@@ -194,12 +194,19 @@ sudo tee /etc/apache2/sites-available/ta-cukrarna.conf << 'EOF'
         ExpiresDefault "access plus 1 year"
         Header append Cache-Control "public, immutable"
     </LocationMatch>
-
-    # Security: Hide server info
-    ServerTokens Prod
-    ServerSignature Off
 </VirtualHost>
 EOF
+
+# Set global security directives (outside VirtualHost)
+# Note: If you already have ServerTokens/ServerSignature in global config, skip this:
+sudo tee /etc/apache2/conf-available/security-headers.conf << 'EOF'
+# Global security settings (only if not already configured)
+ServerTokens Prod
+ServerSignature Off
+EOF
+
+# Enable security configuration (only if created above)
+sudo a2enconf security-headers
 
 # Enable site and disable default
 sudo a2ensite ta-cukrarna.conf
