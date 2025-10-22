@@ -71,13 +71,13 @@ jobs:
           echo "🚀 Starting deployment to VPS..."
 
           # Create backup directory and ensure target exists
-          ssh $VPS_USER@$VPS_HOST "
-            if [ -d '$VPS_PATH/current' ]; then
-              echo '📦 Creating backup...'
-              cp -r '$VPS_PATH/current' '$VPS_PATH/backup-\$(date +%Y%m%d-%H%M%S)' || true
+          ssh $VPS_USER@$VPS_HOST '
+            if [ -d "'"$VPS_PATH"'/current" ]; then
+              echo "📦 Creating backup..."
+              cp -r "'"$VPS_PATH"'/current" "'"$VPS_PATH"'/backup-$(date +%Y%m%d-%H%M%S)" || true
             fi
-            mkdir -p '$VPS_PATH/current'
-          "
+            mkdir -p "'"$VPS_PATH"'/current"
+          '
 
           # Use rsync to efficiently transfer files
           echo "📤 Syncing files with rsync..."
@@ -89,16 +89,16 @@ jobs:
 
           # Execute deployment commands on VPS
           echo "🏗️ Running deployment commands on VPS..."
-          ssh $VPS_USER@$VPS_HOST "
-            cd '$VPS_PATH/current'
-            echo '📦 Installing dependencies...'
+          ssh $VPS_USER@$VPS_HOST '
+            cd "'"$VPS_PATH"'/current"
+            echo "📦 Installing dependencies..."
             npm ci
-            echo '🏗️ Building application...'
+            echo "🏗️ Building application..."
             npm run build
-            echo '🔄 Restarting application...'
+            echo "🔄 Restarting application..."
             pm2 restart ta-cukrarna || pm2 start ecosystem.config.js
             pm2 reload ecosystem.config.js --update-env || true
-            echo '✅ Deployment completed successfully!'
-          "
+            echo "✅ Deployment completed successfully!"
+          '
 
           echo "🎉 Deployment finished!"
