@@ -16,10 +16,10 @@ export default function Home() {
           <h1 className="text-4xl md:text-6xl font-bold mb-4 tracking-tight">
             Ta Cukrárna
           </h1>
-          <p className="text-lg md:text-xl mb-8 max-w-2xl mx-auto">
-            Tradiční cukrárna s láskou k dokonalým dezertům
+          <p id="header-description" className="text-lg md:text-xl mb-8 max-w-2xl mx-auto">
+            Zakázková výroba netradičních, tradičních i&nbsp;luxusních a&nbsp;elegantních zákusků, dortů, dezertů, sušenek a&nbsp;sladkého trvanlivého pečiva.
           </p>
-          <button className="bg-white text-black px-8 py-3 rounded-full font-semibold hover:bg-zinc-100 transition-colors">
+          <button id="header-cta" className="bg-white text-black px-8 py-3 rounded-full font-semibold hover:bg-zinc-100 transition-colors">
             Naše nabídka
           </button>
         </div>
