@@ -68,8 +68,9 @@ jobs:
         run: |
           echo "🔑 Adding server to known hosts..."
           mkdir -p ~/.ssh
-          ssh-keyscan -H $VPS_HOST >> ~/.ssh/known_hosts 2>/dev/null || true
-          echo "Host keys added successfully"
+          ssh-keyscan -H $VPS_HOST >> ~/.ssh/known_hosts
+          echo "Host keys added for $VPS_HOST"
+          cat ~/.ssh/known_hosts
 
       - name: Deploy to VPS
         env:
