@@ -16,11 +16,11 @@ export default function Home() {
         {/* Logo - Top Left */}
         <div className="absolute top-6 left-6 z-20">
           <Image
-            src="/img/header_logo.png"
+            src="/img/logo.svg"
             alt="Ta Cukrárna Logo"
-            width={120}
-            height={60}
-            className="h-auto w-auto max-h-16"
+            width={240}
+            height={120}
+            className="h-auto w-auto max-h-32 brightness-0 invert"
             priority
           />
         </div>
