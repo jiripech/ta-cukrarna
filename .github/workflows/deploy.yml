@@ -2,119 +2,119 @@ name: Deploy Ta Cukrárna to VPS
 
 on:
   push:
-    branches: [ main ]
-    tags: [ 'v*' ]
+    branches: [main]
+    tags: ['v*']
   pull_request:
-    branches: [ main ]
+    branches: [main]
 
 jobs:
   build:
     runs-on: ubuntu-latest
-    
+
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
-      
-    - name: Setup Node.js
-      uses: actions/setup-node@v4
-      with:
-        node-version: '18'
-        cache: 'npm'
-        
-    - name: Install dependencies
-      run: npm ci
-      
-    - name: Run linting
-      run: npm run lint
-      
-    - name: Build application
-      run: npm run build
-      
-    - name: Upload build artifacts
-      if: github.ref == 'refs/heads/main'
-      uses: actions/upload-artifact@v4
-      with:
-        name: ta-cukrarna-build
-        path: |
-          .next/
-          public/
-          package.json
-          package-lock.json
-        retention-days: 1
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run linting
+        run: npm run lint
+
+      - name: Build application
+        run: npm run build
+
+      - name: Upload build artifacts
+        if: github.ref == 'refs/heads/main'
+        uses: actions/upload-artifact@v4
+        with:
+          name: ta-cukrarna-build
+          path: |
+            .next/
+            public/
+            package.json
+            package-lock.json
+          retention-days: 1
 
   deploy:
     needs: build
     runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/main'
-    
+
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
-      
-    - name: Download build artifacts
-      uses: actions/download-artifact@v4
-      with:
-        name: ta-cukrarna-build
-        
-    - name: Setup SSH key
-      uses: webfactory/ssh-agent@v0.8.0
-      with:
-        ssh-private-key: ${{ secrets.VPS_SSH_KEY }}
-        
-    - name: Deploy to VPS
-      env:
-        VPS_HOST: ${{ secrets.VPS_HOST }}
-        VPS_USER: ${{ secrets.VPS_USER }}
-        VPS_PATH: ${{ secrets.VPS_PATH }}
-      run: |
-        # Create deployment script
-        cat > deploy.sh << 'EOF'
-        #!/bin/bash
-        set -e
-        
-        echo "🚀 Starting deployment to VPS..."
-        
-        # Create backup of current deployment
-        if [ -d "$VPS_PATH/current" ]; then
-          echo "📦 Creating backup..."
-          mv "$VPS_PATH/current" "$VPS_PATH/backup-$(date +%Y%m%d-%H%M%S)" || true
-        fi
-        
-        # Create new deployment directory
-        mkdir -p "$VPS_PATH/current"
-        
-        echo "📁 Deploying files..."
-        EOF
-        
-        # Make script executable
-        chmod +x deploy.sh
-        
-        # Copy files to VPS
-        echo "📤 Uploading files to VPS..."
-        rsync -avz --delete \
-          -e "ssh -o StrictHostKeyChecking=no" \
-          ./ \
-          $VPS_USER@$VPS_HOST:$VPS_PATH/current/
-          
-        # Execute deployment commands on VPS
-        ssh -o StrictHostKeyChecking=no $VPS_USER@$VPS_HOST << 'ENDSSH'
-          cd $VPS_PATH/current
-          
-          echo "📦 Installing dependencies..."
-          npm ci --only=production
-          
-          echo "🏗️ Building application..."
-          npm run build
-          
-          echo "🔄 Restarting application..."
-          # Restart PM2 application
-          pm2 restart ta-cukrarna || pm2 start ecosystem.config.js
-          
-          # Reload PM2 configuration if ecosystem file changed
-          pm2 reload ecosystem.config.js --update-env
-          
-          echo "✅ Deployment completed successfully!"
-          echo "🌐 Application should be available at your domain"
-        ENDSSH
-        
-        echo "🎉 Deployment finished!"
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Download build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: ta-cukrarna-build
+
+      - name: Setup SSH key
+        uses: webfactory/ssh-agent@v0.8.0
+        with:
+          ssh-private-key: ${{ secrets.VPS_SSH_KEY }}
+
+      - name: Deploy to VPS
+        env:
+          VPS_HOST: ${{ secrets.VPS_HOST }}
+          VPS_USER: ${{ secrets.VPS_USER }}
+          VPS_PATH: ${{ secrets.VPS_PATH }}
+        run: |
+          # Create deployment script
+          cat > deploy.sh << 'EOF'
+          #!/bin/bash
+          set -e
+
+          echo "🚀 Starting deployment to VPS..."
+
+          # Create backup of current deployment
+          if [ -d "$VPS_PATH/current" ]; then
+            echo "📦 Creating backup..."
+            mv "$VPS_PATH/current" "$VPS_PATH/backup-$(date +%Y%m%d-%H%M%S)" || true
+          fi
+
+          # Create new deployment directory
+          mkdir -p "$VPS_PATH/current"
+
+          echo "📁 Deploying files..."
+          EOF
+
+          # Make script executable
+          chmod +x deploy.sh
+
+          # Copy files to VPS
+          echo "📤 Uploading files to VPS..."
+          rsync -avz --delete \
+            -e "ssh -o StrictHostKeyChecking=no" \
+            ./ \
+            $VPS_USER@$VPS_HOST:$VPS_PATH/current/
+
+          # Execute deployment commands on VPS
+          ssh -o StrictHostKeyChecking=no $VPS_USER@$VPS_HOST << 'ENDSSH'
+            cd $VPS_PATH/current
+
+            echo "📦 Installing dependencies..."
+            npm ci --only=production
+
+            echo "🏗️ Building application..."
+            npm run build
+
+            echo "🔄 Restarting application..."
+            # Restart PM2 application
+            pm2 restart ta-cukrarna || pm2 start ecosystem.config.js
+
+            # Reload PM2 configuration if ecosystem file changed
+            pm2 reload ecosystem.config.js --update-env
+
+            echo "✅ Deployment completed successfully!"
+            echo "🌐 Application should be available at your domain"
+          ENDSSH
+
+          echo "🎉 Deployment finished!"

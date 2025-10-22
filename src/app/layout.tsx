@@ -1,31 +1,39 @@
-import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
-import "./globals.css";
-import PWARegistration from "@/components/PWARegistration";
+import type { Metadata } from 'next';
+import { Geist, Geist_Mono } from 'next/font/google';
+import './globals.css';
+import PWARegistration from '@/components/PWARegistration';
 
 const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
+  variable: '--font-geist-sans',
+  subsets: ['latin'],
 });
 
 const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
+  variable: '--font-geist-mono',
+  subsets: ['latin'],
 });
 
 export const metadata: Metadata = {
-  title: "Ta Cukrárna - Luxusní dorty a zákusky na zakázku",
-  description: "Zakázková výroba netradičních, tradičních i luxusních a elegantních zákusků, dortů, dezertů, sušenek a sladkého trvanlivého pečiva.",
-  keywords: ["cukrárna", "dorty", "zákusky", "dezerty", "svatební dorty", "zakázka"],
-  authors: [{ name: "Ta Cukrárna" }],
-  creator: "Ta Cukrárna",
-  publisher: "Ta Cukrárna",
-  robots: "index, follow",
-  manifest: "/manifest.json",
+  title: 'Ta Cukrárna - Luxusní dorty a zákusky na zakázku',
+  description:
+    'Zakázková výroba netradičních, tradičních i luxusních a elegantních zákusků, dortů, dezertů, sušenek a sladkého trvanlivého pečiva.',
+  keywords: [
+    'cukrárna',
+    'dorty',
+    'zákusky',
+    'dezerty',
+    'svatební dorty',
+    'zakázka',
+  ],
+  authors: [{ name: 'Ta Cukrárna' }],
+  creator: 'Ta Cukrárna',
+  publisher: 'Ta Cukrárna',
+  robots: 'index, follow',
+  manifest: '/manifest.json',
   appleWebApp: {
     capable: true,
-    statusBarStyle: "default",
-    title: "Ta Cukrárna",
+    statusBarStyle: 'default',
+    title: 'Ta Cukrárna',
   },
   formatDetection: {
     telephone: false,
@@ -54,7 +62,12 @@ export default function RootLayout({
         <link rel="manifest" href="/manifest.json" />
         <link rel="icon" href="/img/favicon.png" type="image/png" />
         <link rel="apple-touch-icon" href="/img/favicon.png" />
-        <link rel="preload" href="/img/logo.svg" as="image" type="image/svg+xml" />
+        <link
+          rel="preload"
+          href="/img/logo.svg"
+          as="image"
+          type="image/svg+xml"
+        />
       </head>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}

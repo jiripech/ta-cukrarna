@@ -3,12 +3,14 @@
 ## SSH Key Setup for GitHub Actions
 
 ### 1. SSH Keys Generated
+
 - **Private key**: `ta-cukrarna-deploy-key` (for GitHub Secrets)
 - **Public key**: `ta-cukrarna-deploy-key.pub` (for VPS)
 
 ### 2. VPS Setup Instructions
 
-#### Create dedicated user for application:
+#### Create dedicated user for application
+
 ```bash
 # On your VPS (Debian 12) as root or sudo user
 # Create user for ta-cukrarna
@@ -25,7 +27,8 @@ mkdir -p ~/.ssh
 chmod 700 ~/.ssh
 ```
 
-#### Add public key to VPS:
+#### Add public key to VPS
+
 ```bash
 # As ta-cukrarna user
 cat >> ~/.ssh/authorized_keys << 'EOF'
@@ -36,7 +39,8 @@ EOF
 chmod 600 ~/.ssh/authorized_keys
 ```
 
-#### Install Node.js and dependencies:
+#### Install Node.js and dependencies
+
 ```bash
 # Update system (as root/sudo user)
 sudo apt update && sudo apt upgrade -y
@@ -56,12 +60,13 @@ sudo chmod 755 /var/www/ta-cukrarna
 
 ### 3. GitHub Secrets Configuration
 
-Go to: https://github.com/jiripech/ta-cukrarna/settings/secrets/actions
+Go to: <https://github.com/jiripech/ta-cukrarna/settings/secrets/actions>
 
 Add these secrets:
 
 #### `VPS_SSH_KEY`
-```
+
+```text
 # Copy ENTIRE content of ta-cukrarna-deploy-key (private key)
 -----BEGIN OPENSSH PRIVATE KEY-----
 [content here]
@@ -69,23 +74,27 @@ Add these secrets:
 ```
 
 #### `VPS_HOST`
-```
+
+```text
 your-vps-ip-address-or-domain.com
 ```
 
 #### `VPS_USER`
-```
+
+```text
 ta-cukrarna
 ```
 
 #### `VPS_PATH`
-```
+
+```text
 /var/www/ta-cukrarna
 ```
 
 ### 4. VPS Web Server Setup
 
 #### Apache Configuration (recommended)
+
 ```bash
 # Install Apache
 sudo apt install apache2 -y
@@ -102,23 +111,23 @@ sudo tee /etc/apache2/sites-available/ta-cukrarna.conf << 'EOF'
     ServerName your-domain.com
     ServerAlias www.your-domain.com
     DocumentRoot /var/www/ta-cukrarna/current
-    
+
     # Proxy to Node.js application
     ProxyPreserveHost On
     ProxyPass /.well-known/ !
     ProxyPass / http://localhost:3000/
     ProxyPassReverse / http://localhost:3000/
-    
+
     # Security headers
     Header always set X-Content-Type-Options nosniff
     Header always set X-Frame-Options DENY
     Header always set X-XSS-Protection "1; mode=block"
     Header always set Strict-Transport-Security "max-age=63072000; includeSubDomains; preload"
-    
+
     # Logging
     ErrorLog ${APACHE_LOG_DIR}/ta-cukrarna_error.log
     CustomLog ${APACHE_LOG_DIR}/ta-cukrarna_access.log combined
-    
+
     # Static files optimization
     <LocationMatch "\.(css|js|png|jpg|jpeg|gif|svg|ico|woff|woff2|ttf)$">
         ExpiresActive On
@@ -139,6 +148,7 @@ sudo systemctl enable apache2
 ```
 
 #### PM2 Ecosystem for dedicated user
+
 ```bash
 # As ta-cukrarna user
 cat > /var/www/ta-cukrarna/ecosystem.config.js << 'EOF'
@@ -177,6 +187,7 @@ pm2 startup
 ```
 
 ### 5. SSL Certificate (Optional)
+
 ```bash
 # Install Certbot for Apache
 sudo apt install certbot python3-certbot-apache -y
@@ -228,7 +239,8 @@ pm2 restart ta-cukrarna
 ## Domain Configuration
 
 Point your domain DNS A record to your VPS IP:
-```
+
+```text
 A record: @ -> your-vps-ip
 A record: www -> your-vps-ip
 ```

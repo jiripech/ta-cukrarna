@@ -1,8 +1,10 @@
 # Ta Cukrárna - PWA Website
 
-> Zakázková výroba netradičních, tradičních i luxusních a elegantních zákusků, dortů, dezertů, sušenek a sladkého trvanlivého pečiva.
+> Zakázková výroba netradičních, tradičních i luxusních a elegantních zákusků,
+> dortů, dezertů, sušenek a sladkého trvanlivého pečiva.
 
-A modern Progressive Web App (PWA) for Ta Cukrárna bakery, built with Next.js 16, React 19, and TypeScript.
+A modern Progressive Web App (PWA) for Ta Cukrárna bakery, built with Next.js
+16, React 19, and TypeScript.
 
 ## 🚀 Features
 
@@ -26,6 +28,7 @@ A modern Progressive Web App (PWA) for Ta Cukrárna bakery, built with Next.js 1
 ## 🚀 Getting Started
 
 ### Prerequisites
+
 - Node.js 18+
 - npm or yarn
 
@@ -61,11 +64,12 @@ screen -r ta-cukrarna-dev
 # Server keeps running in background
 ```
 
-The application will be available at [http://localhost:3000](http://localhost:3000)
+The application will be available at
+[http://localhost:3000](http://localhost:3000)
 
 ## 🏗️ Project Structure
 
-```
+```text
 ta-cukrarna/
 ├── public/
 │   ├── img/
@@ -113,16 +117,19 @@ Example console log filename: `log/localhost-[timestamp].log`
 ## 📱 PWA Features
 
 ### Installation
+
 - Appears in Chrome's "Install app" prompt
 - Works on iOS Safari with "Add to Home Screen"
 - Standalone app experience
 
 ### Offline Support
+
 - Caches essential assets (HTML, CSS, images)
 - Service worker handles offline requests
 - Progressive enhancement approach
 
 ### Mobile Optimization
+
 - Apple PWA meta tags
 - Theme color configuration
 - Proper viewport handling
@@ -131,16 +138,19 @@ Example console log filename: `log/localhost-[timestamp].log`
 ## 🎨 Branding
 
 ### Colors
+
 - **Theme**: `#000000` (black)
 - **Background**: `#ffffff` (white)
 - **Overlay**: `rgba(0,0,0,0.4)` (hero section)
 
 ### Typography
+
 - **Primary Font**: Geist Sans
 - **Mono Font**: Geist Mono
 - **Responsive scales**: Mobile-first approach
 
 ### Images
+
 - **Logo**: SVG format for scalability
 - **Icons**: PNG format for PWA compatibility
 - **Backgrounds**: High-quality photography
@@ -164,6 +174,7 @@ npm run start
 ## 📋 Version History
 
 ### v1.0 (2025-10-22)
+
 🎉 **First Release**
 
 - ✅ Responsive homepage with hero section
@@ -190,6 +201,7 @@ Private project for Ta Cukrárna bakery.
 
 ## 🔗 Links
 
-- **Repository**: [https://github.com/jiripech/ta-cukrarna](https://github.com/jiripech/ta-cukrarna)
+- **Repository**:
+  [https://github.com/jiripech/ta-cukrarna](https://github.com/jiripech/ta-cukrarna)
 - **Live Demo**: [Coming Soon]
 - **Business**: Ta Cukrárna
