@@ -54,6 +54,10 @@
 
 - User wants notes for continuity between sessions
 - Will update this file with each significant change
+- **Development server**: Running in screen session `ta-cukrarna-dev`
+  - Access with: `screen -r ta-cukrarna-dev`
+  - Detach with: `Ctrl+A, D`
+  - Persistent across terminal sessions
 
 ---
 *Last updated: October 22, 2025*
