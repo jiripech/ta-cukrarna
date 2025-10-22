@@ -2,19 +2,13 @@
 
 # Ta Cukrárna VPS Cleanup Script - Root Part
 # Configures Apache for static hosting and removes old deployment
-# Run as: sudo user or root
+# Run in terminal as: root user
 
 set -e
 
 echo "🧹 Ta Cukrárna VPS Cleanup - Root Part"
 echo "====================================="
-
-# Check if running as root or with sudo
-if [ "$EUID" -ne 0 ]; then
-    echo "❌ This script should be run as root or with sudo"
-    echo "   Run: sudo bash scripts/cleanup-vps-root.sh"
-    exit 1
-fi
+echo "👤 Running as user: $USER (UID: $EUID)"
 
 echo "🔍 Checking current Apache configuration..."
 
@@ -79,3 +73,5 @@ echo "🌐 Website will be available at:"
 echo "   http://your-domain.com/~ta-cukrarna/"
 echo ""
 echo "🚀 Next step: Push code to trigger GitHub Actions deployment"
+echo ""
+echo "💡 Don't forget to run any PM2 unstartup command shown in the user terminal!"

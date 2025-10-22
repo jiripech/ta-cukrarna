@@ -2,19 +2,13 @@
 
 # Ta Cukrárna VPS Cleanup Script - User Part
 # Removes PM2 processes and prepares user directory for static hosting
-# Run as: ta-cukrarna user
+# Run in terminal as: ta-cukrarna user
 
 set -e
 
 echo "🧹 Ta Cukrárna VPS Cleanup - User Part"
 echo "====================================="
-
-# Check if running as ta-cukrarna user
-if [ "$USER" != "ta-cukrarna" ]; then
-    echo "❌ This script should be run as 'ta-cukrarna' user"
-    echo "   Switch user: sudo su - ta-cukrarna"
-    exit 1
-fi
+echo "👤 Running as user: $USER"
 
 echo "📋 Current PM2 processes:"
 pm2 list 2>/dev/null || echo "   No PM2 processes found"
@@ -37,8 +31,10 @@ echo "💀 Killing PM2 daemon..."
 pm2 kill 2>/dev/null || echo "   PM2 daemon not running"
 
 echo "🔧 Getting PM2 unstartup command..."
-echo "📝 Please run this command as sudo user to remove PM2 startup:"
+echo "📝 Copy this command and run it in your root terminal:"
+echo "=================================================="
 pm2 unstartup 2>/dev/null || echo "   No startup configuration found"
+echo "=================================================="
 
 echo ""
 echo "🏠 Creating public_html directory..."
@@ -48,5 +44,4 @@ chmod 755 ~/public_html
 echo ""
 echo "✅ User cleanup completed!"
 echo ""
-echo "🔄 Next step: Run as sudo user:"
-echo "   bash scripts/cleanup-vps-root.sh"
+echo "🔄 Now run cleanup-vps-root.sh in your root terminal"
