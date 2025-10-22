@@ -11,9 +11,9 @@ echo "======================================"
 echo "👤 Running as user: $USER (UID: $EUID)"
 
 # Domain configuration
-DOMAIN="tacukrarna.cz"
-USER_HOME="/home/ta-cukrarna"
-PUBLIC_HTML="$USER_HOME/public_html"
+export DOMAIN="tacukrarna.cz"
+export USER_HOME="/home/ta-cukrarna"
+export PUBLIC_HTML="$USER_HOME/public_html"
 
 echo "🔧 Creating VirtualHost for direct domain access..."
 echo "   Domain: $DOMAIN"
@@ -24,15 +24,15 @@ cat > /etc/apache2/sites-available/ta-cukrarna.conf << 'EOF'
 <VirtualHost *:80>
     ServerName tacukrarna.cz
     ServerAlias www.tacukrarna.cz
-    
+
     DocumentRoot /home/ta-cukrarna/public_html
-    
+
     <Directory /home/ta-cukrarna/public_html>
         AllowOverride All
         Require all granted
         Options -Indexes
     </Directory>
-    
+
     # Security headers
     Header always set X-Content-Type-Options nosniff
     Header always set X-Frame-Options DENY
@@ -45,10 +45,10 @@ cat > /etc/apache2/sites-available/ta-cukrarna.conf << 'EOF'
         ExpiresDefault "access plus 1 year"
         Header append Cache-Control "public, immutable"
     </LocationMatch>
-    
+
     # Redirect to HTTPS (uncomment after SSL setup)
     # Redirect permanent / https://tacukrarna.cz/
-    
+
     ErrorLog ${APACHE_LOG_DIR}/ta-cukrarna_error.log
     CustomLog ${APACHE_LOG_DIR}/ta-cukrarna_access.log combined
 </VirtualHost>
@@ -57,19 +57,19 @@ cat > /etc/apache2/sites-available/ta-cukrarna.conf << 'EOF'
 <VirtualHost *:443>
     ServerName tacukrarna.cz
     ServerAlias www.tacukrarna.cz
-    
+
     DocumentRoot /home/ta-cukrarna/public_html
-    
+
     <Directory /home/ta-cukrarna/public_html>
         AllowOverride All
         Require all granted
         Options -Indexes
     </Directory>
-    
+
     # SSL Configuration (will be added by Certbot)
     SSLEngine on
     # SSLCertificateFile and SSLCertificateKeyFile will be added by Certbot
-    
+
     # Security headers
     Header always set X-Content-Type-Options nosniff
     Header always set X-Frame-Options DENY
@@ -83,7 +83,7 @@ cat > /etc/apache2/sites-available/ta-cukrarna.conf << 'EOF'
         ExpiresDefault "access plus 1 year"
         Header append Cache-Control "public, immutable"
     </LocationMatch>
-    
+
     ErrorLog ${APACHE_LOG_DIR}/ta-cukrarna_ssl_error.log
     CustomLog ${APACHE_LOG_DIR}/ta-cukrarna_ssl_access.log combined
 </VirtualHost>
@@ -96,8 +96,8 @@ echo "🔧 Enabling site and configuring Apache..."
 # Enable the site
 a2ensite ta-cukrarna.conf
 
-# Disable default site if enabled
-a2dissite 000-default.conf 2>/dev/null || echo "   Default site already disabled"
+# Keep default site enabled (user prefers to keep their default configuration)
+echo "   Keeping default site configuration as requested"
 
 # Enable SSL module (needed for HTTPS VirtualHost)
 a2enmod ssl 2>/dev/null || echo "   SSL module already enabled"
