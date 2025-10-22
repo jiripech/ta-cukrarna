@@ -5,7 +5,6 @@ module.exports = {
       script: 'npm',
       args: 'start',
       cwd: '/var/www/ta-cukrarna/current',
-      user: 'ta-cukrarna',
       env: {
         NODE_ENV: 'production',
         PORT: 3000,
