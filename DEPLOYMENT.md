@@ -7,6 +7,44 @@
 - **Private key**: `ta-cukrarna-deploy-key` (for GitHub Secrets)
 - **Public key**: `ta-cukrarna-deploy-key.pub` (for VPS)
 
+## Cleanup from Previous PM2 Deployment
+
+If you previously had PM2/Node.js setup, clean it up before using static
+deployment:
+
+```bash
+# Stop and remove PM2 processes
+pm2 stop all
+pm2 delete all
+pm2 kill
+
+# Remove PM2 startup service
+pm2 unstartup
+# This will show a command to run as sudo, execute it
+
+# Remove PM2 globally (optional)
+sudo npm uninstall -g pm2
+
+# Remove old application directory
+sudo rm -rf /var/www/ta-cukrarna
+
+# Remove old Apache VirtualHost if it exists
+sudo a2dissite ta-cukrarna.conf
+sudo rm -f /etc/apache2/sites-available/ta-cukrarna.conf
+
+# Remove proxy modules (no longer needed)
+sudo a2dismod proxy
+sudo a2dismod proxy_http
+
+# Test Apache configuration
+sudo apache2ctl configtest
+sudo systemctl reload apache2
+
+# Optional: Remove Node.js entirely if not used elsewhere
+# sudo apt remove nodejs npm
+# sudo apt autoremove
+```
+
 ### 2. VPS Setup Instructions
 
 #### Create dedicated user for application
