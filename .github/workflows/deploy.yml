@@ -78,42 +78,37 @@ jobs:
           VPS_USER: ${{ secrets.VPS_USER }}
           VPS_PATH: ${{ secrets.VPS_PATH }}
         run: |
-          echo "🚀 Starting deployment to VPS..."
+          echo "🚀 Starting static deployment to VPS..."
 
-          # Create backup directory and ensure target exists
+          # Create backup of current deployment
           ssh $VPS_USER@$VPS_HOST '
-            if [ -d "'"$VPS_PATH"'/current" ]; then
+            if [ -d "'"$VPS_PATH"'" ]; then
               echo "📦 Creating backup..."
-              cp -r "'"$VPS_PATH"'/current" "'"$VPS_PATH"'/backup-$(date +%Y%m%d-%H%M%S)" || true
+              sudo cp -r "'"$VPS_PATH"'" "'"$VPS_PATH"'-backup-$(date +%Y%m%d-%H%M%S)" || true
             fi
-            mkdir -p "'"$VPS_PATH"'/current"
+            sudo mkdir -p "'"$VPS_PATH"'"
           '
 
-          # Use rsync to efficiently transfer files
-          echo "📤 Syncing files with rsync..."
+          # Deploy static files directly to Apache DocumentRoot
+          echo "📤 Deploying static files with rsync..."
           rsync -avz --delete \
             --exclude-from='.rsyncignore' \
             -e "ssh" \
-            ./ \
-            $VPS_USER@$VPS_HOST:$VPS_PATH/current/
+            ./out/ \
+            $VPS_USER@$VPS_HOST:$VPS_PATH/
 
-          # Execute deployment commands on VPS
-          echo "🏗️ Running deployment commands on VPS..."
+          # Set proper permissions for Apache
           ssh $VPS_USER@$VPS_HOST '
-            cd "'"$VPS_PATH"'/current"
-            echo "📦 Installing dependencies..."
-            npm ci
-            echo "🏗️ Building application..."
-            npm run build
-            echo "🔄 Restarting application..."
-            pm2 restart ta-cukrarna || pm2 start ecosystem.config.js
-            pm2 reload ecosystem.config.js --update-env || true
-            echo "🔄 Reloading Apache to clear proxy cache..."
+            echo "Setting proper file permissions..."
+            sudo chown -R www-data:www-data "'"$VPS_PATH"'"
+            sudo find "'"$VPS_PATH"'" -type f -exec chmod 644 {} \;
+            sudo find "'"$VPS_PATH"'" -type d -exec chmod 755 {} \;
+            echo "Reloading Apache..."
             sudo systemctl reload apache2 || echo "Apache reload failed - manual restart needed"
-            echo "✅ Deployment completed successfully!"
+            echo "Static deployment completed successfully!"
           '
 
-          echo "🎉 Deployment finished!"
+          echo "🎉 Static deployment finished!"
 
       - name: Cleanup SSH agent
         if: always()
