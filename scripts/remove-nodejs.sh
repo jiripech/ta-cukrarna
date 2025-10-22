@@ -80,19 +80,37 @@ echo "   ✅ npm caches cleared"
 rm -f /usr/bin/node /usr/bin/nodejs /usr/bin/npm /usr/bin/npx 2>/dev/null || true
 echo "   ✅ Node.js binaries removed"
 
+# Clear shell hash table to refresh command paths
+hash -r 2>/dev/null || true
+echo "   ✅ Shell command cache cleared"
+
 echo "🔍 Verification..."
 if command -v node >/dev/null 2>&1; then
-    echo "   ⚠️  Node.js still found: $(which node)"
-    echo "   This might be from nvm or other installation method"
+    NODE_PATH=$(which node 2>/dev/null || echo "not found")
+    if [ -f "$NODE_PATH" ]; then
+        echo "   ⚠️  Node.js still found: $NODE_PATH"
+        echo "   This might be from nvm or other installation method"
+    else
+        echo "   ℹ️  Node.js path in shell but file doesn't exist: $NODE_PATH"
+    fi
 else
     echo "   ✅ Node.js successfully removed"
 fi
 
 if command -v npm >/dev/null 2>&1; then
-    echo "   ⚠️  npm still found: $(which npm)"
+    NPM_PATH=$(which npm 2>/dev/null || echo "not found")
+    if [ -f "$NPM_PATH" ]; then
+        echo "   ⚠️  npm still found: $NPM_PATH"
+    else
+        echo "   ℹ️  npm path in shell but file doesn't exist: $NPM_PATH"
+        echo "   (Shell may need to refresh its hash table)"
+    fi
 else
     echo "   ✅ npm successfully removed"
 fi
+
+# Clear shell hash table to refresh command cache
+hash -r 2>/dev/null || true
 
 echo ""
 echo "✅ Node.js cleanup completed!"
