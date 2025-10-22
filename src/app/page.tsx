@@ -43,7 +43,7 @@ export default function Home() {
             id="header-cta"
             className="bg-white/20 backdrop-blur-sm text-white px-8 py-3 rounded-full font-medium border border-white/30"
           >
-            🚧 Stránky jsou v přípravě ⏳
+            🚧 Stránky jsou v přípravě • Testování deploymentu ✅
           </div>
         </div>
       </header>
