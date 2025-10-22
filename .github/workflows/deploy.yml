@@ -36,8 +36,7 @@ jobs:
         with:
           name: ta-cukrarna-build
           path: |
-            .next/
-            public/
+            out/
             package.json
             package-lock.json
           retention-days: 1
