@@ -114,3 +114,11 @@ jobs:
           '
 
           echo "🎉 Deployment finished!"
+
+      - name: Cleanup SSH agent
+        if: always()
+        run: |
+          # Explicitly kill SSH agent to prevent cleanup errors
+          if [ -n "$SSH_AGENT_PID" ]; then
+            kill $SSH_AGENT_PID || true
+          fi
