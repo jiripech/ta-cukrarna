@@ -44,7 +44,14 @@
   - Enhanced content with professional bakery copy
   - Added header logo (header_logo.png) with responsive positioning
   - Implemented unique IDs for better element targeting
-- [ ] PWA configuration (manifest.json, service worker)
+- [x] PWA configuration (manifest.json, service worker)
+  - Created web app manifest with Czech localization
+  - Implemented service worker for offline functionality
+  - Added PWA meta tags and mobile optimization
+  - Configured favicon.png as app icon and logo.svg for branding
+  - Fixed all console errors and warnings
+  - Added proper viewport configuration
+  - Cache management for offline experience
 - [ ] Content management system
 - [ ] Image upload and gallery
 - [ ] Push notifications setup
