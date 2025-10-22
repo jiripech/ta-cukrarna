@@ -68,52 +68,37 @@ jobs:
           VPS_USER: ${{ secrets.VPS_USER }}
           VPS_PATH: ${{ secrets.VPS_PATH }}
         run: |
-          echo "🚀 Starting rsync deployment to VPS..."
+          echo "🚀 Starting deployment to VPS..."
 
-          # Create backup on VPS first
-          ssh -o StrictHostKeyChecking=no $VPS_USER@$VPS_HOST << 'ENDSSH'
-            if [ -d "$VPS_PATH/current" ]; then
-              echo "📦 Creating backup..."
-              cp -r "$VPS_PATH/current" "$VPS_PATH/backup-$(date +%Y%m%d-%H%M%S)" || true
+          # Create backup directory and ensure target exists
+          ssh -o StrictHostKeyChecking=no $VPS_USER@$VPS_HOST "
+            if [ -d '$VPS_PATH/current' ]; then
+              echo '📦 Creating backup...'
+              cp -r '$VPS_PATH/current' '$VPS_PATH/backup-\$(date +%Y%m%d-%H%M%S)' || true
             fi
-
-            # Ensure target directory exists
-            mkdir -p "$VPS_PATH/current"
-          ENDSSH
+            mkdir -p '$VPS_PATH/current'
+          "
 
           # Use rsync to efficiently transfer files
           echo "📤 Syncing files with rsync..."
           rsync -avz --delete \
-            --exclude 'node_modules' \
-            --exclude '.git' \
-            --exclude 'logs' \
-            --exclude '*.log' \
-            --exclude '.husky' \
-            --exclude 'ta-cukrarna-deploy-key*' \
+            --exclude-from='.rsyncignore' \
             -e "ssh -o StrictHostKeyChecking=no" \
             ./ \
             $VPS_USER@$VPS_HOST:$VPS_PATH/current/
 
           # Execute deployment commands on VPS
-          ssh -o StrictHostKeyChecking=no $VPS_USER@$VPS_HOST << 'ENDSSH'
-            cd $VPS_PATH/current
-
-            echo "📦 Installing dependencies..."
-            # Install all deps including devDependencies for build process
+          echo "🏗️ Running deployment commands on VPS..."
+          ssh -o StrictHostKeyChecking=no $VPS_USER@$VPS_HOST "
+            cd '$VPS_PATH/current'
+            echo '📦 Installing dependencies...'
             npm ci
-
-            echo "🏗️ Building application..."
+            echo '🏗️ Building application...'
             npm run build
-
-            echo "🔄 Restarting application..."
-            # Restart PM2 application
+            echo '🔄 Restarting application...'
             pm2 restart ta-cukrarna || pm2 start ecosystem.config.js
+            pm2 reload ecosystem.config.js --update-env || true
+            echo '✅ Deployment completed successfully!'
+          "
 
-            # Reload PM2 configuration if ecosystem file changed
-            pm2 reload ecosystem.config.js --update-env
-
-            echo "✅ Deployment completed successfully!"
-            echo "🌐 Application should be available at your domain"
-          ENDSSH
-
-          echo "🎉 Rsync deployment finished!"
+          echo "🎉 Deployment finished!"

@@ -1,0 +1,40 @@
+# Node.js dependencies
+node_modules/
+
+# Git repository
+.git/
+
+# Build artifacts (will be re-built on server)
+.next/
+
+# Logs
+logs/
+*.log
+
+# Development tools
+.husky/
+
+# SSH keys (for security)
+*deploy-key*
+*.pem
+*.key
+
+# Environment files
+.env*
+
+# IDE and editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# macOS system files
+.DS_Store
+
+# Coverage reports
+coverage/
+
+# Temporary files
+tmp/
+temp/
