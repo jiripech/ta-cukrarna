@@ -1,0 +1,49 @@
+# GitHub Copilot - Project Notes for ta-cukrarna
+
+## Project Overview
+
+- **Name**: ta-cukrarna (Ta Cukrárna - "The Bakery")
+- **Framework**: Next.js 16 + React 19 + TypeScript
+- **Styling**: Tailwind CSS v4
+- **Structure**: App Router (app/ directory)
+- **Status**: Fresh project with default starter template
+
+## Project Purpose & Goals
+
+- **Type**: Responsive web application (PWA)
+- **Purpose**: Basic information website for bakery "Ta Cukrárna"
+- **Inspiration**: Simplicity like Instagram or Google Photos
+- **Features**: 
+  - Progressive content management by user
+  - Image upload and gallery management
+  - Push notifications (opening hours changes, news)
+  - Offline functionality (PWA)
+
+## Development Timeline
+
+- **October 22, 2025**: First session after losing previous conversation
+
+## Implementation Status
+
+- **Previous session**: Project initialization via command line
+- **Current state**: Basic Next.js setup with default starter template
+- Default page.tsx with starter content
+- **Lost conversation**: Context lost when opening workspace
+
+## Planned Tasks
+
+- [x] Publish project to GitHub for development tracking
+- [ ] PWA configuration (manifest.json, service worker)
+- [ ] Responsive layout for bakery
+- [ ] Content management system
+- [ ] Image upload and gallery
+- [ ] Push notifications setup
+- [ ] Offline functionality
+
+## Development Notes
+
+- User wants notes for continuity between sessions
+- Will update this file with each significant change
+
+---
+*Last updated: October 22, 2025*
