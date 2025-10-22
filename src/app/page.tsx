@@ -39,12 +39,12 @@ export default function Home() {
             a&nbsp;elegantních zákusků, dortů, dezertů, sušenek a&nbsp;sladkého
             trvanlivého pečiva.
           </p>
-          <button
+          <div
             id="header-cta"
-            className="bg-white text-black px-8 py-3 rounded-full font-semibold hover:bg-zinc-100 transition-colors"
+            className="bg-white/20 backdrop-blur-sm text-white px-8 py-3 rounded-full font-medium border border-white/30"
           >
-            Naše nabídka
-          </button>
+            🚧 Stránky jsou v přípravě • Brzy spustíme
+          </div>
         </div>
       </header>
 
