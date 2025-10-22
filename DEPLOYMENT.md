@@ -275,6 +275,11 @@ sudo certbot renew --dry-run
 2. **Check GitHub Actions** tab for deployment status
 3. **Monitor VPS logs**: `journalctl -f` or `pm2 logs`
 
+**Note**: The deployment process installs all dependencies (including
+devDependencies like TypeScript, Tailwind, Husky) on the VPS because they're
+needed for the build process. After build completes, these dev tools remain
+available but don't affect production runtime.
+
 ### 7. Manual Deployment Commands
 
 ```bash

@@ -86,9 +86,10 @@ jobs:
           rsync -avz --delete \
             --exclude 'node_modules' \
             --exclude '.git' \
-            --exclude '.next' \
             --exclude 'logs' \
             --exclude '*.log' \
+            --exclude '.husky' \
+            --exclude 'ta-cukrarna-deploy-key*' \
             -e "ssh -o StrictHostKeyChecking=no" \
             ./ \
             $VPS_USER@$VPS_HOST:$VPS_PATH/current/
@@ -98,7 +99,8 @@ jobs:
             cd $VPS_PATH/current
 
             echo "📦 Installing dependencies..."
-            npm ci --only=production
+            # Install all deps including devDependencies for build process
+            npm ci
 
             echo "🏗️ Building application..."
             npm run build
