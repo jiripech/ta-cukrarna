@@ -106,7 +106,7 @@ Make sure the UserDir configuration allows serving from public_html:
     <Directory /home/*/public_html>
         AllowOverride FileInfo AuthConfig Limit Indexes
         Options MultiViews Indexes SymLinksIfOwnerMatch IncludesNoExec
-        Require method GET POST OPTIONS
+        Require method GET HEAD POST OPTIONS
     </Directory>
 </IfModule>
 ```
