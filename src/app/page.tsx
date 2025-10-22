@@ -20,7 +20,8 @@ export default function Home() {
             alt="Ta Cukrárna Logo"
             width={240}
             height={120}
-            className="h-auto w-auto max-h-32 brightness-0 invert"
+            className="brightness-0 invert"
+            style={{ width: 'auto', height: 'auto', maxHeight: '8rem' }}
             priority
           />
         </div>
