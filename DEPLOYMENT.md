@@ -8,34 +8,50 @@
 
 ### 2. VPS Setup Instructions
 
+#### Create dedicated user for application:
+```bash
+# On your VPS (Debian 12) as root or sudo user
+# Create user for ta-cukrarna
+sudo adduser ta-cukrarna --disabled-password --gecos "Ta Cukrarna Application User"
+
+# Add user to www-data group for web server permissions
+sudo usermod -a -G www-data ta-cukrarna
+
+# Switch to the new user
+sudo su - ta-cukrarna
+
+# Create SSH directory and set permissions
+mkdir -p ~/.ssh
+chmod 700 ~/.ssh
+```
+
 #### Add public key to VPS:
 ```bash
-# On your VPS (Debian 12)
-mkdir -p ~/.ssh
+# As ta-cukrarna user
 cat >> ~/.ssh/authorized_keys << 'EOF'
-# Copy content from ta-cukrarna-deploy-key.pub here
+ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIOceUKQ2F/O//4D2oPMmRlD85Zllko+CywHTPDjxhW46 ta-cukrarna-github-actions
 EOF
 
 # Set proper permissions
 chmod 600 ~/.ssh/authorized_keys
-chmod 700 ~/.ssh
 ```
 
-#### Install Node.js on VPS:
+#### Install Node.js and dependencies:
 ```bash
-# Update system
+# Update system (as root/sudo user)
 sudo apt update && sudo apt upgrade -y
 
 # Install Node.js 18
 curl -fsSL https://deb.nodesource.com/setup_18.x | sudo -E bash -
 sudo apt-get install -y nodejs
 
-# Install PM2 (process manager)
+# Install PM2 globally
 sudo npm install -g pm2
 
 # Create application directory
 sudo mkdir -p /var/www/ta-cukrarna
-sudo chown $USER:$USER /var/www/ta-cukrarna
+sudo chown ta-cukrarna:www-data /var/www/ta-cukrarna
+sudo chmod 755 /var/www/ta-cukrarna
 ```
 
 ### 3. GitHub Secrets Configuration
@@ -59,7 +75,7 @@ your-vps-ip-address-or-domain.com
 
 #### `VPS_USER`
 ```
-your-vps-username
+ta-cukrarna
 ```
 
 #### `VPS_PATH`
@@ -69,40 +85,62 @@ your-vps-username
 
 ### 4. VPS Web Server Setup
 
-#### Option A: Nginx (recommended)
+#### Apache Configuration (recommended)
 ```bash
-# Install Nginx
-sudo apt install nginx -y
+# Install Apache
+sudo apt install apache2 -y
+
+# Enable required modules
+sudo a2enmod proxy
+sudo a2enmod proxy_http
+sudo a2enmod rewrite
+sudo a2enmod ssl
 
 # Create site configuration
-sudo tee /etc/nginx/sites-available/ta-cukrarna << 'EOF'
-server {
-    listen 80;
-    server_name your-domain.com www.your-domain.com;
+sudo tee /etc/apache2/sites-available/ta-cukrarna.conf << 'EOF'
+<VirtualHost *:80>
+    ServerName your-domain.com
+    ServerAlias www.your-domain.com
+    DocumentRoot /var/www/ta-cukrarna/current
     
-    location / {
-        proxy_pass http://localhost:3000;
-        proxy_http_version 1.1;
-        proxy_set_header Upgrade $http_upgrade;
-        proxy_set_header Connection 'upgrade';
-        proxy_set_header Host $host;
-        proxy_set_header X-Real-IP $remote_addr;
-        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto $scheme;
-        proxy_cache_bypass $http_upgrade;
-    }
-}
+    # Proxy to Node.js application
+    ProxyPreserveHost On
+    ProxyPass /.well-known/ !
+    ProxyPass / http://localhost:3000/
+    ProxyPassReverse / http://localhost:3000/
+    
+    # Security headers
+    Header always set X-Content-Type-Options nosniff
+    Header always set X-Frame-Options DENY
+    Header always set X-XSS-Protection "1; mode=block"
+    Header always set Strict-Transport-Security "max-age=63072000; includeSubDomains; preload"
+    
+    # Logging
+    ErrorLog ${APACHE_LOG_DIR}/ta-cukrarna_error.log
+    CustomLog ${APACHE_LOG_DIR}/ta-cukrarna_access.log combined
+    
+    # Static files optimization
+    <LocationMatch "\.(css|js|png|jpg|jpeg|gif|svg|ico|woff|woff2|ttf)$">
+        ExpiresActive On
+        ExpiresDefault "access plus 1 year"
+        Header append Cache-Control "public, immutable"
+    </LocationMatch>
+</VirtualHost>
 EOF
 
-# Enable site
-sudo ln -s /etc/nginx/sites-available/ta-cukrarna /etc/nginx/sites-enabled/
-sudo nginx -t
-sudo systemctl reload nginx
+# Enable site and disable default
+sudo a2ensite ta-cukrarna.conf
+sudo a2dissite 000-default.conf
+
+# Test configuration and restart
+sudo apache2ctl configtest
+sudo systemctl restart apache2
+sudo systemctl enable apache2
 ```
 
-#### Option B: PM2 Ecosystem
+#### PM2 Ecosystem for dedicated user
 ```bash
-# Create PM2 ecosystem file
+# As ta-cukrarna user
 cat > /var/www/ta-cukrarna/ecosystem.config.js << 'EOF'
 module.exports = {
   apps: [{
@@ -110,27 +148,45 @@ module.exports = {
     script: 'npm',
     args: 'start',
     cwd: '/var/www/ta-cukrarna/current',
+    user: 'ta-cukrarna',
     env: {
       NODE_ENV: 'production',
       PORT: 3000
-    }
+    },
+    instances: 1,
+    autorestart: true,
+    watch: false,
+    max_memory_restart: '1G',
+    error_file: '/var/www/ta-cukrarna/logs/error.log',
+    out_file: '/var/www/ta-cukrarna/logs/out.log',
+    log_file: '/var/www/ta-cukrarna/logs/combined.log'
   }]
 };
 EOF
 
-# Start with PM2
+# Create logs directory
+mkdir -p /var/www/ta-cukrarna/logs
+
+# Start application with PM2
 pm2 start ecosystem.config.js
 pm2 save
+
+# Setup PM2 startup for ta-cukrarna user
 pm2 startup
+# Follow the instructions shown by the command above
 ```
 
 ### 5. SSL Certificate (Optional)
 ```bash
-# Install Certbot
-sudo apt install certbot python3-certbot-nginx -y
+# Install Certbot for Apache
+sudo apt install certbot python3-certbot-apache -y
 
 # Get SSL certificate
-sudo certbot --nginx -d your-domain.com -d www.your-domain.com
+sudo certbot --apache -d your-domain.com -d www.your-domain.com
+
+# Certbot will automatically update Apache configuration for HTTPS
+# Test automatic renewal
+sudo certbot renew --dry-run
 ```
 
 ### 6. Testing Deployment
@@ -180,6 +236,7 @@ A record: www -> your-vps-ip
 ## Support
 
 - **GitHub Actions logs**: Check Actions tab in repository
-- **VPS logs**: `sudo journalctl -u nginx -f`
+- **VPS logs**: `sudo journalctl -u apache2 -f`
 - **Application logs**: `pm2 logs ta-cukrarna`
-- **Nginx config test**: `sudo nginx -t`
+- **Apache config test**: `sudo apache2ctl configtest`
+- **SSL certificate status**: `sudo certbot certificates`

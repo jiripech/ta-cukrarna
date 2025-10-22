@@ -103,13 +103,15 @@ jobs:
           echo "📦 Installing dependencies..."
           npm ci --only=production
           
-          echo "🔄 Restarting application..."
-          # Restart your process manager (pm2, systemd, etc.)
-          # Example for PM2:
-          # pm2 restart ta-cukrarna || pm2 start npm --name "ta-cukrarna" -- start
+          echo "🏗️ Building application..."
+          npm run build
           
-          # Example for systemd:
-          # sudo systemctl restart ta-cukrarna
+          echo "🔄 Restarting application..."
+          # Restart PM2 application
+          pm2 restart ta-cukrarna || pm2 start ecosystem.config.js
+          
+          # Reload PM2 configuration if ecosystem file changed
+          pm2 reload ecosystem.config.js --update-env
           
           echo "✅ Deployment completed successfully!"
           echo "🌐 Application should be available at your domain"

@@ -26,7 +26,7 @@ A modern Progressive Web App (PWA) for Ta Cukrárna bakery, built with Next.js 1
 ## 🚀 Getting Started
 
 ### Prerequisites
-- Node.js 18+ 
+- Node.js 18+
 - npm or yarn
 
 ### Installation
@@ -97,7 +97,7 @@ ta-cukrarna/
 To save Chrome console output for debugging:
 
 1. Open Chrome DevTools (F12)
-2. Go to Console tab  
+2. Go to Console tab
 3. Right-click → "Save as..." or copy output
 4. Save to `log/` directory (automatically ignored by Git)
 
@@ -106,7 +106,7 @@ Example console log filename: `log/localhost-[timestamp].log`
 ### Common PWA Issues
 
 - **Viewport warnings**: Use separate `viewport` export in layout.tsx
-- **Image aspect ratios**: Add explicit `width: 'auto', height: 'auto'` styles  
+- **Image aspect ratios**: Add explicit `width: 'auto', height: 'auto'` styles
 - **Cache updates**: Increment service worker `CACHE_NAME` version
 - **Icon formats**: Use PNG for app icons, SVG for scalable graphics
 
@@ -114,7 +114,7 @@ Example console log filename: `log/localhost-[timestamp].log`
 
 ### Installation
 - Appears in Chrome's "Install app" prompt
-- Works on iOS Safari with "Add to Home Screen" 
+- Works on iOS Safari with "Add to Home Screen"
 - Standalone app experience
 
 ### Offline Support
@@ -157,7 +157,7 @@ npm run start
 ### Deployment Platforms
 
 - **Vercel** (recommended for Next.js)
-- **Netlify** 
+- **Netlify**
 - **Firebase Hosting**
 - **Static hosting** with `npm run build && npm run export`
 
@@ -167,7 +167,7 @@ npm run start
 🎉 **First Release**
 
 - ✅ Responsive homepage with hero section
-- ✅ Professional bakery branding and copy  
+- ✅ Professional bakery branding and copy
 - ✅ Full PWA capabilities (installable, offline)
 - ✅ Mobile-optimized experience
 - ✅ Czech language support
