@@ -18,7 +18,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '18'
+          node-version: '20'
           cache: 'npm'
 
       - name: Install dependencies
@@ -69,14 +69,14 @@ jobs:
           VPS_PATH: ${{ secrets.VPS_PATH }}
         run: |
           echo "🚀 Starting rsync deployment to VPS..."
-          
+
           # Create backup on VPS first
           ssh -o StrictHostKeyChecking=no $VPS_USER@$VPS_HOST << 'ENDSSH'
             if [ -d "$VPS_PATH/current" ]; then
               echo "📦 Creating backup..."
               cp -r "$VPS_PATH/current" "$VPS_PATH/backup-$(date +%Y%m%d-%H%M%S)" || true
             fi
-            
+
             # Ensure target directory exists
             mkdir -p "$VPS_PATH/current"
           ENDSSH
