@@ -1,3 +1,5 @@
+import Image from "next/image";
+
 export default function Home() {
   return (
     <div className="min-h-screen bg-zinc-50 dark:bg-black">
@@ -10,6 +12,18 @@ export default function Home() {
       >
         {/* Overlay for better text readability */}
         <div className="absolute inset-0 bg-black/40"></div>
+
+        {/* Logo - Top Left */}
+        <div className="absolute top-6 left-6 z-20">
+          <Image
+            src="/img/header_logo.png"
+            alt="Ta Cukrárna Logo"
+            width={120}
+            height={60}
+            className="h-auto w-auto max-h-16"
+            priority
+          />
+        </div>
 
         {/* Header Content */}
         <div className="relative z-10 text-center text-white px-4">
