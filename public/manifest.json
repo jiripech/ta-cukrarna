@@ -1,0 +1,31 @@
+{
+  "name": "Ta Cukrárna",
+  "short_name": "Ta Cukrárna",
+  "description": "Zakázková výroba netradičních, tradičních i luxusních a elegantních zákusků, dortů, dezertů, sušenek a sladkého trvanlivého pečiva.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#000000",
+  "orientation": "portrait-primary",
+  "categories": ["food", "lifestyle", "business"],
+  "lang": "cs",
+  "scope": "/",
+  "icons": [
+    {
+      "src": "/img/favicon.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/img/favicon.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    },
+    {
+      "src": "/img/favicon.png",
+      "sizes": "any",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
