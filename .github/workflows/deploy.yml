@@ -108,6 +108,8 @@ jobs:
             echo "🔄 Restarting application..."
             pm2 restart ta-cukrarna || pm2 start ecosystem.config.js
             pm2 reload ecosystem.config.js --update-env || true
+            echo "🔄 Reloading Apache to clear proxy cache..."
+            sudo systemctl reload apache2 || echo "Apache reload failed - manual restart needed"
             echo "✅ Deployment completed successfully!"
           '
 
