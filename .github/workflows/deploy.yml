@@ -76,35 +76,31 @@ jobs:
         env:
           VPS_HOST: ${{ secrets.VPS_HOST }}
           VPS_USER: ${{ secrets.VPS_USER }}
-          VPS_PATH: ${{ secrets.VPS_PATH }}
         run: |
           echo "🚀 Starting static deployment to VPS..."
 
-          # Create backup of current deployment
+          # Create backup and ensure public_html exists
           ssh $VPS_USER@$VPS_HOST '
-            if [ -d "'"$VPS_PATH"'" ]; then
+            if [ -d "~/public_html" ]; then
               echo "📦 Creating backup..."
-              sudo cp -r "'"$VPS_PATH"'" "'"$VPS_PATH"'-backup-$(date +%Y%m%d-%H%M%S)" || true
+              cp -r ~/public_html ~/public_html-backup-$(date +%Y%m%d-%H%M%S) || true
             fi
-            sudo mkdir -p "'"$VPS_PATH"'"
+            mkdir -p ~/public_html
           '
 
-          # Deploy static files directly to Apache DocumentRoot
-          echo "📤 Deploying static files with rsync..."
+          # Deploy static files to user's public_html
+          echo "📤 Deploying static files to ~/public_html..."
           rsync -avz --delete \
             --exclude-from='.rsyncignore' \
             -e "ssh" \
             ./out/ \
-            $VPS_USER@$VPS_HOST:$VPS_PATH/
+            $VPS_USER@$VPS_HOST:~/public_html/
 
-          # Set proper permissions for Apache
+          # Set proper permissions (no sudo needed)
           ssh $VPS_USER@$VPS_HOST '
             echo "Setting proper file permissions..."
-            sudo chown -R www-data:www-data "'"$VPS_PATH"'"
-            sudo find "'"$VPS_PATH"'" -type f -exec chmod 644 {} \;
-            sudo find "'"$VPS_PATH"'" -type d -exec chmod 755 {} \;
-            echo "Reloading Apache..."
-            sudo systemctl reload apache2 || echo "Apache reload failed - manual restart needed"
+            chmod -R 755 ~/public_html
+            find ~/public_html -type f -exec chmod 644 {} \;
             echo "Static deployment completed successfully!"
           '
 
