@@ -14,6 +14,9 @@
 /coverage
 /log
 
+# temporary files
+temp_*.txt
+
 # next.js
 /.next/
 /out/
