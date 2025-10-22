@@ -2,7 +2,7 @@
 
 # Ta Cukrárna VPS - Create VirtualHost for Direct Domain Access
 # Creates Apache VirtualHost to serve tacukrarna.cz directly from ~/public_html
-# Run as: root user
+# Run as: root user (scripts are in /home/ta-cukrarna/scripts/)
 
 set -e
 

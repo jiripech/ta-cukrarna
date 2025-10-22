@@ -2,7 +2,7 @@
 
 # Ta Cukrárna VPS - Remove Node.js after Static Migration
 # Removes Node.js and related packages since we no longer need them
-# Run as: root user
+# Run as: root user (scripts are in /home/ta-cukrarna/scripts/)
 
 set -e
 

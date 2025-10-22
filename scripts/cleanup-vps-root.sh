@@ -2,7 +2,7 @@
 
 # Ta Cukrárna VPS Cleanup Script - Root Part
 # Configures Apache for static hosting and removes old deployment
-# Run in terminal as: root user
+# Run as: root user (scripts are in /home/ta-cukrarna/scripts/)
 
 set -e
 
@@ -71,11 +71,11 @@ echo "   • Ready for deployment to ~ta-cukrarna/public_html"
 echo ""
 echo "🌐 Website access options:"
 echo "   1. UserDir: http://your-domain.com/~ta-cukrarna/"
-echo "   2. Direct domain: Run bash scripts/setup-virtualhost.sh"
+echo "   2. Direct domain: bash /home/ta-cukrarna/scripts/setup-virtualhost.sh"
 echo "      (Note: Keeps your existing default site configuration)"
 echo ""
 echo "🧹 Optional cleanup:"
-echo "   • Remove Node.js: bash scripts/remove-nodejs.sh"
+echo "   • Remove Node.js: bash /home/ta-cukrarna/scripts/remove-nodejs.sh"
 echo "     (Node.js no longer needed for static deployment)"
 echo ""
 echo "🚀 Next step: Push code to trigger GitHub Actions deployment"
