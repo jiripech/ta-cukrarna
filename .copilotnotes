@@ -7,13 +7,14 @@
 - **Styling**: Tailwind CSS v4
 - **Structure**: App Router (app/ directory)
 - **Status**: Fresh project with default starter template
+- **GitHub**: https://github.com/jiripech/ta-cukrarna
 
 ## Project Purpose & Goals
 
 - **Type**: Responsive web application (PWA)
 - **Purpose**: Basic information website for bakery "Ta Cukrárna"
 - **Inspiration**: Simplicity like Instagram or Google Photos
-- **Features**: 
+- **Features**:
   - Progressive content management by user
   - Image upload and gallery management
   - Push notifications (opening hours changes, news)
@@ -33,8 +34,17 @@
 ## Planned Tasks
 
 - [x] Publish project to GitHub for development tracking
+  - **Repository**: https://github.com/jiripech/ta-cukrarna
+  - Successfully created and pushed initial code
+- [x] Create basic layout for bakery with header image
+  - Added /public/img/ directory structure
+  - Implemented full-screen header with background image (header_bg.png)
+  - Created responsive layout with hero section
+  - Added feature cards and footer
+  - Enhanced content with professional bakery copy
+  - Added header logo (header_logo.png) with responsive positioning
+  - Implemented unique IDs for better element targeting
 - [ ] PWA configuration (manifest.json, service worker)
-- [ ] Responsive layout for bakery
 - [ ] Content management system
 - [ ] Image upload and gallery
 - [ ] Push notifications setup
