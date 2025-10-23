@@ -6,30 +6,48 @@
 - **Framework**: Next.js 16 + React 19 + TypeScript
 - **Styling**: Tailwind CSS v4
 - **Structure**: App Router (app/ directory)
-- **Status**: Fresh project with default starter template
+- **Export**: Static export enabled (since yesterday)
 - **GitHub**: https://github.com/jiripech/ta-cukrarna
 
-## Project Purpose & Goals
+## Development Workflow
 
-- **Type**: Responsive web application (PWA)
-- **Purpose**: Basic information website for bakery "Ta Cukrárna"
-- **Inspiration**: Simplicity like Instagram or Google Photos
-- **Features**:
-  - Progressive content management by user
-  - Image upload and gallery management
-  - Push notifications (opening hours changes, news)
-  - Offline functionality (PWA)
+### Preferred Approach
+- **STRUCTURED ANALYTICAL APPROACH**: Always analyze problems systematically before attempting solutions
+- **NO random junior attempts**: Research root cause first, then implement targeted solution
+- **Use systematic debugging**: Logs, error analysis, configuration review before making changes
 
-## Development Timeline
+### Server Management
+- **Use screen for development server**: `screen -S nextjs-dev -d -m npm run dev`
+- **Access running server**: `screen -r nextjs-dev`
+- **Detach from screen**: `Ctrl+A, D`
+- **Kill server**: `screen -S nextjs-dev -X quit`
+- **Why**: Prevents server interruption during terminal operations
 
-- **October 22, 2025**: First session after losing previous conversation
+### Current Favicon Issue
+- **Problem**: Next.js auto-generates favicon link: `/favicon.ico?favicon.0b3bf435.ico`
+- **Root cause**: Next.js detects favicon files and creates automatic metadata
+- **RESOLVED**: Fixed Turbopack/webpack config conflict in `next.config.ts`
+- **Solution**: Replaced webpack config with `turbopack: {}` configuration
+- **Files setup**:
+  - `public/icon.ico` (our custom favicon)
+  - `public/apple-touch-icon.png` (Apple touch icon)
+  - Removed `public/favicon.ico` to prevent auto-detection
 
 ## Implementation Status
 
-- **Previous session**: Project initialization via command line
-- **Current state**: Basic Next.js setup with default starter template
-- Default page.tsx with starter content
-- **Lost conversation**: Context lost when opening workspace
+### Completed ✅
+- [x] Basic layout and responsive design
+- [x] PWA configuration (manifest.json, service worker)
+- [x] Contact information in footer
+- [x] Hydration error fixed (removed DynamicSections)
+- [x] Image component aspect ratio warning fixed
+- [x] Custom favicon files created and configured
+- [x] Service Worker cache updated
+
+### Current Issue 🔧
+- **Favicon not displaying**: Chrome shows Vercel logo instead of custom favicon
+- **Technical cause**: Next.js automatic favicon generation overrides manual links
+- **Next step**: Configure next.config.ts to disable automatic favicon handling
 
 ## Planned Tasks
 

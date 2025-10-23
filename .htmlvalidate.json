@@ -1,0 +1,20 @@
+{
+  "extends": ["html-validate:recommended"],
+  "rules": {
+    "heading-level": "error",
+    "no-dup-id": "error",
+    "no-dup-attr": "error",
+    "void-content": "error",
+    "void-style": "off",
+    "no-missing-doctype": "off",
+    "require-sri": "off",
+    "meta-refresh": "off",
+    "no-inline-style": "off",
+    "script-type": "off",
+    "attr-case": "off",
+    "attribute-boolean-style": "off",
+    "wcag/h30": "warn",
+    "valid-id": "warn"
+  },
+  "elements": ["html5"]
+}

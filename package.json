@@ -11,13 +11,14 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
+    "lint:html": "html-validate log/*.html",
     "lint:md": "markdownlint-cli2 \"**/*.md\"",
     "lint:md:fix": "markdownlint-cli2 --fix \"**/*.md\"",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "format:md": "prettier --write \"**/*.md\"",
     "prepare": "husky",
-    "check-all": "npm run lint && npm run lint:md && npm run format:check"
+    "check-all": "npm run lint && npm run lint:html && npm run lint:md && npm run format:check"
   },
   "dependencies": {
     "next": "16.0.0",
@@ -32,6 +33,7 @@
     "babel-plugin-react-compiler": "1.0.0",
     "eslint": "^9",
     "eslint-config-next": "16.0.0",
+    "html-validate": "^10.1.2",
     "husky": "^9.1.7",
     "lint-staged": "^16.2.5",
     "markdownlint-cli2": "^0.18.1",

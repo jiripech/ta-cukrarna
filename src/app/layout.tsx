@@ -60,8 +60,26 @@ export default function RootLayout({
         <meta name="apple-mobile-web-app-status-bar-style" content="default" />
         <meta name="apple-mobile-web-app-title" content="Ta Cukrárna" />
         <link rel="manifest" href="/manifest.json" />
-        <link rel="icon" href="/img/favicon.png" type="image/png" />
-        <link rel="apple-touch-icon" href="/img/favicon.png" />
+        {/* Favicon odkazy */}
+        <link rel="icon" type="image/x-icon" href="/icon.ico" />
+        <link
+          rel="icon"
+          type="image/png"
+          sizes="32x32"
+          href="/img/favicon.png"
+        />
+        <link
+          rel="icon"
+          type="image/png"
+          sizes="16x16"
+          href="/img/favicon.png"
+        />
+        <link
+          rel="apple-touch-icon"
+          sizes="180x180"
+          href="/apple-touch-icon.png"
+        />
+        <link rel="shortcut icon" href="/icon.ico" />
         <link
           rel="preload"
           href="/img/logo.svg"
