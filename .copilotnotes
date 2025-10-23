@@ -1,13 +1,70 @@
 # GitHub Copilot - Project Notes for ta-cukrarna
 
+## ⚠️ CRITICAL REMINDERS - READ FIRST!
+
+### Key Lessons from October 23xw, 2025
+1. **NEVER COMMIT PRIVATE KEYS**: Today accidentally committed SSH private key to public repo - MAJOR security incident!
+2. **SYSTEMATIC APPROACH ONLY**: User demands structured analysis, not trial-and-error "junior attempts"
+3. **CHECK CURRENT STATE**: Always examine existing files before making changes - user modified files between requests
+4. **READ THESE NOTES FIRST**: User frustrated with lack of continuity between sessions
+
+### Daily Workflow
+1. **ALWAYS read .copilotnotes first** - user will remind me to do this
+2. **Use systematic debugging approach** - analyze before acting
+3. **Never commit secrets** - scan for keys, passwords, tokens before commit
+4. **Check file contents** - files may have changed since last session
+
 ## Project Overview
 
 - **Name**: ta-cukrarna (Ta Cukrárna - "The Bakery")
 - **Framework**: Next.js 16 + React 19 + TypeScript
 - **Styling**: Tailwind CSS v4
 - **Structure**: App Router (app/ directory)
-- **Export**: Static export enabled (since yesterday)
 - **GitHub**: https://github.com/jiripech/ta-cukrarna
+- **Production**: Deployed via GitHub Actions to Vercel
+
+## Current Implementation Status (October 23, 2025)
+
+### ✅ COMPLETED MAJOR REDESIGN
+- **Complete page redesign** with horizontal blocks layout
+- **Dark mode system** with automatic light/dark switching using `useDarkMode` hook
+- **Image optimization** - all images resized to max 300px height for performance
+- **HTML linter setup** - `html-validate` with custom config for Next.js/React
+- **Custom favicon** replacing Vercel default (icon.png in src/app/)
+- **All technical errors fixed**:
+  - React hydration errors resolved
+  - Next.js Image warnings eliminated
+  - HTML validation errors minimized (0 errors, 3 warnings)
+- **Typography improvements** - larger headings (text-4xl) with letter spacing
+- **Orange buttons** with custom color #e79c07
+
+### 🔧 TECHNICAL SETUP
+- **HTML Linter**: `npm run lint:html` - validates exported HTML files
+- **Dark Mode**: Automatic system preference detection with image switching
+- **Image Strategy**: Dual image sets (filename.png / filename-dark.png)
+- **Performance**: Optimized images, proper Next.js Image configuration
+
+### 🚨 SECURITY INCIDENT RESOLVED
+- **Issue**: SSH private key accidentally committed to public repository
+- **Resolution**:
+  - Private key removed from repository and local system
+  - New ed25519 key pair generated
+  - New public key: `ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIMlBOjgqtaY81+aMdXE5b6qkOL57HVYwvnhBfaE46Vo8`
+  - Old key removed from server by user
+
+## File Structure Notes
+```
+src/app/
+  ├── icon.png (custom favicon - Next.js auto-detects)
+  ├── page.tsx (main page with dark mode support)
+  └── layout.tsx
+src/hooks/
+  └── useDarkMode.ts (automatic theme detection)
+public/img/
+  ├── *-dark.png (dark mode versions)
+  └── *.png (light mode versions)
+.htmlvalidate.json (HTML linter config)
+```
 
 ## Development Workflow
 
@@ -16,73 +73,23 @@
 - **NO random junior attempts**: Research root cause first, then implement targeted solution
 - **Use systematic debugging**: Logs, error analysis, configuration review before making changes
 
-### Server Management
-- **Use screen for development server**: `screen -S nextjs-dev -d -m npm run dev`
-- **Access running server**: `screen -r nextjs-dev`
-- **Detach from screen**: `Ctrl+A, D`
-- **Kill server**: `screen -S nextjs-dev -X quit`
-- **Why**: Prevents server interruption during terminal operations
-
-### Current Favicon Issue
-- **Problem**: Next.js auto-generates favicon link: `/favicon.ico?favicon.0b3bf435.ico`
-- **Root cause**: Next.js detects favicon files and creates automatic metadata
-- **RESOLVED**: Fixed Turbopack/webpack config conflict in `next.config.ts`
-- **Solution**: Replaced webpack config with `turbopack: {}` configuration
-- **Files setup**:
-  - `public/icon.ico` (our custom favicon)
-  - `public/apple-touch-icon.png` (Apple touch icon)
-  - Removed `public/favicon.ico` to prevent auto-detection
-
-## Implementation Status
-
-### Completed ✅
-- [x] Basic layout and responsive design
-- [x] PWA configuration (manifest.json, service worker)
-- [x] Contact information in footer
-- [x] Hydration error fixed (removed DynamicSections)
-- [x] Image component aspect ratio warning fixed
-- [x] Custom favicon files created and configured
-- [x] Service Worker cache updated
-
-### Current Issue 🔧
-- **Favicon not displaying**: Chrome shows Vercel logo instead of custom favicon
-- **Technical cause**: Next.js automatic favicon generation overrides manual links
-- **Next step**: Configure next.config.ts to disable automatic favicon handling
+### Git Security Protocol
+- **SCAN BEFORE COMMIT**: Always check for private keys, tokens, passwords
+- **PRIVATE KEYS NEVER GO IN GIT**: Use .gitignore, environment variables, or external key management
+- **Review commits**: Use `git status` and `git diff` before pushing
 
 ## Planned Tasks
 
-- [x] Publish project to GitHub for development tracking
-  - **Repository**: https://github.com/jiripech/ta-cukrarna
-  - Successfully created and pushed initial code
-- [x] Create basic layout for bakery with header image
-  - Added /public/img/ directory structure
-  - Implemented full-screen header with background image (header_bg.png)
-  - Created responsive layout with hero section
-  - Added feature cards and footer
-  - Enhanced content with professional bakery copy
-  - Added header logo (header_logo.png) with responsive positioning
-  - Implemented unique IDs for better element targeting
-- [x] PWA configuration (manifest.json, service worker)
-  - Created web app manifest with Czech localization
-  - Implemented service worker for offline functionality
-  - Added PWA meta tags and mobile optimization
-  - Configured favicon.png as app icon and logo.svg for branding
-  - Fixed all console errors and warnings
-  - Added proper viewport configuration
-  - Cache management for offline experience
+### Immediate (Next Session)
+- [ ] Further content refinements based on user feedback
+- [ ] Possible build optimization with private runner
+- [ ] Additional design adjustments
+
+### Future
 - [ ] Content management system
 - [ ] Image upload and gallery
 - [ ] Push notifications setup
-- [ ] Offline functionality
-
-## Development Notes
-
-- User wants notes for continuity between sessions
-- Will update this file with each significant change
-- **Development server**: Running in screen session `ta-cukrarna-dev`
-  - Access with: `screen -r ta-cukrarna-dev`
-  - Detach with: `Ctrl+A, D`
-  - Persistent across terminal sessions
+- [ ] Performance monitoring
 
 ---
-*Last updated: October 22, 2025*
+*Last updated: October 23, 2025 - Post security incident & major redesign*
