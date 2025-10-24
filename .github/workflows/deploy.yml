@@ -7,7 +7,8 @@ on:
     branches: [main]
 
 jobs:
-  build:
+  security:
+    name: Security Scan
     runs-on: ubuntu-latest
 
     steps:
@@ -26,8 +27,53 @@ jobs:
       - name: Run security scan
         run: npm run lint:secrets
 
-      - name: Run linting
+  lint:
+    name: Code Quality
+    runs-on: ubuntu-latest
+    needs: security
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run ESLint
         run: npm run lint
+
+      - name: Run HTML validation
+        run: npm run lint:html
+
+      - name: Run Markdown lint
+        run: npm run lint:md
+
+      - name: Check formatting
+        run: npm run format:check
+
+  build:
+    name: Build Application
+    runs-on: ubuntu-latest
+    needs: lint
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
 
       - name: Build application
         run: npm run build
@@ -44,6 +90,7 @@ jobs:
           retention-days: 1
 
   deploy:
+    name: Deploy to VPS
     needs: build
     runs-on: ubuntu-latest
     if: startsWith(github.ref, 'refs/tags/v')
@@ -107,14 +154,32 @@ jobs:
 
           echo "🎉 Static deployment finished!"
 
-      - name: Verify deployment
+  verify:
+    name: Verify Deployment
+    needs: deploy
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/v')
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Wait for deployment stabilization
         run: |
           echo "⏳ Waiting 30 seconds for deployment to stabilize..."
           sleep 30
-          ./scripts/verify-deployment.sh
 
+      - name: Run deployment verification
+        run: ./scripts/verify-deployment.sh
+
+  cleanup:
+    name: Cleanup
+    needs: [deploy, verify]
+    runs-on: ubuntu-latest
+    if: always() && startsWith(github.ref, 'refs/tags/v')
+
+    steps:
       - name: Cleanup SSH agent
-        if: always()
         run: |
           # Explicitly kill SSH agent to prevent cleanup errors
           if [ -n "$SSH_AGENT_PID" ]; then
