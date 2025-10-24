@@ -8,26 +8,26 @@
 
 ## Machine Specifications
 
-| Runner        | CPU           | RAM   | Storage | Network    | Location |
-| ------------- | ------------- | ----- | ------- | ---------- | -------- |
-| GitHub Hosted | 2-core x86_64 | 7GB   | SSD     | Fast       | Azure    |
-| Mac Runner    | M1/M2         | 16GB+ | NVMe    | Home ISP   | Local    |
-| VPS Runner    | 2-core x86_64 | 4GB   | SSD     | Datacenter | Europe   |
-| Other Runner  | TBD           | TBD   | TBD     | TBD        | TBD      |
+| Runner        | CPU                                | RAM   | Storage | Network    | Location |
+| ------------- | ---------------------------------- | ----- | ------- | ---------- | -------- |
+| GitHub Hosted | 2-core x86_64                      | 7GB   | SSD     | Fast       | Azure    |
+| Mac Runner    | M1/M2                              | 16GB+ | NVMe    | Home ISP   | Local    |
+| VPS Runner    | 2-core x86_64                      | 4GB   | SSD     | Datacenter | Europe   |
+| NAS Runner    | Intel Atom C2538 @ 2.4GHz (4-core) | 8GB   | HDD/SSD | LAN        | Local    |
 
 ## Benchmark Results
 
 ### Pipeline Timing (in seconds)
 
-| Stage          | GitHub | Mac | VPS | Other | Winner |
-| -------------- | ------ | --- | --- | ----- | ------ |
-| **Queue Time** | 0-30s  | ?   | ?   | ?     | TBD    |
-| **Security**   | ?      | ?   | ?   | ?     | TBD    |
-| **Lint**       | ?      | ?   | ?   | ?     | TBD    |
-| **Build**      | ?      | ?   | ?   | ?     | TBD    |
-| **Deploy**     | ?      | ?   | ?   | ?     | TBD    |
-| **Verify**     | ?      | ?   | ?   | ?     | TBD    |
-| **Total**      | ?      | ?   | ?   | ?     | TBD    |
+| Stage          | GitHub | Mac | VPS | NAS | Winner |
+| -------------- | ------ | --- | --- | --- | ------ |
+| **Queue Time** | 0-30s  | ?   | ?   | ?   | TBD    |
+| **Security**   | ?      | ?   | ?   | ?   | TBD    |
+| **Lint**       | ?      | ?   | ?   | ?   | TBD    |
+| **Build**      | ?      | ?   | ?   | ?   | TBD    |
+| **Deploy**     | ?      | ?   | ?   | ?   | TBD    |
+| **Verify**     | ?      | ?   | ?   | ?   | TBD    |
+| **Total**      | ?      | ?   | ?   | ?   | TBD    |
 
 ### Performance Analysis
 
