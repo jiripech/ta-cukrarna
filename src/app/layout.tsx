@@ -25,9 +25,9 @@ export const metadata: Metadata = {
     'svatební dorty',
     'zakázka',
   ],
-  authors: [{ name: 'Ta Cukrárna' }],
-  creator: 'Ta Cukrárna',
-  publisher: 'Ta Cukrárna',
+  authors: [{ name: 'RevoFab s.r.o.' }],
+  creator: 'RevoFab s.r.o.',
+  publisher: 'RevoFab s.r.o.',
   robots: 'index, follow',
   manifest: '/manifest.json',
   appleWebApp: {

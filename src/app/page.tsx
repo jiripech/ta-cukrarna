@@ -323,7 +323,7 @@ export default function Home() {
 
           {/* Copyright */}
           <div className="border-t border-zinc-800 pt-4 text-center text-zinc-400">
-            <p>&copy; 2025 Ta Cukrárna. Všechna práva vyhrazena.</p>
+            <p>&copy; 2025 RevoFab s.r.o. Všechna práva vyhrazena.</p>
           </div>
         </div>
       </footer>

@@ -22,7 +22,9 @@ jobs:
           cache: 'npm'
 
       - name: Install dependencies
-        run: npm ci
+        run: |
+          npm config set update-notifier false
+          npm ci
 
       - name: Run security scan
         run: npm run lint:secrets
@@ -30,7 +32,8 @@ jobs:
   lint:
     name: Code Quality
     runs-on: ubuntu-latest
-    needs: security
+    # Lint can run in parallel with security
+    # needs: security
 
     steps:
       - name: Checkout code
@@ -43,7 +46,9 @@ jobs:
           cache: 'npm'
 
       - name: Install dependencies
-        run: npm ci
+        run: |
+          npm config set update-notifier false
+          npm ci
 
       - name: Run ESLint
         run: npm run lint
@@ -60,7 +65,7 @@ jobs:
   build:
     name: Build Application
     runs-on: ubuntu-latest
-    needs: lint
+    needs: [security, lint]
 
     steps:
       - name: Checkout code
@@ -72,8 +77,21 @@ jobs:
           node-version: '20'
           cache: 'npm'
 
+      - name: Cache Next.js build
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.npm
+            ${{ github.workspace }}/.next/cache
+          key: ${{ runner.os }}-nextjs-${{ hashFiles('**/package-lock.json') }}-${{ hashFiles('**/*.js', '**/*.jsx', '**/*.ts', '**/*.tsx') }}
+          restore-keys: |
+            ${{ runner.os }}-nextjs-${{ hashFiles('**/package-lock.json') }}-
+            ${{ runner.os }}-nextjs-
+
       - name: Install dependencies
-        run: npm ci
+        run: |
+          npm config set update-notifier false
+          npm ci
 
       - name: Build application
         run: npm run build
