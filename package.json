@@ -12,13 +12,16 @@
     "start": "next start",
     "lint": "eslint",
     "lint:html": "html-validate log/*.html",
+    "lint:secrets": "secretlint .",
     "lint:md": "markdownlint-cli2 \"**/*.md\"",
     "lint:md:fix": "markdownlint-cli2 --fix \"**/*.md\"",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "format:md": "prettier --write \"**/*.md\"",
     "prepare": "husky",
-    "check-all": "npm run lint && npm run lint:html && npm run lint:md && npm run format:check"
+    "release": "./scripts/release.sh",
+    "verify": "./scripts/verify-deployment.sh",
+    "check-all": "npm run lint && npm run lint:secrets && npm run lint:html && npm run lint:md && npm run format:check"
   },
   "dependencies": {
     "next": "16.0.0",
@@ -26,6 +29,8 @@
     "react-dom": "19.2.0"
   },
   "devDependencies": {
+    "@secretlint/secretlint-rule-preset-recommend": "^11.2.5",
+    "@secretlint/secretlint-rule-privatekey": "^11.2.5",
     "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
     "@types/react": "^19",
@@ -38,10 +43,14 @@
     "lint-staged": "^16.2.5",
     "markdownlint-cli2": "^0.18.1",
     "prettier": "^3.6.2",
+    "secretlint": "^11.2.5",
     "tailwindcss": "^4",
     "typescript": "^5"
   },
   "lint-staged": {
+    "*": [
+      "secretlint"
+    ],
     "*.{js,jsx,ts,tsx}": [
       "eslint --fix",
       "prettier --write"

@@ -2,7 +2,6 @@ name: Deploy Ta Cukrárna to VPS
 
 on:
   push:
-    branches: [main]
     tags: ['v*']
   pull_request:
     branches: [main]
@@ -24,6 +23,9 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Run security scan
+        run: npm run lint:secrets
+
       - name: Run linting
         run: npm run lint
 
@@ -31,7 +33,7 @@ jobs:
         run: npm run build
 
       - name: Upload build artifacts
-        if: github.ref == 'refs/heads/main'
+        if: startsWith(github.ref, 'refs/tags/v')
         uses: actions/upload-artifact@v4
         with:
           name: ta-cukrarna-build
@@ -44,7 +46,7 @@ jobs:
   deploy:
     needs: build
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/main'
+    if: startsWith(github.ref, 'refs/tags/v')
     environment: production
 
     steps:
@@ -104,6 +106,12 @@ jobs:
           '
 
           echo "🎉 Static deployment finished!"
+
+      - name: Verify deployment
+        run: |
+          echo "⏳ Waiting 30 seconds for deployment to stabilize..."
+          sleep 30
+          ./scripts/verify-deployment.sh
 
       - name: Cleanup SSH agent
         if: always()
