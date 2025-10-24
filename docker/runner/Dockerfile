@@ -11,11 +11,19 @@ RUN apk add --no-cache \
     openssh-client \
     rsync \
     sudo \
-    tar
+    tar \
+    # GitHub Actions runner dependencies
+    icu-libs \
+    krb5-libs \
+    libgcc \
+    libintl \
+    libssl3 \
+    libstdc++ \
+    zlib
 
 # Create runner user
-RUN addgroup -g 1000 runner && \
-    adduser -D -u 1000 -G runner runner && \
+RUN addgroup runner && \
+    adduser -D -G runner runner && \
     echo "runner ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers
 
 # Install GitHub Actions Runner
@@ -29,8 +37,8 @@ RUN curl -o actions-runner-linux-x64-${RUNNER_VERSION}.tar.gz -L https://github.
     tar xzf ./actions-runner-linux-x64-${RUNNER_VERSION}.tar.gz && \
     rm actions-runner-linux-x64-${RUNNER_VERSION}.tar.gz
 
-# Install runner dependencies
-RUN sudo ./bin/installdependencies.sh
+# Install runner dependencies (skip for Alpine - already handled above)
+# RUN sudo ./bin/installdependencies.sh
 
 # Configure npm for performance
 RUN npm config set update-notifier false && \
