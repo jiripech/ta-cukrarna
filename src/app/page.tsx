@@ -68,7 +68,7 @@ export default function Home() {
               src={
                 isDarkMode ? '/img/sweetdream-dark.png' : '/img/sweetdream.png'
               }
-              alt="Sladké sny"
+              alt="Ilustrační obrázek sladkých snů v zakázkové cukrářské výrobě"
               width={281}
               height={300}
               style={{ width: 'auto', height: 'auto' }}
