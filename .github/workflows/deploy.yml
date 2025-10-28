@@ -169,7 +169,7 @@ jobs:
 
           # Create backup and ensure public_html exists
           echo "📦 Creating backup..."
-          ssh $VPS_USER@$VPS_HOST 'cp -r public_html public_html-backup-$(date +%Y%m%d-%H%M%S)'
+          ssh $VPS_USER@$VPS_HOST 'cp -r ./public_html public_html-backup-$(date +%Y%m%d-%H%M%S)'
 
           # Deploy static files to user's public_html
           echo "📤 Deploying static files to ~/public_html..."
@@ -177,7 +177,7 @@ jobs:
 
           # Set proper permissions (no sudo needed)
           echo "Setting proper file permissions..."
-          # The permissions shold not be changed
+          # The permissions should not be changed
           # ssh $VPS_USER@$VPS_HOST chmod -R 755 ./public_html
           ssh $VPS_USER@$VPS_HOST find ./public_html -type f -exec chmod 644 {} \;
           echo "Static deployment completed successfully!"
