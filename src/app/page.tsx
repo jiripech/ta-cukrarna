@@ -87,48 +87,6 @@ export default function Home() {
           </div>
         </div>
 
-        {/* Block Type B: Centered Text + Button - Custom Orders */}
-        <div className="text-center py-12 bg-white dark:bg-zinc-900 rounded-lg">
-          <h2 className="text-4xl font-bold text-zinc-900 dark:text-zinc-100 tracking-wide mb-4">
-            Dorty na zakázku
-          </h2>
-          <p className="text-lg text-zinc-600 dark:text-zinc-400 max-w-2xl mx-auto mb-8">
-            Vytvoříme dort přesně podle vašich představ. Od svatebních dortů po
-            dětské oslavy - každý dort je jedinečný.
-          </p>
-          <button
-            type="button"
-            className="bg-[#e79c07] text-black px-8 py-3 rounded-lg font-semibold hover:bg-[#d18a06] transition-colors"
-          >
-            Objednat dort
-          </button>
-        </div>
-
-        {/* Block Type A: Image + Text - Breakfast (reversed) */}
-        <div className="flex flex-col lg:flex-row-reverse items-center gap-8">
-          <div className="lg:w-1/2">
-            <Image
-              src={
-                isDarkMode ? '/img/breakfast-dark.png' : '/img/breakfast.png'
-              }
-              alt="Snídaně"
-              width={404}
-              height={300}
-              style={{ width: 'auto', height: 'auto' }}
-              className="rounded-lg"
-            />
-          </div>
-          <div className="lg:w-1/2 space-y-4">
-            <h2 className="text-4xl font-bold text-zinc-900 dark:text-zinc-100 tracking-wide">
-              Čerstvé snídaně každý den
-            </h2>
-            <p className="text-lg text-zinc-600 dark:text-zinc-400">
-              Začněte den správně s našimi čerstvými croissanty, domácím chlebem
-              a výběrovou kávou. Každé ráno připravujeme nové dobroty.
-            </p>
-          </div>
-        </div>
-
         {/* Block Type B: Centered Text + Button - Cozy Mornings */}
         <div className="text-center py-12 bg-zinc-100 dark:bg-zinc-800 rounded-lg">
           <h2 className="text-4xl font-bold text-zinc-900 dark:text-zinc-100 tracking-wide mb-4">
@@ -146,31 +104,27 @@ export default function Home() {
           </button>
         </div>
 
-        {/* Block Type A: Image + Text - High Protein */}
-        <div className="flex flex-col lg:flex-row items-center gap-8">
-          <div className="lg:w-1/2">
-            <Image
-              src={
-                isDarkMode
-                  ? '/img/highprotein-dark.png'
-                  : '/img/highprotein.png'
-              }
-              alt="Zdravé dezerty"
-              width={265}
-              height={300}
-              style={{ width: 'auto', height: 'auto' }}
-              className="rounded-lg"
-            />
-          </div>
-          <div className="lg:w-1/2 space-y-4">
-            <h2 className="text-4xl font-bold text-zinc-900 dark:text-zinc-100 tracking-wide">
-              Zdravé a fitness dezerty
-            </h2>
-            <p className="text-lg text-zinc-600 dark:text-zinc-400">
-              Speciální nabídky pro milovníky zdravého životního stylu.
-              Proteinové koláče, dezerty bez cukru a veganské varianty.
-            </p>
-          </div>
+        {/* Block Type B: Centered Text + Button - Custom Orders */}
+        <div className="text-center py-12 bg-white dark:bg-zinc-900 rounded-lg">
+          <h2 className="text-4xl font-bold text-zinc-900 dark:text-zinc-100 tracking-wide mb-4">
+            Zakázková výroba
+          </h2>
+          <p className="text-lg text-zinc-600 dark:text-zinc-400 max-w-2xl mx-auto mb-8">
+            Co pro vás můžeme udělat na přání?
+          </p>
+          <p className="text-lg text-zinc-600 dark:text-zinc-400 max-w-2xl mx-auto mb-8">
+            Dorty na svatby, narozeniny, nebo jiné příležitosti, sladký bar pro
+            svatby, oslavy, firemní akce.
+          </p>
+          <p className="text-lg text-zinc-600 dark:text-zinc-400 max-w-2xl mx-auto mb-8">
+            Přijede k vám na návštěvu tchýně a vy se chcete vytáhnout domácím
+            koláčem, ale není na to čas? Přineste svůj plech, my upečeme koláč,
+            vy budete za hvězdu.
+          </p>
+          <p className="text-lg text-zinc-600 dark:text-zinc-400 max-w-2xl mx-auto mb-8">
+            Nebojte se nám svěřit s vašim sladkým přáním a uvidíte, co spolu
+            zmůžeme.
+          </p>
         </div>
 
         {/* Block Type B: Centered Text + Button - Snacks */}
