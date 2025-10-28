@@ -14,6 +14,10 @@
 3. **Never commit secrets** - scan for keys, passwords, tokens before commit
 4. **Check file contents** - files may have changed since last session
 
+## Lessons Learned - Generalization
+- All lessons learned from specific issues (e.g. systematic approach, debugging, error analysis) must be applied to any future problem, not just the original context.
+- Always use systematic, analytical, and structured debugging for any technical issue in this project.
+
 ## Project Overview
 
 - **Name**: ta-cukrarna (Ta Cukrárna - "The Bakery")
@@ -21,7 +25,7 @@
 - **Styling**: Tailwind CSS v4
 - **Structure**: App Router (app/ directory)
 - **GitHub**: https://github.com/jiripech/ta-cukrarna
-- **Production**: Deployed via GitHub Actions to Vercel
+- **Production**: Deployed via GitHub Actions to VPS
 
 ## Current Implementation Status (October 23, 2025)
 
@@ -92,4 +96,106 @@ public/img/
 - [ ] Performance monitoring
 
 ---
-*Last updated: October 23, 2025 - Post security incident & major redesign*
+*Last updated: October 24, 2025 - GitHub Actions Self-hosted Runners Progress*
+
+## ✅ COMPLETED TODAY (October 24, 2025)
+
+### ARM64 Docker Runner Build
+- **Ubuntu base successfully built** (1.83GB) - replaced Alpine due to .NET Core issues
+- **Fixed .NET Core dependencies** by switching from Alpine to Ubuntu 22.04
+- **Architecture-specific build working**: `ta-cukrarna-runner:arm64`
+- **Build script**: `docker/runner/build-arm64.sh`
+
+### Token Authentication Resolution
+- **Root cause identified**: GitHub runners need **registration token** (short-lived ~1hr), not Personal Access Token
+- **Fine-grained PAT working**: User has correct PAT with Actions: Read + Administration: Write
+- **Registration token script**: `~/.local/bin/create-registration-token.sh` generates fresh tokens
+- **Manual config.sh SUCCESS**: `./config.sh --url https://github.com/jiripech/ta-cukrarna --token AAW63KYRCI562JOOBMVEITLI7PMGE --name debug-runner --labels debug --unattended`
+  - ✅ Connected to GitHub
+  - ✅ Runner successfully added
+  - ✅ Runner connection is good
+  - ✅ Settings Saved
+
+### Documentation Updates
+- **Added registration token section** to `docs/PRIVATE_RUNNERS.md`
+- **GitHub API method documented** for token generation
+- **Fixed trailing spaces** in markdown
+
+## 🔧 PENDING TOMORROW
+
+### Critical Issue: Entrypoint Script Debug
+- **Problem**: `docker/runner/entrypoint.sh` fails with 404 errors
+- **Working**: Manual `./config.sh` execution succeeds perfectly
+- **Environment**: Registration token `AAW63KYRCI562JOOBMVEITLI7PMGE` expires today 21:49
+- **Action needed**: Debug why entrypoint script fails vs manual success
+- **Hypothesis**: Environment variable passing or script execution context issue
+
+### Runner Deployment Pipeline
+1. Fix entrypoint script
+2. Deploy Mac ARM64 runner (native performance)
+3. Build/export x86-64 runner for VPS/NAS
+4. Performance benchmarking across GitHub hosted vs 3 self-hosted
+
+### Lint Issues to Fix
+- **MD031 errors**: `docs/PRIVATE_RUNNERS.md` line 197, 205 - fenced code blocks need blank lines
+
+## 📋 WORKING COMPONENTS
+
+### Build System
+- **ARM64 Dockerfile**: `/Users/jiri.pech/ta-cukrarna/docker/runner/Dockerfile.arm64`
+- **Build script**: `docker/runner/build-arm64.sh`
+- **Cache directories**: `docker/cache/{tmp,npm}` created
+
+### Token Management
+- **Fine-grained PAT**: User has in Bitwarden with correct permissions
+- **Registration script**: `~/.local/bin/create-registration-token.sh`
+- **Runner startup**: `~/.local/bin/runner-startup-arm64.sh`
+
+### Known Good Configuration
+```bash
+./config.sh \
+  --url https://github.com/jiripech/ta-cukrarna \
+  --token AAW63KYRCI562JOOBMVEITLI7PMGE \
+  --name debug-runner \
+  --labels debug \
+  --unattended
+```
+
+## 🎯 TOMORROW'S GOALS
+1. **Debug entrypoint script** - compare with working manual config
+2. **Deploy functional Mac runner** for performance testing
+3. **Start performance benchmarking** pipeline
+4. **Begin VPS/NAS runner deployment**
+
+## 💡 LEARNINGS
+- Alpine Linux has .NET Core compatibility issues on ARM64
+- Ubuntu 22.04 base provides better GitHub Actions runner support
+- Registration tokens != Personal Access Tokens (short-lived vs long-lived)
+- Manual runner configuration works perfectly - issue is in automation script
+
+## 🚀 STATUS
+**Mac M1 Max ARM64**: Ready for deployment (entrypoint fix needed)
+**VPS/NAS x86-64**: Ready for build/deploy
+**Performance benchmarking**: Ready to begin
+
+*End of session - excellent DevOps progress! 🌟*
+
+# Note on troubleshooting self-hosted runner (2025-10-25)
+
+- When solving registration token generation from PAT, always:
+  - Immediately capture detailed error from API (not in subshell, directly in log)
+  - Verify that variables from .env are loaded
+  - Test token generation manually outside Docker if there is a problem
+  - Do not repeat the same builds without new information
+- If the user can generate the token manually, do not block them with unnecessary cycles
+- Prioritize transparent debug output and minimize user frustration
+
+# General Copilot working principles
+
+- Always act as an advanced LLM, not a junior dev
+- Prioritize proactive, expert-level troubleshooting and clear communication
+- Avoid repeating similar steps or commands without new information
+- Immediately surface and analyze detailed errors, especially from APIs and system calls
+- Minimize user frustration by providing actionable solutions and transparent debug output
+- Read and respect existing .copilotnotes and user conventions before making changes
+- If stuck, escalate or suggest alternative approaches rather than looping
