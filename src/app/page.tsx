@@ -61,7 +61,7 @@ export default function Home() {
         id="main-content"
         className="container mx-auto px-4 py-12 space-y-16"
       >
-        {/* Block Type A: Image + Text - Sweet Dreams */}
+        {/* Block Type A: Image + Text - Sweet Custom Dreams */}
         <div className="flex flex-col lg:flex-row items-center gap-8">
           <div className="lg:w-1/2">
             <Image
@@ -77,71 +77,25 @@ export default function Home() {
           </div>
           <div className="lg:w-1/2 space-y-4">
             <h2 className="text-4xl font-bold text-zinc-900 dark:text-zinc-100 tracking-wide">
-              Splníme všechna vaše sladká přání
+              Zakázková výroba
             </h2>
-            <p className="text-lg text-zinc-600 dark:text-zinc-400">
-              Standardně bez zbytečných umělých hmot, a&nbsp;když si budete přát
-              - i&nbsp;s&nbsp;minimálním množstvím cukru, nebo speciálně
-              uzpůsobené vašim dietním potřebám.
+            <p className="text-lg text-zinc-600 dark:text-zinc-400 max-w-2xl mx-auto mb-8">
+              Co pro vás můžeme udělat na přání?
+            </p>
+            <p className="text-lg text-zinc-600 dark:text-zinc-400 max-w-2xl mx-auto mb-8">
+              Dorty na svatby, narozeniny, nebo jiné příležitosti, sladký bar
+              pro svatby, oslavy, firemní akce.
+            </p>
+            <p className="text-lg text-zinc-600 dark:text-zinc-400 max-w-2xl mx-auto mb-8">
+              Přijede k vám na návštěvu tchýně a vy se chcete vytáhnout domácím
+              koláčem, ale není na to čas? Přineste svůj plech, my upečeme
+              koláč, vy budete za hvězdu.
+            </p>
+            <p className="text-lg text-zinc-600 dark:text-zinc-400 max-w-2xl mx-auto mb-8">
+              Nebojte se nám svěřit s vašim sladkým přáním a uvidíte, co spolu
+              zmůžeme.
             </p>
           </div>
-        </div>
-
-        {/* Block Type B: Centered Text + Button - Cozy Mornings */}
-        <div className="text-center py-12 bg-zinc-100 dark:bg-zinc-800 rounded-lg">
-          <h2 className="text-4xl font-bold text-zinc-900 dark:text-zinc-100 tracking-wide mb-4">
-            Útulná kavárna v centru města
-          </h2>
-          <p className="text-lg text-zinc-600 dark:text-zinc-400 max-w-2xl mx-auto mb-8">
-            Přijďte si vychutnat kávu v našem útulném prostředí. Ideální místo
-            pro schůzky, práci nebo jen chvilku odpočinku.
-          </p>
-          <button
-            type="button"
-            className="bg-[#e79c07] text-black px-8 py-3 rounded-lg font-semibold hover:bg-[#d18a06] transition-colors"
-          >
-            Rezervovat stůl
-          </button>
-        </div>
-
-        {/* Block Type B: Centered Text + Button - Custom Orders */}
-        <div className="text-center py-12 bg-white dark:bg-zinc-900 rounded-lg">
-          <h2 className="text-4xl font-bold text-zinc-900 dark:text-zinc-100 tracking-wide mb-4">
-            Zakázková výroba
-          </h2>
-          <p className="text-lg text-zinc-600 dark:text-zinc-400 max-w-2xl mx-auto mb-8">
-            Co pro vás můžeme udělat na přání?
-          </p>
-          <p className="text-lg text-zinc-600 dark:text-zinc-400 max-w-2xl mx-auto mb-8">
-            Dorty na svatby, narozeniny, nebo jiné příležitosti, sladký bar pro
-            svatby, oslavy, firemní akce.
-          </p>
-          <p className="text-lg text-zinc-600 dark:text-zinc-400 max-w-2xl mx-auto mb-8">
-            Přijede k vám na návštěvu tchýně a vy se chcete vytáhnout domácím
-            koláčem, ale není na to čas? Přineste svůj plech, my upečeme koláč,
-            vy budete za hvězdu.
-          </p>
-          <p className="text-lg text-zinc-600 dark:text-zinc-400 max-w-2xl mx-auto mb-8">
-            Nebojte se nám svěřit s vašim sladkým přáním a uvidíte, co spolu
-            zmůžeme.
-          </p>
-        </div>
-
-        {/* Block Type B: Centered Text + Button - Snacks */}
-        <div className="text-center py-12 bg-white dark:bg-zinc-900 rounded-lg">
-          <h2 className="text-4xl font-bold text-zinc-900 dark:text-zinc-100 tracking-wide mb-4">
-            Sladké i slané pochoutky
-          </h2>
-          <p className="text-lg text-zinc-600 dark:text-zinc-400 max-w-2xl mx-auto mb-8">
-            Široký výběr drobných pochutin ideálních k rychlému občerstvení. Od
-            mini zákusků po slané croissanty.
-          </p>
-          <button
-            type="button"
-            className="bg-[#e79c07] text-black px-8 py-3 rounded-lg font-semibold hover:bg-[#d18a06] transition-colors"
-          >
-            Prohlédnout nabídku
-          </button>
         </div>
       </main>
 
