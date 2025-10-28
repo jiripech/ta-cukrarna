@@ -1,0 +1,60 @@
+version: '3.8'
+
+services:
+  # Basic runner with manual token
+  runner-basic:
+    build:
+      context: ./docker/runner
+      dockerfile: Dockerfile
+    container_name: ta-cukrarna-runner-basic
+    environment:
+      - RUNNER_NAME=ta-cukrarna-mac-basic
+      - RUNNER_REPOSITORY=jiri-pech/ta-cukrarna
+      - RUNNER_LABELS=docker,self-hosted,mac,m1max,basic
+      - RUNNER_TOKEN=${RUNNER_TOKEN}
+    entrypoint:
+      - /home/runner/entrypoint.sh
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    profiles:
+      - basic
+
+  # Enhanced runner with PAT-based token generation
+  runner-enhanced:
+    build:
+      context: ./docker/runner
+      dockerfile: Dockerfile
+    container_name: ta-cukrarna-runner-enhanced
+    restart: 'no'
+    environment:
+      - RUNNER_NAME=ta-cukrarna-mac-enhanced
+      - RUNNER_REPOSITORY=jiri-pech/ta-cukrarna
+      - RUNNER_LABELS=docker,self-hosted,mac,m1max,enhanced
+      - GITHUB_PAT=${GITHUB_PAT}
+      # Optional: fallback to manual token
+      - RUNNER_TOKEN=${RUNNER_TOKEN:-}
+    entrypoint:
+      - /home/runner/entrypoint-enhanced.sh
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    profiles:
+      - enhanced
+
+  # Current production runner (for compatibility)
+  runner:
+    build:
+      context: ./docker/runner
+      dockerfile: Dockerfile
+    container_name: ta-cukrarna-runner-mac
+    restart: unless-stopped
+    environment:
+      - RUNNER_NAME=ta-cukrarna-mac
+      - RUNNER_REPOSITORY=jiri-pech/ta-cukrarna
+      - RUNNER_LABELS=docker,self-hosted,mac,m1max
+      - RUNNER_TOKEN=${RUNNER_TOKEN}
+    entrypoint:
+      - /home/runner/entrypoint.sh
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    profiles:
+      - production

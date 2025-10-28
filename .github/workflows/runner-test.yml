@@ -1,12 +1,15 @@
+# Test Runner Permissions workflow
 name: Test Runner Permissions
 
 on:
-  workflow_dispatch:  # Manual trigger
+  workflow_dispatch: # Manual trigger
 
 jobs:
   test-permissions:
     name: Test what runner can do
-    runs-on: [self-hosted, mac]  # Use our M1Max runner
+    runs-on:
+      - self-hosted
+      - mac # Use our M1Max runner
     steps:
       - name: Test GitHub API access
         run: |

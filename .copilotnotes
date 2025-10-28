@@ -1,20 +1,23 @@
 # GitHub Copilot - Project Notes for ta-cukrarna
 
-## ⚠️ CRITICAL REMINDERS - READ FIRST!
+## ⚠️ CRITICAL REMINDERS - READ FIRST
 
 ### Key Lessons from October 23xw, 2025
+
 1. **NEVER COMMIT PRIVATE KEYS**: Today accidentally committed SSH private key to public repo - MAJOR security incident!
 2. **SYSTEMATIC APPROACH ONLY**: User demands structured analysis, not trial-and-error "junior attempts"
 3. **CHECK CURRENT STATE**: Always examine existing files before making changes - user modified files between requests
 4. **READ THESE NOTES FIRST**: User frustrated with lack of continuity between sessions
 
 ### Daily Workflow
+
 1. **ALWAYS read .copilotnotes first** - user will remind me to do this
 2. **Use systematic debugging approach** - analyze before acting
 3. **Never commit secrets** - scan for keys, passwords, tokens before commit
 4. **Check file contents** - files may have changed since last session
 
 ## Lessons Learned - Generalization
+
 - All lessons learned from specific issues (e.g. systematic approach, debugging, error analysis) must be applied to any future problem, not just the original context.
 - Always use systematic, analytical, and structured debugging for any technical issue in this project.
 
@@ -24,12 +27,13 @@
 - **Framework**: Next.js 16 + React 19 + TypeScript
 - **Styling**: Tailwind CSS v4
 - **Structure**: App Router (app/ directory)
-- **GitHub**: https://github.com/jiripech/ta-cukrarna
+- **GitHub**: <https://github.com/jiripech/ta-cukrarna>
 - **Production**: Deployed via GitHub Actions to VPS
 
 ## Current Implementation Status (October 23, 2025)
 
 ### ✅ COMPLETED MAJOR REDESIGN
+
 - **Complete page redesign** with horizontal blocks layout
 - **Dark mode system** with automatic light/dark switching using `useDarkMode` hook
 - **Image optimization** - all images resized to max 300px height for performance
@@ -43,12 +47,14 @@
 - **Orange buttons** with custom color #e79c07
 
 ### 🔧 TECHNICAL SETUP
+
 - **HTML Linter**: `npm run lint:html` - validates exported HTML files
 - **Dark Mode**: Automatic system preference detection with image switching
 - **Image Strategy**: Dual image sets (filename.png / filename-dark.png)
 - **Performance**: Optimized images, proper Next.js Image configuration
 
 ### 🚨 SECURITY INCIDENT RESOLVED
+
 - **Issue**: SSH private key accidentally committed to public repository
 - **Resolution**:
   - Private key removed from repository and local system
@@ -57,7 +63,22 @@
   - Old key removed from server by user
 
 ## File Structure Notes
+
+
+```text
+src/app/
+  ├── icon.png (custom favicon - Next.js auto-detects)
+  ├── page.tsx (main page with dark mode support)
+  └── layout.tsx
+src/hooks/
+  └── useDarkMode.ts (automatic theme detection)
+public/img/
+  ├── *-dark.png (dark mode versions)
+  └── *.png (light mode versions)
+.htmlvalidate.json (HTML linter config)
 ```
+
+```text
 src/app/
   ├── icon.png (custom favicon - Next.js auto-detects)
   ├── page.tsx (main page with dark mode support)
@@ -73,11 +94,13 @@ public/img/
 ## Development Workflow
 
 ### Preferred Approach
+
 - **STRUCTURED ANALYTICAL APPROACH**: Always analyze problems systematically before attempting solutions
 - **NO random junior attempts**: Research root cause first, then implement targeted solution
 - **Use systematic debugging**: Logs, error analysis, configuration review before making changes
 
 ### Git Security Protocol
+
 - **SCAN BEFORE COMMIT**: Always check for private keys, tokens, passwords
 - **PRIVATE KEYS NEVER GO IN GIT**: Use .gitignore, environment variables, or external key management
 - **Review commits**: Use `git status` and `git diff` before pushing
@@ -85,28 +108,33 @@ public/img/
 ## Planned Tasks
 
 ### Immediate (Next Session)
+
 - [ ] Further content refinements based on user feedback
 - [ ] Possible build optimization with private runner
 - [ ] Additional design adjustments
 
 ### Future
+
 - [ ] Content management system
 - [ ] Image upload and gallery
 - [ ] Push notifications setup
 - [ ] Performance monitoring
 
 ---
-*Last updated: October 24, 2025 - GitHub Actions Self-hosted Runners Progress*
+
+#### Last updated: October 24, 2025 - GitHub Actions Self-hosted Runners Progress
 
 ## ✅ COMPLETED TODAY (October 24, 2025)
 
 ### ARM64 Docker Runner Build
+
 - **Ubuntu base successfully built** (1.83GB) - replaced Alpine due to .NET Core issues
 - **Fixed .NET Core dependencies** by switching from Alpine to Ubuntu 22.04
 - **Architecture-specific build working**: `ta-cukrarna-runner:arm64`
 - **Build script**: `docker/runner/build-arm64.sh`
 
 ### Token Authentication Resolution
+
 - **Root cause identified**: GitHub runners need **registration token** (short-lived ~1hr), not Personal Access Token
 - **Fine-grained PAT working**: User has correct PAT with Actions: Read + Administration: Write
 - **Registration token script**: `~/.local/bin/create-registration-token.sh` generates fresh tokens
@@ -117,6 +145,7 @@ public/img/
   - ✅ Settings Saved
 
 ### Documentation Updates
+
 - **Added registration token section** to `docs/PRIVATE_RUNNERS.md`
 - **GitHub API method documented** for token generation
 - **Fixed trailing spaces** in markdown
@@ -124,6 +153,7 @@ public/img/
 ## 🔧 PENDING TOMORROW
 
 ### Critical Issue: Entrypoint Script Debug
+
 - **Problem**: `docker/runner/entrypoint.sh` fails with 404 errors
 - **Working**: Manual `./config.sh` execution succeeds perfectly
 - **Environment**: Registration token `AAW63KYRCI562JOOBMVEITLI7PMGE` expires today 21:49
@@ -131,27 +161,32 @@ public/img/
 - **Hypothesis**: Environment variable passing or script execution context issue
 
 ### Runner Deployment Pipeline
+
 1. Fix entrypoint script
 2. Deploy Mac ARM64 runner (native performance)
 3. Build/export x86-64 runner for VPS/NAS
 4. Performance benchmarking across GitHub hosted vs 3 self-hosted
 
 ### Lint Issues to Fix
+
 - **MD031 errors**: `docs/PRIVATE_RUNNERS.md` line 197, 205 - fenced code blocks need blank lines
 
 ## 📋 WORKING COMPONENTS
 
 ### Build System
+
 - **ARM64 Dockerfile**: `/Users/jiri.pech/ta-cukrarna/docker/runner/Dockerfile.arm64`
 - **Build script**: `docker/runner/build-arm64.sh`
 - **Cache directories**: `docker/cache/{tmp,npm}` created
 
 ### Token Management
+
 - **Fine-grained PAT**: User has in Bitwarden with correct permissions
 - **Registration script**: `~/.local/bin/create-registration-token.sh`
 - **Runner startup**: `~/.local/bin/runner-startup-arm64.sh`
 
 ### Known Good Configuration
+
 ```bash
 ./config.sh \
   --url https://github.com/jiripech/ta-cukrarna \
@@ -162,25 +197,28 @@ public/img/
 ```
 
 ## 🎯 TOMORROW'S GOALS
+
 1. **Debug entrypoint script** - compare with working manual config
 2. **Deploy functional Mac runner** for performance testing
 3. **Start performance benchmarking** pipeline
 4. **Begin VPS/NAS runner deployment**
 
 ## 💡 LEARNINGS
+
 - Alpine Linux has .NET Core compatibility issues on ARM64
 - Ubuntu 22.04 base provides better GitHub Actions runner support
 - Registration tokens != Personal Access Tokens (short-lived vs long-lived)
 - Manual runner configuration works perfectly - issue is in automation script
 
 ## 🚀 STATUS
-**Mac M1 Max ARM64**: Ready for deployment (entrypoint fix needed)
-**VPS/NAS x86-64**: Ready for build/deploy
-**Performance benchmarking**: Ready to begin
 
-*End of session - excellent DevOps progress! 🌟*
+- **Mac M1 Max ARM64**: Ready for deployment (entrypoint fix needed)
+- **VPS/NAS x86-64**: Ready for build/deploy
+- **Performance benchmarking**: Ready to begin
 
-# Note on troubleshooting self-hosted runner (2025-10-25)
+- *End of session - excellent DevOps progress! 🌟*
+
+## Note on troubleshooting self-hosted runner (2025-10-25)
 
 - When solving registration token generation from PAT, always:
   - Immediately capture detailed error from API (not in subshell, directly in log)
@@ -190,7 +228,7 @@ public/img/
 - If the user can generate the token manually, do not block them with unnecessary cycles
 - Prioritize transparent debug output and minimize user frustration
 
-# General Copilot working principles
+## General Copilot working principles
 
 - Always act as an advanced LLM, not a junior dev
 - Prioritize proactive, expert-level troubleshooting and clear communication
