@@ -168,29 +168,19 @@ jobs:
           echo "🚀 Starting static deployment to VPS..."
 
           # Create backup and ensure public_html exists
-          ssh $VPS_USER@$VPS_HOST '
-            if [ -d "$HOME/public_html" ]; then
-              echo "📦 Creating backup..."
-              cp -r $HOME/public_html $HOME/public_html-backup-$(date +%Y%m%d-%H%M%S) || true
-            fi
-            mkdir -p $HOME/public_html
-          '
+          echo "📦 Creating backup..."
+          ssh $VPS_USER@$VPS_HOST 'cp -r public_html public_html-backup-$(date +%Y%m%d-%H%M%S)'
 
           # Deploy static files to user's public_html
           echo "📤 Deploying static files to ~/public_html..."
-          rsync -avz --delete \
-            --exclude-from='.rsyncignore' \
-            -e "ssh" \
-            ./out/ \
-            $VPS_USER@$VPS_HOST:~/public_html/
+          rsync -avz --delete -e "ssh" --exclude-from='.rsyncignore' ./out/ $VPS_USER@$VPS_HOST:public_html/
 
           # Set proper permissions (no sudo needed)
-          ssh $VPS_USER@$VPS_HOST '
-            echo "Setting proper file permissions..."
-            chmod -R 755 ~/public_html
-            find ~/public_html -type f -exec chmod 644 {} \;
-            echo "Static deployment completed successfully!"
-          '
+          echo "Setting proper file permissions..."
+          # The permissions shold not be changed
+          # ssh $VPS_USER@$VPS_HOST chmod -R 755 ./public_html
+          ssh $VPS_USER@$VPS_HOST find ./public_html -type f -exec chmod 644 {} \;
+          echo "Static deployment completed successfully!"
 
           echo "🎉 Static deployment finished!"
 
