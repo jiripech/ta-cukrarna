@@ -169,11 +169,11 @@ jobs:
 
           # Create backup and ensure public_html exists
           ssh $VPS_USER@$VPS_HOST '
-            if [ -d "~/public_html" ]; then
+            if [ -d "$HOME/public_html" ]; then
               echo "📦 Creating backup..."
-              cp -r ~/public_html ~/public_html-backup-$(date +%Y%m%d-%H%M%S) || true
+              cp -r $HOME/public_html $HOME/public_html-backup-$(date +%Y%m%d-%H%M%S) || true
             fi
-            mkdir -p ~/public_html
+            mkdir -p $HOME/public_html
           '
 
           # Deploy static files to user's public_html
