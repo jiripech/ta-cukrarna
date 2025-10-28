@@ -144,9 +144,11 @@ jobs:
           name: ta-cukrarna-build
 
       - name: Setup SSH key
-        uses: webfactory/ssh-agent@d4b9b8ff72958532804b70bbe600ad43b36d5f2e
-        with:
-          ssh-private-key: ${{ secrets.VPS_SSH_KEY }}
+        run: |
+          eval "$(ssh-agent -s)"
+          echo "$VPS_SSH_KEY" | tr -d '\r' | ssh-add -
+        env:
+          VPS_SSH_KEY: ${{ secrets.VPS_SSH_KEY }}
 
       - name: Add server to known hosts
         env:
