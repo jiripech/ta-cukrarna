@@ -271,11 +271,19 @@ export default function Home() {
               </h3>
               <div className="space-y-2 text-zinc-300">
                 <div className="flex justify-between">
-                  <span>Pondělí - Pátek</span>
+                  <span>Pondělí, Úterý</span>
                   <span className="font-medium">8:00 - 17:00</span>
                 </div>
                 <div className="flex justify-between">
-                  <span>Sobota - Neděle</span>
+                  <span>Středa</span>
+                  <span className="font-medium">8:00 - 12:00</span>
+                </div>
+                <div className="flex justify-between">
+                  <span>Čtvrtek, Pátek</span>
+                  <span className="font-medium">8:00 - 17:00</span>
+                </div>
+                <div className="flex justify-between">
+                  <span>Sobota - Neděle, svátky</span>
                   <span className="font-medium text-red-400">Zavřeno</span>
                 </div>
               </div>
