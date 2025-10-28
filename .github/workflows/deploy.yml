@@ -160,7 +160,7 @@ jobs:
           echo "Host keys added for $VPS_HOST"
           cat ~/.ssh/known_hosts
 
-      - name: Deploy to VPS
+      - name: Create backup on VPS
         env:
           VPS_HOST: ${{ secrets.VPS_HOST }}
           VPS_USER: ${{ secrets.VPS_USER }}
@@ -170,6 +170,14 @@ jobs:
           # Create backup and ensure public_html exists
           echo "📦 Creating backup..."
           ssh $VPS_USER@$VPS_HOST 'cp -r ./public_html public_html-backup-$(date +%Y%m%d-%H%M%S)'
+
+      - name: Deploy to VPS
+        if: always()
+        env:
+          VPS_HOST: ${{ secrets.VPS_HOST }}
+          VPS_USER: ${{ secrets.VPS_USER }}
+        run: |
+          echo "🚀 Starting static deployment to VPS..."
 
           # Deploy static files to user's public_html
           echo "📤 Deploying static files to ~/public_html..."
