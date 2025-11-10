@@ -10,6 +10,9 @@ const nextConfig: NextConfig = {
   images: {
     unoptimized: true,
   },
+  experimental: {
+    cssChunking: false, // all CSS in one file
+  },
 
   // Disable automatic favicon generation
   generateBuildId: async () => {
