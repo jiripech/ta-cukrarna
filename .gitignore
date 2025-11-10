@@ -24,6 +24,9 @@ temp_*.txt
 # production
 /build
 
+# system files
+*deploy-key*
+
 # misc
 .DS_Store
 *.pem
