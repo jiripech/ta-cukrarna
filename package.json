@@ -8,7 +8,8 @@
   },
   "scripts": {
     "dev": "next dev",
-    "build": "next build",
+    "build": "NEXT_TELEMETRY_DISABLED=1 next build",
+    "clean": "rm -rf .next out",
     "start": "next start",
     "lint": "eslint",
     "lint:html": "find public -name \"*.html\" -exec html-validate {} + || echo \"No HTML files found - skipping validation\"",
