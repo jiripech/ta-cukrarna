@@ -4,7 +4,8 @@ import { useEffect } from 'react';
 
 export default function PWARegistration() {
   useEffect(() => {
-    if ('serviceWorker' in navigator) {
+    // Only register service worker in production to avoid development caching issues
+    if (process.env.NODE_ENV === 'production' && 'serviceWorker' in navigator) {
       navigator.serviceWorker
         .register('/sw.js')
         .then(registration => {

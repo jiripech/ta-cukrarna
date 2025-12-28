@@ -19,15 +19,38 @@ self.addEventListener('install', event => {
   );
 });
 
-// Fetch event - serve from cache when offline
+// Fetch event - Network-First for the root and HTML, Cache-First for others
 self.addEventListener('fetch', event => {
+  const url = new URL(event.request.url);
+
+  // Use Network-First for the root page and any HTML requests
+  if (
+    url.pathname === '/' ||
+    url.pathname.endsWith('.html') ||
+    event.request.headers.get('accept').includes('text/html')
+  ) {
+    event.respondWith(
+      fetch(event.request)
+        .then(response => {
+          // Update the cache with the latest version
+          const clonedResponse = response.clone();
+          caches.open(CACHE_NAME).then(cache => {
+            cache.put(event.request, clonedResponse);
+          });
+          return response;
+        })
+        .catch(() => {
+          // Fallback to cache if network fails
+          return caches.match(event.request);
+        })
+    );
+    return;
+  }
+
+  // Use Cache-First for static assets (images, fonts, manifest, etc.)
   event.respondWith(
     caches.match(event.request).then(response => {
-      // Return cached version or fetch from network
-      if (response) {
-        return response;
-      }
-      return fetch(event.request);
+      return response || fetch(event.request);
     })
   );
 });
