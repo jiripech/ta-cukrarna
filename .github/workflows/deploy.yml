@@ -110,6 +110,8 @@ jobs:
           npm ci
 
       - name: Build application
+        env:
+          NEXT_PUBLIC_CLARITY_ID: ${{ secrets.NEXT_PUBLIC_CLARITY_ID }}
         run: npm run build
 
       - name: Upload build artifacts
