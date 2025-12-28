@@ -34,25 +34,18 @@ export default function Home() {
         {/* Header Content */}
         <div className="relative z-10 text-center text-white px-4">
           <h1 className="text-4xl md:text-6xl font-bold mb-4 tracking-tight">
-            Ta Cukrárna
+            Cukrárna v centru Hradce Králové
           </h1>
           <h2
             id="header-description"
             className="text-lg md:text-xl mb-8 max-w-2xl mx-auto"
           >
-            Zakázková cukrárna v centru Hradce Králové, kde pečeme s&nbsp;láskou
-            nesmírnou…
+            Rodinná cukrárna přímo v&nbsp;centru města
           </h2>
           <p className="text-lg md:text-xl mb-8 max-w-2xl mx-auto">
-            Svatby, oslavy, sušenky, koláče a kusové dezerty na míru vašim
-            představám
+            Rádi vás uvidíme v naší komorní kavárničce - čekají zde na vás
+            skvělé domácí koláče, zákusky a&nbsp;výtečné kafe
           </p>
-          <div
-            id="header-cta"
-            className="bg-white/20 backdrop-blur-sm text-white px-8 py-3 rounded-full font-medium border border-white/30"
-          >
-            🚧 Stránky jsou v přípravě, tlačítka zatím nefungují... 🚧
-          </div>
         </div>
       </header>
 
@@ -77,23 +70,12 @@ export default function Home() {
           </div>
           <div className="lg:w-1/2 space-y-4">
             <h2 className="text-4xl font-bold text-zinc-900 dark:text-zinc-100 tracking-wide">
-              Zakázková výroba
+              Splníme všechna vaše sladká přání
             </h2>
             <p className="text-lg text-zinc-600 dark:text-zinc-400 max-w-2xl mx-auto mb-8">
-              Co pro vás můžeme udělat na přání?
-            </p>
-            <p className="text-lg text-zinc-600 dark:text-zinc-400 max-w-2xl mx-auto mb-8">
-              Dorty na svatby, narozeniny, nebo jiné příležitosti, sladký bar
-              pro svatby, oslavy, firemní akce.
-            </p>
-            <p className="text-lg text-zinc-600 dark:text-zinc-400 max-w-2xl mx-auto mb-8">
-              Přijede k vám na návštěvu tchýně a vy se chcete vytáhnout domácím
-              koláčem, ale není na to čas? Přineste svůj plech, my upečeme
-              koláč, vy budete za hvězdu.
-            </p>
-            <p className="text-lg text-zinc-600 dark:text-zinc-400 max-w-2xl mx-auto mb-8">
-              Nebojte se nám svěřit s vašim sladkým přáním a uvidíte, co spolu
-              zmůžeme.
+              Standardně bez zbytečných umělých přísad, a když si budete přát -
+              i s minimálním množstvím cukru, nebo speciálně uzpůsobené pro jiné
+              vaše dietní omezení
             </p>
           </div>
         </div>
@@ -136,7 +118,15 @@ export default function Home() {
                       clipRule="evenodd"
                     />
                   </svg>
-                  <span>Opletalova 328/3, 500 03 Hradec Králové</span>
+                  <span>
+                    <a
+                      className="hover:text-amber-400 transition-colors"
+                      href="https://maps.app.goo.gl/e29gMHyM2tUf8a1u8"
+                      title="Mapy Google"
+                    >
+                      Opletalova 328/3, 500 03 Hradec Králové
+                    </a>
+                  </span>
                 </div>
                 <div className="flex items-center">
                   <svg
