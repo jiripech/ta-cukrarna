@@ -11,15 +11,12 @@ const nextConfig: NextConfig = {
     unoptimized: true,
   },
   experimental: {
-    cssChunking: false, // all CSS in one file
+    // cssChunking: false, // removed as it was causing issues in dev
   },
 
   // Disable automatic favicon generation
   generateBuildId: async () => {
     return 'build-' + Date.now();
   },
-
-  // Empty turbopack config to silence warning
-  turbopack: {},
 };
 export default nextConfig;
