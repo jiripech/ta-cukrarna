@@ -145,12 +145,20 @@ jobs:
         with:
           name: ta-cukrarna-build
 
-      - name: Setup SSH key
+      - name: Setup SSH agent
+        uses: webfactory/ssh-agent@v0.8.0
+        with:
+          ssh-private-key: ${{ secrets.VPS_SSH_KEY }}
+
+      - name: Diagnostic - Verify Secrets (Secure)
         env:
-          VPS_SSH_KEY: ${{ secrets.VPS_SSH_KEY }}
+          VPS_HOST: ${{ secrets.VPS_HOST }}
+          VPS_USER: ${{ secrets.VPS_USER }}
         run: |
-          eval "$(ssh-agent -s)"
-          echo "$VPS_SSH_KEY" | tr -d '\r' | ssh-add -
+          echo "🔍 Diagnostic check for VPS secrets..."
+          if [ -z "$VPS_HOST" ]; then echo "❌ VPS_HOST is MISSING"; else echo "✅ VPS_HOST is present (length: ${#VPS_HOST})"; fi
+          if [ -z "$VPS_USER" ]; then echo "❌ VPS_USER is MISSING"; else echo "✅ VPS_USER is present (length: ${#VPS_USER})"; fi
+          if [ -z "${{ secrets.VPS_SSH_KEY }}" ]; then echo "❌ VPS_SSH_KEY is MISSING"; else echo "✅ VPS_SSH_KEY is present"; fi
 
       - name: Add server to known hosts
         env:
@@ -160,7 +168,6 @@ jobs:
           mkdir -p ~/.ssh
           ssh-keyscan -H $VPS_HOST >> ~/.ssh/known_hosts
           echo "Host keys added for $VPS_HOST"
-          cat ~/.ssh/known_hosts
 
       - name: Create backup on VPS
         env:
@@ -183,7 +190,7 @@ jobs:
 
           # Deploy static files to user's public_html
           echo "📤 Deploying static files to ~/public_html..."
-          rsync -avz --delete -e "ssh" --exclude-from='.rsyncignore' ./out/ $VPS_USER@$VPS_HOST:public_html/
+          rsync -avz --delete -e "ssh -o StrictHostKeyChecking=no --exclude-from='.rsyncignore'"  ./out/ $VPS_USER@$VPS_HOST:public_html/
 
           # Set proper permissions (no sudo needed)
           echo "Setting proper file permissions..."
@@ -219,12 +226,8 @@ jobs:
     needs: [deploy, verify]
     runs-on: ubuntu-latest
     if: always() && startsWith(github.ref, 'refs/tags/v')
-    permissions: {} # No special permissions needed for cleanup
+    permissions: {}
 
     steps:
-      - name: Cleanup SSH agent
-        run: |
-          # Explicitly kill SSH agent to prevent cleanup errors
-          if [ -n "$SSH_AGENT_PID" ]; then
-            kill $SSH_AGENT_PID || true
-          fi
+      - name: Finalize
+        run: echo "Deployment process finished."
