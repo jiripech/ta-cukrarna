@@ -78,13 +78,13 @@ Pro existující vývojáře:
    npm install
    ```
 
-2. **Inicializovat pre-commit hooks**:
+2. **Initialize pre-commit hooks**:
 
    ```bash
    npm run prepare
    ```
 
-3. **Zkontrolovat formátování**:
+3. **Check formatting**:
 
    ```bash
    npm run check-all
@@ -92,28 +92,27 @@ Pro existující vývojáře:
 
 ### 🚀 Deployment Checklist
 
-Pro production deployment:
+For production deployment:
 
-- [ ] VPS uživatel `ta-cukrarna` vytvořen
-- [ ] SSH klíče nastaveny v GitHub Secrets
-- [ ] Apache virtual host nakonfigurován
-- [ ] PM2 ecosystem připraven
-- [ ] DNS A records nastaveny
-- [ ] SSL certifikáty připraveny
+- [x] VPS user `ta-cukrarna` created
+- [x] SSH key set
+- [x] Apache virtual host configured
+- [x] DNS A record set
+- [x] SSL certificates ready
 
 ### 💡 Breaking Changes
 
-Žádné breaking changes - všechny změny jsou zpětně kompatibilní.
+None.
 
 ### 🙏 Credits
 
-- PWA foundation z v1.0
+- PWA foundation v1.0
 - Automated quality control system
 - Production-ready deployment pipeline
 
 ---
 
-**Upgrade z v1.0**: Jednoduché `git pull` + `npm install`
+**Upgrade z v1.0**: Simply `git pull` + `npm install`
 
-**Next version preview**: v1.2 bude zaměřena na content management a další PWA
-funkce.
+**Next version preview**: v1.2 should be focused on content management and other
+PWA related stuff.
