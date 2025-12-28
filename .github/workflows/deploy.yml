@@ -146,7 +146,7 @@ jobs:
           name: ta-cukrarna-build
 
       - name: Setup SSH agent
-        uses: webfactory/ssh-agent@v0.8.0
+        uses: webfactory/ssh-agent@d4b9b8ff72958532804b70bbe600ad43b36d5f2e
         with:
           ssh-private-key: ${{ secrets.VPS_SSH_KEY }}
 
