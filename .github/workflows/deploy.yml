@@ -144,11 +144,11 @@ jobs:
           name: ta-cukrarna-build
 
       - name: Setup SSH key
+        env:
+          VPS_SSH_KEY: ${{ secrets.VPS_SSH_KEY }}
         run: |
           eval "$(ssh-agent -s)"
           echo "$VPS_SSH_KEY" | tr -d '\r' | ssh-add -
-        env:
-          VPS_SSH_KEY: ${{ secrets.VPS_SSH_KEY }}
 
       - name: Add server to known hosts
         env:
