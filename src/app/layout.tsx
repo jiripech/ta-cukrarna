@@ -14,9 +14,10 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: 'Ta Cukrárna - Luxusní dorty a zákusky na zakázku',
+  title:
+    'Cukrárna v centru Hradce Králové, Rodinná cukrárna přímo v centru města',
   description:
-    'Zakázková výroba netradičních, tradičních i luxusních a elegantních zákusků, dortů, dezertů, sušenek a sladkého trvanlivého pečiva.',
+    'Rádi vás uvidíme v naší komorní kavárničce - čekají zde na vás skvělé domácí koláče, zákusky a výtečné kafe',
   keywords: [
     'cukrárna',
     'dorty',
@@ -30,6 +31,15 @@ export const metadata: Metadata = {
   publisher: 'RevoFab s.r.o.',
   robots: 'index, follow',
   manifest: '/manifest.json',
+  icons: {
+    icon: [
+      { url: '/icon.ico' },
+      { url: '/img/favicon.png', sizes: '32x32', type: 'image/png' },
+      { url: '/img/favicon.png', sizes: '16x16', type: 'image/png' },
+    ],
+    apple: [{ url: '/apple-touch-icon.png', sizes: '180x180' }],
+    shortcut: '/icon.ico',
+  },
   appleWebApp: {
     capable: true,
     statusBarStyle: 'default',
@@ -41,6 +51,7 @@ export const metadata: Metadata = {
 };
 
 export const viewport = {
+  themeColor: '#000000',
   width: 'device-width',
   initialScale: 1,
   maximumScale: 1,
@@ -54,39 +65,6 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="cs">
-      <head>
-        <meta name="theme-color" content="#000000" />
-        <meta name="apple-mobile-web-app-capable" content="yes" />
-        <meta name="apple-mobile-web-app-status-bar-style" content="default" />
-        <meta name="apple-mobile-web-app-title" content="Ta Cukrárna" />
-        <link rel="manifest" href="/manifest.json" />
-        {/* Favicon odkazy */}
-        <link rel="icon" type="image/x-icon" href="/icon.ico" />
-        <link
-          rel="icon"
-          type="image/png"
-          sizes="32x32"
-          href="/img/favicon.png"
-        />
-        <link
-          rel="icon"
-          type="image/png"
-          sizes="16x16"
-          href="/img/favicon.png"
-        />
-        <link
-          rel="apple-touch-icon"
-          sizes="180x180"
-          href="/apple-touch-icon.png"
-        />
-        <link rel="shortcut icon" href="/icon.ico" />
-        <link
-          rel="preload"
-          href="/img/logo.svg"
-          as="image"
-          type="image/svg+xml"
-        />
-      </head>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
