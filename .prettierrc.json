@@ -22,7 +22,8 @@
     {
       "files": "*.{json,jsonc}",
       "options": {
-        "tabWidth": 2
+        "tabWidth": 2,
+        "trailingComma": "none"
       }
     }
   ]
