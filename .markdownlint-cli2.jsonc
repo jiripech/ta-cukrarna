@@ -9,16 +9,16 @@
 
     // Configure specific rules
     "MD031": {
-      "list_items": true // Require blank lines around list items
+      "list_items": true, // Require blank lines around list items
     },
     "MD022": {
       "lines_above": 1,
-      "lines_below": 1
+      "lines_below": 1,
     },
     "MD032": true, // Require blank lines around lists
     "MD012": {
-      "maximum": 2 // Allow up to 2 consecutive blank lines
-    }
+      "maximum": 2, // Allow up to 2 consecutive blank lines
+    },
   },
 
   // Files to include/exclude
@@ -26,5 +26,5 @@
   "ignores": ["node_modules/**", ".next/**", ".rsyncignore", ".gemini/**"],
 
   // Auto-fix what can be fixed automatically
-  "fix": true
+  "fix": true,
 }
