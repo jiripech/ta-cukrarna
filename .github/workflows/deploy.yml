@@ -200,7 +200,7 @@ jobs:
           echo "Setting proper file permissions..."
           # The permissions should not be changed
           # ssh $VPS_USER@$VPS_HOST chmod -R 755 ./public_html
-          ssh $VPS_USER@$VPS_HOST find ./public_html -type f -exec chmod 644 {} \;
+          ssh $VPS_USER@$VPS_HOST "find ./public_html -type f -exec chmod 644 {} \;"
           echo "Static deployment completed successfully!"
 
           echo "🎉 Static deployment finished!"
