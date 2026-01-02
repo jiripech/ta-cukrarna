@@ -22,7 +22,7 @@
   },
 
   // Files to exclude/include
-  "ignores": ["node_modules/**", ".next/**", ".rsyncignore", ".gemini/**"],
+  "ignores": ["node_modules/**", ".next/**", ".rsyncignore"],
   "globs": ["**/*.md"],
 
   // Auto-fix what can be fixed automatically

@@ -148,7 +148,7 @@ jobs:
 
       - name: Setup SSH agent
         run: |
-          ssh-agent -a $SSH_AUTH_SOCK > /dev/null
+          eval $(ssh-agent -a $SSH_AUTH_SOCK)
           ssh-add - <<< "${{ secrets.VPS_SSH_KEY }}"
           echo "SSH_AGENT_PID=$SSH_AGENT_PID" >> $GITHUB_ENV
         env:
@@ -194,7 +194,7 @@ jobs:
 
           # Deploy static files to user's public_html
           echo "📤 Deploying static files to ~/public_html..."
-          rsync -avz --delete -e "ssh -o StrictHostKeyChecking=no --exclude-from='.rsyncignore'"  ./out/ $VPS_USER@$VPS_HOST:public_html/
+          rsync -avz --delete -e "ssh -o StrictHostKeyChecking=no" --exclude-from='.rsyncignore' ./out/ $VPS_USER@$VPS_HOST:public_html/
 
           # Set proper permissions (no sudo needed)
           echo "Setting proper file permissions..."
