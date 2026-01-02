@@ -1,3 +1,4 @@
+'use client';
 // src/components/Clarity.tsx
 
 import React, { useEffect } from 'react';
