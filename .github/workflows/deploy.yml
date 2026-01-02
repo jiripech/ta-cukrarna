@@ -14,6 +14,7 @@ permissions:
 env:
   # Security: Define trusted events for self-hosted runners
   IS_TRUSTED_EVENT: ${{ github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository }}
+  SSH_AUTH_SOCK: /tmp/ssh_agent.sock
 
 jobs:
   security:
@@ -146,9 +147,12 @@ jobs:
           name: ta-cukrarna-build
 
       - name: Setup SSH agent
-        uses: webfactory/ssh-agent@d4b9b8ff72958532804b70bbe600ad43b36d5f2e
-        with:
-          ssh-private-key: ${{ secrets.VPS_SSH_KEY }}
+        run: |
+          ssh-agent -a $SSH_AUTH_SOCK > /dev/null
+          ssh-add - <<< "${{ secrets.VPS_SSH_KEY }}"
+          echo "SSH_AGENT_PID=$SSH_AGENT_PID" >> $GITHUB_ENV
+        env:
+          SSH_AUTH_SOCK: /tmp/ssh_agent.sock
 
       - name: Diagnostic - Verify Secrets (Secure)
         env:
@@ -200,6 +204,13 @@ jobs:
           echo "Static deployment completed successfully!"
 
           echo "🎉 Static deployment finished!"
+
+      - name: Cleanup SSH agent
+        if: always()
+        run: |
+          if [ -n "$SSH_AGENT_PID" ]; then
+            kill $SSH_AGENT_PID || true
+          fi
 
   verify:
     name: Verify Deployment
