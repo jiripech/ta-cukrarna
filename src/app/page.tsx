@@ -73,9 +73,9 @@ export default function Home() {
               Splníme všechna vaše sladká přání
             </h2>
             <p className="text-lg text-zinc-600 dark:text-zinc-400 max-w-2xl mb-8 text-left">
-              Standardně bez zbytečných umělých přísad, a když si budete přát -
-              i s minimálním množstvím cukru, nebo speciálně uzpůsobené pro jiné
-              vaše dietní omezení
+              Standardně bez zbytečných umělých přísad, a&nbsp;když si budete
+              přát - i&nbsp;s&nbsp;minimálním množstvím cukru, nebo speciálně
+              uzpůsobené pro jiná vaše dietní omezení…
             </p>
           </div>
         </div>
