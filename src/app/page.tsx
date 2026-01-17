@@ -55,8 +55,8 @@ export default function Home() {
         className="container mx-auto px-4 py-12 space-y-16"
       >
         {/* Block Type A: Image + Text - Sweet Custom Dreams */}
-        <div className="flex flex-col lg:flex-row items-center gap-8">
-          <div className="lg:w-1/2">
+        <div className="flex flex-col lg:flex-row items-center gap-2">
+          <div id="leftCol" className="lg:w-1/2">
             <Image
               src={
                 isDarkMode ? '/img/sweetdream-dark.png' : '/img/sweetdream.png'
@@ -68,11 +68,11 @@ export default function Home() {
               className="rounded-lg"
             />
           </div>
-          <div className="lg:w-1/2 space-y-4">
+          <div id="rightCol" className="lg:w-1/2 space-y-4">
             <h2 className="text-4xl font-bold text-zinc-900 dark:text-zinc-100 tracking-wide">
               Splníme všechna vaše sladká přání
             </h2>
-            <p className="text-lg text-zinc-600 dark:text-zinc-400 max-w-2xl mx-auto mb-8">
+            <p className="text-lg text-zinc-600 dark:text-zinc-400 max-w-2xl mb-8 text-left">
               Standardně bez zbytečných umělých přísad, a když si budete přát -
               i s minimálním množstvím cukru, nebo speciálně uzpůsobené pro jiné
               vaše dietní omezení
