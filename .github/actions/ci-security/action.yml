@@ -1,0 +1,21 @@
+name: "CI - Security"
+description: "Composite action to run the repository security scan (lint:secrets)."
+runs:
+  using: "composite"
+  steps:
+    - name: Checkout code
+      uses: actions/checkout@8ade135a41bc03ea155e62e844d188df1ea18608
+
+    - name: Setup Node.js
+      uses: actions/setup-node@60edb5dd545a775178f52524783378180af0d1f8
+      with:
+        node-version: '20'
+        cache: 'npm'
+
+    - name: Install dependencies
+      run: |
+        npm config set update-notifier false
+        npm ci
+
+    - name: Run security scan
+      run: npm run lint:secrets

@@ -17,121 +17,195 @@ env:
   SSH_AUTH_SOCK: /tmp/ssh_agent.sock
 
 jobs:
-  security:
+  check-runner:
+    name: Check self-hosted runner
+    runs-on: ubuntu-latest
+    outputs:
+      available: ${{ steps.check.outputs.available }}
+      count: ${{ steps.check.outputs.count }}
+    steps:
+      - name: Check for available self-hosted runner
+        id: check
+        run: |
+          set -euo pipefail
+          API="https://api.github.com/repos/${{ github.repository }}/actions/runners"
+          # Use repository variable PREF_RUNNER; if unset, fall back to secret PREF_RUNNER; if still unset -> skip self-hosted usage
+          LABEL="${{ vars.PREF_RUNNER }}"
+          if [ -z "$LABEL" ] || [ "$LABEL" = "null" ]; then
+            SECLABEL="${{ secrets.PREF_RUNNER }}"
+            if [ -n "$SECLABEL" ] && [ "$SECLABEL" != "null" ]; then
+              LABEL="$SECLABEL"
+              echo "Using PREF_RUNNER from secrets"
+            else
+              echo "No PREF_RUNNER set; will use GitHub-hosted runners"
+              echo "count=0" >> $GITHUB_OUTPUT || true
+              echo "available=false" >> $GITHUB_OUTPUT
+              exit 0
+            fi
+          fi
+          RESPONSE=$(curl -fsSL -H "Authorization: Bearer $GITHUB_TOKEN" -H "Accept: application/vnd.github+json" "$API")
+          FOUND=$(echo "$RESPONSE" | jq --arg label "$LABEL" '[.runners[] | select(.status=="online" and .busy==false and (.labels[].name==$label))] | length' || true)
+          echo "Probed label: $LABEL"
+          echo "count=$FOUND" >> $GITHUB_OUTPUT || true
+          if [ "$FOUND" -gt 0 ]; then echo "available=true" >> $GITHUB_OUTPUT; else echo "available=false" >> $GITHUB_OUTPUT; fi
+
+  # Security job variants
+  security-self:
+    name: Security Scan
+    runs-on: [self-hosted, hq-runner-x64]
+    needs: check-runner
+    if: needs.check-runner.outputs.available == 'true'
+    permissions:
+      contents: read
+    steps:
+      - uses: ./.github/actions/ci-security
+
+  security-hosted:
     name: Security Scan
     runs-on: ubuntu-latest
+    needs: check-runner
+    if: needs.check-runner.outputs.available != 'true'
     permissions:
-      contents: read # Read repository code for scanning
-
+      contents: read
     steps:
-      - name: Checkout code
-        uses: actions/checkout@8ade135a41bc03ea155e62e844d188df1ea18608
+      - uses: ./.github/actions/ci-security
 
-      - name: Setup Node.js
-        uses: actions/setup-node@60edb5dd545a775178f52524783378180af0d1f8
-        with:
-          node-version: '20'
-          cache: 'npm'
+  # Lint job variants
+  lint-self:
+    name: Code Quality
+    runs-on: [self-hosted, hq-runner-x64]
+    needs: check-runner
+    if: needs.check-runner.outputs.available == 'true'
+    permissions:
+      contents: read
+    steps:
+      - uses: ./.github/actions/ci-lint
 
-      - name: Install dependencies
-        run: |
-          npm config set update-notifier false
-          npm ci
-
-      - name: Run security scan
-        run: npm run lint:secrets
-
-  lint:
+  lint-hosted:
     name: Code Quality
     runs-on: ubuntu-latest
+    needs: check-runner
+    if: needs.check-runner.outputs.available != 'true'
     permissions:
-      contents: read # Read repository code for linting
-    # Lint can run in parallel with security
-    # needs: security
-
+      contents: read
     steps:
-      - name: Checkout code
-        uses: actions/checkout@8ade135a41bc03ea155e62e844d188df1ea18608
+      - uses: ./.github/actions/ci-lint
 
-      - name: Setup Node.js
-        uses: actions/setup-node@60edb5dd545a775178f52524783378180af0d1f8
-        with:
-          node-version: '20'
-          cache: 'npm'
+  # Build job variants
+  build-self:
+    name: Build Application
+    runs-on: [self-hosted, hq-runner-x64]
+    needs: [check-runner, security-self, security-hosted, lint-self, lint-hosted]
+    if: needs.check-runner.outputs.available == 'true'
+    permissions:
+      contents: read
+      actions: write
+    steps:
+      - uses: ./.github/actions/ci-build
 
-      - name: Install dependencies
-        run: |
-          npm config set update-notifier false
-          npm ci
-
-      - name: Run ESLint
-        run: npm run lint
-
-      - name: Run HTML validation
-        run: npm run lint:html
-
-      - name: Run Markdown lint
-        run: npm run lint:md
-
-      - name: Check formatting
-        run: npm run format:check
-
-  build:
+  build-hosted:
     name: Build Application
     runs-on: ubuntu-latest
-    needs: [security, lint]
+    needs: [check-runner, security-self, security-hosted, lint-self, lint-hosted]
+    if: needs.check-runner.outputs.available != 'true'
+    permissions:
+      contents: read
+      actions: write
+    steps:
+      - uses: ./.github/actions/ci-build
+
+  deploy-self:
+    name: Deploy to VPS
+    needs: [build-self, build-hosted, check-runner]
+    runs-on: [self-hosted, hq-runner-x64]
+    # 🔒 SECURITY: Only deploy on version tags (not PRs)
+    if: startsWith(github.ref, 'refs/tags/v') && needs.check-runner.outputs.available == 'true'
+    environment: production
     permissions:
       contents: read # Read repository code
-      actions: write # Upload artifacts
+      actions: read # Download artifacts
 
     steps:
       - name: Checkout code
         uses: actions/checkout@8ade135a41bc03ea155e62e844d188df1ea18608
 
-      - name: Setup Node.js
-        uses: actions/setup-node@60edb5dd545a775178f52524783378180af0d1f8
-        with:
-          node-version: '20'
-          cache: 'npm'
-
-      - name: Cache Next.js build
-        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830
-        with:
-          path: |
-            ~/.npm
-            ${{ github.workspace }}/.next/cache
-          key: ${{ runner.os }}-nextjs-${{ hashFiles('**/package-lock.json') }}-${{ hashFiles('**/*.js', '**/*.jsx', '**/*.ts', '**/*.tsx') }}
-          restore-keys: |
-            ${{ runner.os }}-nextjs-${{ hashFiles('**/package-lock.json') }}-
-            ${{ runner.os }}-nextjs-
-
-      - name: Install dependencies
-        run: |
-          npm config set update-notifier false
-          npm ci
-
-      - name: Build application
-        env:
-          NEXT_PUBLIC_CLARITY_ID: ${{ secrets.NEXT_PUBLIC_CLARITY_ID }}
-        run: npm run build
-
-      - name: Upload build artifacts
-        if: startsWith(github.ref, 'refs/tags/v')
-        uses: actions/upload-artifact@5d5d22a31266ced268874388b861e4b58bb5c2f3
+      - name: Download build artifacts
+        uses: actions/download-artifact@c850b930e6ba138125429b7e5c93fc707a7f8427
         with:
           name: ta-cukrarna-build
-          path: |
-            out/
-            package.json
-            package-lock.json
-          retention-days: 1
 
-  deploy:
+      - name: Setup SSH agent
+        run: |
+          eval $(ssh-agent -a $SSH_AUTH_SOCK)
+          ssh-add - <<< "${{ secrets.VPS_SSH_KEY }}"
+          echo "SSH_AGENT_PID=$SSH_AGENT_PID" >> $GITHUB_ENV
+        env:
+          SSH_AUTH_SOCK: /tmp/ssh_agent.sock
+
+      - name: Diagnostic - Verify Secrets (Secure)
+        env:
+          VPS_HOST: ${{ secrets.VPS_HOST }}
+          VPS_USER: ${{ secrets.VPS_USER }}
+        run: |
+          echo "🔍 Diagnostic check for VPS secrets..."
+          if [ -z "$VPS_HOST" ]; then echo "❌ VPS_HOST is MISSING"; else echo "✅ VPS_HOST is present (length: ${#VPS_HOST})"; fi
+          if [ -z "$VPS_USER" ]; then echo "❌ VPS_USER is MISSING"; else echo "✅ VPS_USER is present (length: ${#VPS_USER})"; fi
+          if [ -z "${{ secrets.VPS_SSH_KEY }}" ]; then echo "❌ VPS_SSH_KEY is MISSING"; else echo "✅ VPS_SSH_KEY is present"; fi
+
+      - name: Add server to known hosts
+        env:
+          VPS_HOST: ${{ secrets.VPS_HOST }}
+        run: |
+          echo "🔑 Adding server to known hosts..."
+          mkdir -p ~/.ssh
+          ssh-keyscan -H $VPS_HOST >> ~/.ssh/known_hosts
+          echo "Host keys added for $VPS_HOST"
+
+      - name: Create backup on VPS
+        env:
+          VPS_HOST: ${{ secrets.VPS_HOST }}
+          VPS_USER: ${{ secrets.VPS_USER }}
+        run: |
+          echo "🚀 Starting static deployment to VPS..."
+
+          # Create backup and ensure public_html exists
+          echo "📦 Creating backup..."
+          ssh $VPS_USER@$VPS_HOST 'cp -r ./public_html public_html-backup-$(date +%Y%m%d-%H%M%S)'
+
+      - name: Deploy to VPS
+        if: always()
+        env:
+          VPS_HOST: ${{ secrets.VPS_HOST }}
+          VPS_USER: ${{ secrets.VPS_USER }}
+        run: |
+          echo "🚀 Starting static deployment to VPS..."
+
+          # Deploy static files to user's public_html
+          echo "📤 Deploying static files to ~/public_html..."
+          rsync -avz --delete -e "ssh -o StrictHostKeyChecking=no" --exclude-from='.rsyncignore' ./out/ $VPS_USER@$VPS_HOST:public_html/
+
+          # Set proper permissions (no sudo needed)
+          echo "Setting proper file permissions..."
+          # The permissions should not be changed
+          # ssh $VPS_USER@$VPS_HOST chmod -R 755 ./public_html
+          ssh $VPS_USER@$VPS_HOST "find ./public_html -type f -exec chmod 644 {} \;"
+          echo "Static deployment completed successfully!"
+
+          echo "🎉 Static deployment finished!"
+
+      - name: Cleanup SSH agent
+        if: always()
+        run: |
+          if [ -n "$SSH_AGENT_PID" ]; then
+            kill $SSH_AGENT_PID || true
+          fi
+
+  deploy-hosted:
     name: Deploy to VPS
-    needs: build
+    needs: [build-self, build-hosted, check-runner]
     runs-on: ubuntu-latest
     # 🔒 SECURITY: Only deploy on version tags (not PRs)
-    if: startsWith(github.ref, 'refs/tags/v')
+    if: startsWith(github.ref, 'refs/tags/v') && needs.check-runner.outputs.available != 'true'
     environment: production
     permissions:
       contents: read # Read repository code
@@ -214,7 +288,7 @@ jobs:
 
   verify:
     name: Verify Deployment
-    needs: deploy
+    needs: [deploy-self, deploy-hosted]
     runs-on: ubuntu-latest
     if: startsWith(github.ref, 'refs/tags/v')
     permissions:
@@ -234,7 +308,7 @@ jobs:
 
   cleanup:
     name: Cleanup
-    needs: [deploy, verify]
+    needs: [deploy-self, deploy-hosted, verify]
     runs-on: ubuntu-latest
     if: always() && startsWith(github.ref, 'refs/tags/v')
     permissions: {}

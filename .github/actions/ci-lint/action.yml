@@ -1,0 +1,30 @@
+name: "CI - Lint"
+description: "Composite action to run code quality checks (ESLint, HTML, MD, format)."
+runs:
+  using: "composite"
+  steps:
+    - name: Checkout code
+      uses: actions/checkout@8ade135a41bc03ea155e62e844d188df1ea18608
+
+    - name: Setup Node.js
+      uses: actions/setup-node@60edb5dd545a775178f52524783378180af0d1f8
+      with:
+        node-version: '20'
+        cache: 'npm'
+
+    - name: Install dependencies
+      run: |
+        npm config set update-notifier false
+        npm ci
+
+    - name: Run ESLint
+      run: npm run lint
+
+    - name: Run HTML validation
+      run: npm run lint:html
+
+    - name: Run Markdown lint
+      run: npm run lint:md
+
+    - name: Check formatting
+      run: npm run format:check

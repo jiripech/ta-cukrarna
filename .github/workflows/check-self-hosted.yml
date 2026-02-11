@@ -1,0 +1,67 @@
+name: "Check self-hosted runner (manual test)"
+
+on:
+  workflow_dispatch:
+    inputs:
+      label:
+        description: 'Runner label to probe (optional — if omitted the workflow will use PREF_RUNNER from repository variables/secrets)'
+        required: false
+
+permissions:
+  actions: read
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    outputs:
+      available: ${{ steps.check.outputs.available }}
+      count: ${{ steps.check.outputs.count }}
+
+    steps:
+      - name: Check for self-hosted runner
+        id: check
+        run: |
+          set -euo pipefail
+          # Use workflow input if provided; otherwise use repository variable RUNNER_LABEL; fallback to default
+          LABEL="${{ github.event.inputs.label }}"
+          if [ -z "$LABEL" ] || [ "$LABEL" = "null" ]; then LABEL="${{ vars.PREF_RUNNER }}"; fi
+          if [ -z "$LABEL" ] || [ "$LABEL" = "null" ]; then LABEL="${{ secrets.PREF_RUNNER }}"; fi
+          if [ -z "$LABEL" ] || [ "$LABEL" = "null" ]; then
+            echo "No label provided and PREF_RUNNER not set; skipping self-hosted probe"
+            echo "count=0" >> $GITHUB_OUTPUT || true
+            echo "available=false" >> $GITHUB_OUTPUT
+            exit 0
+          fi
+          API="https://api.github.com/repos/${{ github.repository }}/actions/runners"
+
+          echo "Probing for label: $LABEL"
+
+          RESPONSE=$(curl -fsSL -H "Authorization: Bearer $GITHUB_TOKEN" -H "Accept: application/vnd.github+json" "$API")
+
+          # Count online runners with the requested label
+          COUNT=$(echo "$RESPONSE" | jq --arg label "$LABEL" '[.runners[] | select(.status=="online" and .busy==false and (.labels[].name==$label))] | length')
+
+          echo "count=$COUNT" >> $GITHUB_OUTPUT
+
+          if [ "$COUNT" -gt 0 ]; then
+            echo "available=true" >> $GITHUB_OUTPUT
+          else
+            echo "available=false" >> $GITHUB_OUTPUT
+          fi
+
+          echo "-- Matching runners --"
+          echo "$RESPONSE" | jq --arg label "$LABEL" '.runners[] | select(.status=="online" and .busy==false and (.labels[].name==$label)) | {id:.id, name:.name, status:.status, busy:.busy, labels:.labels}' || true
+
+      - name: Show result
+        run: |
+          echo "Available: ${{ steps.check.outputs.available }}"
+          echo "Count: ${{ steps.check.outputs.count }}"
+
+      - name: Example gh CLI (optional)
+        run: |
+          if command -v gh >/dev/null 2>&1; then
+            echo "gh is installed; listing runners via gh api (org-level or repo-level)"
+            gh api repos/${{ github.repository }}/actions/runners --jq '.runners[] | {id: .id, name: .name, status: .status, busy: .busy, labels: .labels}' || true
+          else
+            echo "gh not available in runner (optional step)"
+          fi
