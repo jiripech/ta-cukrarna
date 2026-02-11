@@ -67,3 +67,19 @@ Opraveno v této aktualizaci:
 - MD031: Správné mezery okolo seznamů
 - MD022: Správné mezery okolo headingů
 - Konzistentní formátování napříč všemi soubory
+
+## 🧭 Preferovaný self-hosted runner
+
+- Pro nastavení preferovaného self-hosted runneru přidejte repository variable
+  `PREF_RUNNER` (např. `hq-runner-x64`) přes: Repository → Settings → Actions →
+  Variables.
+- Pokud je `PREF_RUNNER` nastaven, produkční workflowy jej zkusí použít (pokud
+  je runner online a ne-zaneprázdněný). Pokud není nastaven, workflowy použijí
+  GitHub-hosted runnery.
+
+_Example (gh):_
+
+```bash
+# Create or update variable
+gh api repos/:owner/:repo/actions/variables -f name='PREF_RUNNER' -f value='hq-runner-x64'
+```
