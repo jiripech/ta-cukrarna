@@ -24,30 +24,25 @@ jobs:
       available: ${{ steps.check.outputs.available }}
       count: ${{ steps.check.outputs.count }}
     steps:
-      - name: Check for available self-hosted runner
+      - name: Check for available self-hosted runner (Octokit)
         id: check
-        run: |
-          set -euo pipefail
-          API="https://api.github.com/repos/${{ github.repository }}/actions/runners"
-          # Use repository variable PREF_RUNNER; if unset, fall back to secret PREF_RUNNER; if still unset -> skip self-hosted usage
-          LABEL="${{ vars.PREF_RUNNER }}"
-          if [ -z "$LABEL" ] || [ "$LABEL" = "null" ]; then
-            SECLABEL="${{ secrets.PREF_RUNNER }}"
-            if [ -n "$SECLABEL" ] && [ "$SECLABEL" != "null" ]; then
-              LABEL="$SECLABEL"
-              echo "Using PREF_RUNNER from secrets"
-            else
-              echo "No PREF_RUNNER set; will use GitHub-hosted runners"
-              echo "count=0" >> $GITHUB_OUTPUT || true
-              echo "available=false" >> $GITHUB_OUTPUT
-              exit 0
-            fi
-          fi
-          RESPONSE=$(curl -fsSL -H "Authorization: Bearer $GITHUB_TOKEN" -H "Accept: application/vnd.github+json" "$API")
-          FOUND=$(echo "$RESPONSE" | jq --arg label "$LABEL" '[.runners[] | select(.status=="online" and .busy==false and (.labels[].name==$label))] | length' || true)
-          echo "Probed label: $LABEL"
-          echo "count=$FOUND" >> $GITHUB_OUTPUT || true
-          if [ "$FOUND" -gt 0 ]; then echo "available=true" >> $GITHUB_OUTPUT; else echo "available=false" >> $GITHUB_OUTPUT; fi
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const label = process.env.PREF || '';
+            if (!label) {
+              core.info('No PREF_RUNNER supplied (vars or secrets); skipping self-hosted probe');
+              core.setOutput('count', '0');
+              core.setOutput('available', 'false');
+              return;
+            }
+            core.info(`Probing for self-hosted runners with label: ${label}`);
+            const res = await github.rest.actions.listSelfHostedRunnersForRepo({ owner: context.repo.owner, repo: context.repo.repo });
+            const runners = (res.data.runners || []).filter(r => r.status === 'online' && r.busy === false && r.labels.some(l => l.name === label));
+            core.setOutput('count', String(runners.length));
+            core.setOutput('available', runners.length > 0 ? 'true' : 'false');
+        env:
+          PREF: ${{ vars.PREF_RUNNER || secrets.PREF_RUNNER }}
 
   # Security job variants
   security-self:

@@ -18,39 +18,30 @@ jobs:
       count: ${{ steps.check.outputs.count }}
 
     steps:
-      - name: Check for self-hosted runner
+      - name: Check for self-hosted runner (Octokit)
         id: check
-        run: |
-          set -euo pipefail
-          # Use workflow input if provided; otherwise use repository variable RUNNER_LABEL; fallback to default
-          LABEL="${{ github.event.inputs.label }}"
-          if [ -z "$LABEL" ] || [ "$LABEL" = "null" ]; then LABEL="${{ vars.PREF_RUNNER }}"; fi
-          if [ -z "$LABEL" ] || [ "$LABEL" = "null" ]; then LABEL="${{ secrets.PREF_RUNNER }}"; fi
-          if [ -z "$LABEL" ] || [ "$LABEL" = "null" ]; then
-            echo "No label provided and PREF_RUNNER not set; skipping self-hosted probe"
-            echo "count=0" >> $GITHUB_OUTPUT || true
-            echo "available=false" >> $GITHUB_OUTPUT
-            exit 0
-          fi
-          API="https://api.github.com/repos/${{ github.repository }}/actions/runners"
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const inputLabel = process.env.INPUT_LABEL || '';
+            const defaultLabel = process.env.PREF || '';
+            const label = inputLabel || defaultLabel;
 
-          echo "Probing for label: $LABEL"
+            if (!label) {
+              core.info('No label provided and PREF_RUNNER not set; skipping self-hosted probe');
+              core.setOutput('count', '0');
+              core.setOutput('available', 'false');
+              return;
+            }
 
-          RESPONSE=$(curl -fsSL -H "Authorization: Bearer $GITHUB_TOKEN" -H "Accept: application/vnd.github+json" "$API")
-
-          # Count online runners with the requested label
-          COUNT=$(echo "$RESPONSE" | jq --arg label "$LABEL" '[.runners[] | select(.status=="online" and .busy==false and (.labels[].name==$label))] | length')
-
-          echo "count=$COUNT" >> $GITHUB_OUTPUT
-
-          if [ "$COUNT" -gt 0 ]; then
-            echo "available=true" >> $GITHUB_OUTPUT
-          else
-            echo "available=false" >> $GITHUB_OUTPUT
-          fi
-
-          echo "-- Matching runners --"
-          echo "$RESPONSE" | jq --arg label "$LABEL" '.runners[] | select(.status=="online" and .busy==false and (.labels[].name==$label)) | {id:.id, name:.name, status:.status, busy:.busy, labels:.labels}' || true
+            core.info(`Probing for self-hosted runners with label: ${label}`);
+            const res = await github.rest.actions.listSelfHostedRunnersForRepo({ owner: context.repo.owner, repo: context.repo.repo });
+            const runners = (res.data.runners || []).filter(r => r.status === 'online' && r.busy === false && r.labels.some(l => l.name === label));
+            core.setOutput('count', String(runners.length));
+            core.setOutput('available', runners.length > 0 ? 'true' : 'false');
+        env:
+          INPUT_LABEL: ${{ github.event.inputs.label }}
+          PREF: ${{ vars.PREF_RUNNER || secrets.PREF_RUNNER }}
 
       - name: Show result
         run: |
