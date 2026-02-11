@@ -1,4 +1,4 @@
-name: "Check self-hosted runner (manual test)"
+name: 'Check self-hosted runner (manual test)'
 
 on:
   workflow_dispatch:

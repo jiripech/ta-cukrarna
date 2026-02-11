@@ -95,7 +95,8 @@ jobs:
   build-self:
     name: Build Application
     runs-on: [self-hosted, hq-runner-x64]
-    needs: [check-runner, security-self, security-hosted, lint-self, lint-hosted]
+    needs:
+      [check-runner, security-self, security-hosted, lint-self, lint-hosted]
     if: needs.check-runner.outputs.available == 'true'
     permissions:
       contents: read
@@ -106,7 +107,8 @@ jobs:
   build-hosted:
     name: Build Application
     runs-on: ubuntu-latest
-    needs: [check-runner, security-self, security-hosted, lint-self, lint-hosted]
+    needs:
+      [check-runner, security-self, security-hosted, lint-self, lint-hosted]
     if: needs.check-runner.outputs.available != 'true'
     permissions:
       contents: read

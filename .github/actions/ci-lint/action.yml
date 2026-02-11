@@ -1,7 +1,7 @@
-name: "CI - Lint"
-description: "Composite action to run code quality checks (ESLint, HTML, MD, format)."
+name: 'CI - Lint'
+description: 'Composite action to run code quality checks (ESLint, HTML, MD, format).'
 runs:
-  using: "composite"
+  using: 'composite'
   steps:
     - name: Checkout code
       uses: actions/checkout@8ade135a41bc03ea155e62e844d188df1ea18608

@@ -1,7 +1,7 @@
-name: "CI - Build"
-description: "Composite action for building the application and uploading artifact when tagged."
+name: 'CI - Build'
+description: 'Composite action for building the application and uploading artifact when tagged.'
 runs:
-  using: "composite"
+  using: 'composite'
   steps:
     - name: Checkout code
       uses: actions/checkout@8ade135a41bc03ea155e62e844d188df1ea18608

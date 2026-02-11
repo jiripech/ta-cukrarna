@@ -1,7 +1,7 @@
-name: "CI - Security"
-description: "Composite action to run the repository security scan (lint:secrets)."
+name: 'CI - Security'
+description: 'Composite action to run the repository security scan (lint:secrets).'
 runs:
-  using: "composite"
+  using: 'composite'
   steps:
     - name: Checkout code
       uses: actions/checkout@8ade135a41bc03ea155e62e844d188df1ea18608
