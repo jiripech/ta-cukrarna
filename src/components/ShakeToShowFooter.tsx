@@ -20,10 +20,11 @@ export default function ShakeToShowFooter(): null {
     const SHOW_DURATION = 7000; // ms to keep the footer visible
 
     function showFooter() {
+      if (!footer) return;
       footer.classList.add('visible');
       if (shakeTimeout) window.clearTimeout(shakeTimeout);
       shakeTimeout = window.setTimeout(() => {
-        footer.classList.remove('visible');
+        if (footer) footer.classList.remove('visible');
       }, SHOW_DURATION);
     }
 
