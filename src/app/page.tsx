@@ -90,10 +90,20 @@ export default function Home() {
             </h2>
             <p className="text-lg text-zinc-600 dark:text-zinc-400">
               Sledujte naše{' '}
-              <a href="https://www.facebook.com/people/Ta-Cukr%C3%A1rna/61558181128294/">
+              <a
+                className="hover:text-amber-400 transition-colors"
+                href="https://www.facebook.com/people/Ta-Cukr%C3%A1rna/61558181128294/"
+              >
                 facebookové stránky
               </a>{' '}
-              a <a href="https://instagram.com/tacukrarna">instagram</a>.
+              a{' '}
+              <a
+                className="hover:text-amber-400 transition-colors"
+                href="https://instagram.com/tacukrarna"
+              >
+                instagram
+              </a>
+              .
             </p>
           </div>
         </div>
