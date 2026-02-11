@@ -24,9 +24,9 @@ jobs:
       available: ${{ steps.check.outputs.available }}
       count: ${{ steps.check.outputs.count }}
     steps:
-      - name: Check for available self-hosted runner (Octokit)
+      - name: Check for available self-hosted runner (github-script)
         id: check
-        uses: actions/github-script@v6
+        uses: actions/github-script@00f12e3e20659f42342b1c0226afda7f7c042325
         with:
           script: |
             const label = process.env.PREF || '';
