@@ -1,37 +1,35 @@
 # Development Tools Setup
 
-## 🔧 Nástroje pro kvalitu kódu
+## 🔧 Code Quality Tools
 
-Tento projekt nyní obsahuje kompletní setup pro automatickou kontrolu kvality
-kódu:
+This project includes a complete setup for automated code quality checks.
 
 ### Markdown Linting
 
-- **markdownlint-cli2** - kontroluje markdown soubory podle standardních
-  pravidel
-- Automaticky opravuje co se dá (např. mezery, formátování)
-- Varuje před problémy jako MD031, MD022 atd.
+- **markdownlint-cli2** - checks markdown files against standard rules
+- Automatically fixes what it can (e.g., spacing, formatting)
+- Warns about issues such as MD031, MD022, etc.
 
 ### Code Formatting
 
-- **Prettier** - jednotné formátování všech souborů
-- Konfigurace v `.prettierrc.json`
-- Ignoruje `node_modules`, `.next` atd.
+- **Prettier** - consistent formatting for all files
+- Configuration in `.prettierrc.json`
+- Ignores `node_modules`, `.next`, and similar directories
 
 ### Pre-commit Hooks
 
-- **Husky** + **lint-staged** - automatické spuštění před každým commitem
-- Kontroluje pouze změněné soubory (rychlé)
-- Automaticky opravuje co se dá
+- **Husky** + **lint-staged** - run checks automatically before each commit
+- Only checks changed files (fast)
+- Auto-fixes where possible
 
-## 📝 Dostupné příkazy
+## 📝 Available commands
 
 ```bash
-# Kontrola markdown souborů
+# Markdown checks
 npm run lint:md
 npm run lint:md:fix
 
-# Formátování souborů
+# Formatting
 npm run format
 npm run format:check
 npm run format:md
@@ -39,34 +37,50 @@ npm run format:md
 # ESLint (TypeScript/JavaScript)
 npm run lint
 
-# Kompletní kontrola
+# Full check
 npm run check-all
 ```
 
-## 🚀 Automatické opravy
+## 🚀 Automatic fixes
 
-Při každém `git commit` se automaticky:
+On each `git commit`:
 
-1. Spustí ESLint s auto-fix na .js/.ts/.tsx soubory
-2. Spustí markdownlint s auto-fix na .md soubory
-3. Zformátuje všechny soubory pomocí Prettier
-4. Commitne pouze pokud vše prošlo
+1. ESLint runs with auto-fix for .js/.ts/.tsx files
+2. markdownlint runs with auto-fix for .md files
+3. Prettier formats all files
+4. Commit only proceeds if all checks pass
 
-## 🎯 Výhody
+## 🎯 Benefits
 
-- **Konzistentní kvalita**: Všechny soubory mají jednotný styl
-- **Méně chyb**: Automatická detekce problémů před commitem
-- **Rychlé opravy**: Většina problémů se opraví automaticky
-- **Čistá historie**: Commity obsahují pouze správně formátovaný kód
+- **Consistent quality**: All files follow the same style
+- **Fewer bugs**: Automated detection of issues before commit
+- **Quick fixes**: Most problems are auto-corrected
+- **Clean history**: Commits contain well-formatted code
 
-## 🔍 Resolved Issues
+## 🔍 Resolved issues
 
-Opraveno v této aktualizaci:
+Fixed in this update:
 
-- MD040: Všechny code blocky nyní mají specifikovaný jazyk
-- MD031: Správné mezery okolo seznamů
-- MD022: Správné mezery okolo headingů
-- Konzistentní formátování napříč všemi soubory
+- MD040: All code blocks now specify the language
+- MD031: Correct spacing around lists
+- MD022: Proper spacing around headings
+- Consistent formatting across all files
+
+## 🧭 Preferred self-hosted runner
+
+- To set the preferred self-hosted runner, add a repository variable
+  `PREF_RUNNER` (e.g., `hq-runner-x64`) via: Repository → Settings → Actions →
+  Variables.
+- If `PREF_RUNNER` is set, production workflows will attempt to use it (if a
+  runner with that label is online and not busy). If it is not set, workflows
+  will use GitHub-hosted runners.
+
+_Example (gh):_
+
+```bash
+# Create or update variable
+gh api repos/:owner/:repo/actions/variables -f name='PREF_RUNNER' -f value='hq-runner-x64'
+```
 
 ## 🧭 Preferovaný self-hosted runner
 

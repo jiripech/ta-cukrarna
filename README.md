@@ -1,7 +1,7 @@
 # Ta Cukrárna - PWA Website
 
-> Zakázková výroba netradičních, tradičních i luxusních a elegantních zákusků,
-> dortů, dezertů, sušenek a sladkého trvanlivého pečiva.
+> Custom-made confectionery producing unique, traditional and luxurious elegant
+> pastries, cakes, desserts, cookies, and sweet baked goods.
 
 A modern Progressive Web App (PWA) for Ta Cukrárna bakery, built with Next.js
 16, React 19, and TypeScript.
@@ -106,6 +106,12 @@ To save Chrome console output for debugging:
 4. Save to `log/` directory (automatically ignored by Git)
 
 Example console log filename: `log/localhost-[timestamp].log`
+
+### CI — preferred self-hosted runner
+
+- To prefer a self-hosted runner for CI, set the repository variable
+  `PREF_RUNNER` (e.g., `hq-runner-x64`) via: Repository → Settings → Actions →
+  Variables. See `DEVELOPMENT_TOOLS.md` for details.
 
 ### Common PWA Issues
 
