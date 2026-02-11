@@ -43,7 +43,7 @@ npm run check-all
 # Commit version bump
 echo "💾 Committing version bump..."
 git add package.json package-lock.json
-git commit -m "🔖 Release $NEW_VERSION
+git commit -s -S -m "🔖 Release $NEW_VERSION
 
 - Automated patch version bump
 - Ready for production deployment"
