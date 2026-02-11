@@ -89,8 +89,11 @@ export default function Home() {
               Připravujeme pro vás více obsahu
             </h2>
             <p className="text-lg text-zinc-600 dark:text-zinc-400">
-              Naše nabídka se postupně rozšiřuje. Brzy zde najdete více
-              informací o našich produktech a službách.
+              Sledujte naše{' '}
+              <a href="https://www.facebook.com/people/Ta-Cukr%C3%A1rna/61558181128294/">
+                facebookové stránky
+              </a>{' '}
+              a <a href="https://instagram.com/tacukrarna">instagram</a>.
             </p>
           </div>
         </div>
