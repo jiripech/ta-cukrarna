@@ -36,16 +36,22 @@ echo "📦 Current version: $CURRENT_VERSION"
 NEW_VERSION=$(npm version patch --no-git-tag-version)
 echo "📦 New version: $NEW_VERSION"
 
+# Write version file (release version)
+echo "📝 Writing public/version.txt..."
+bash ./scripts/write-version.sh "$NEW_VERSION"
+
 # Run all checks
 echo "🔍 Running security and quality checks..."
 npm run check-all
 
 # Commit version bump
 echo "💾 Committing version bump..."
-git add package.json package-lock.json
+# Include generated public/version.txt so deployed site shows the released version
+git add package.json package-lock.json public/version.txt
 git commit -s -S -m "🔖 Release $NEW_VERSION
 
 - Automated patch version bump
+- public/version.txt updated to $NEW_VERSION
 - Ready for production deployment"
 
 # Create and push tag

@@ -7,8 +7,8 @@
     "npm": ">=10.0.0"
   },
   "scripts": {
-    "dev": "next dev --webpack",
-    "build": "NEXT_TELEMETRY_DISABLED=1 next build --webpack",
+    "dev": "bash ./scripts/write-version.sh && next dev --webpack",
+    "build": "bash ./scripts/write-version.sh && NEXT_TELEMETRY_DISABLED=1 next build --webpack",
     "clean": "rm -rf .next out",
     "start": "next start",
     "lint": "eslint",
