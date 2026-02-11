@@ -1,11 +1,11 @@
-name: "Check self-hosted runner (local)"
-description: "Checks for an online, not-busy self-hosted runner with a given label and emits outputs `available` and `count`."
+name: 'Check self-hosted runner (local)'
+description: 'Checks for an online, not-busy self-hosted runner with a given label and emits outputs `available` and `count`.'
 inputs:
   label:
-    description: "Optional label to probe (overrides PREF env)"
+    description: 'Optional label to probe (overrides PREF env)'
     required: false
 runs:
-  using: "composite"
+  using: 'composite'
   steps:
     - name: Setup Node.js
       uses: actions/setup-node@60edb5dd545a775178f52524783378180af0d1f8
