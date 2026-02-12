@@ -61,6 +61,7 @@ jobs:
             
             // Group issues by file
             for (const fileResult of issues) {
+              // Filter by severity: 0 = off, 1 = warning, 2 = error
               const warnings = fileResult.messages.filter(m => m.severity >= 1);
               
               if (warnings.length === 0) continue;
@@ -86,7 +87,7 @@ jobs:
                 owner: context.repo.owner,
                 repo: context.repo.repo,
                 state: 'open',
-                labels: 'linting,automated'
+                labels: ['linting', 'automated']
               });
               
               const issueTitle = `[Linting] ${fileName} - ${warnings.length} warning(s)`;
