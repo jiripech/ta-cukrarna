@@ -113,6 +113,50 @@ Example console log filename: `log/localhost-[timestamp].log`
   `PREF_RUNNER` (e.g., `hq-runner-x64`) via: Repository → Settings → Actions →
   Variables. See `DEVELOPMENT_TOOLS.md` for details.
 
+## 🤖 GitHub Actions Workflows
+
+### Deployment Workflow (`deploy.yml`)
+
+Automated deployment pipeline that runs on:
+
+- Push to `main` branch with version tags (`v*`)
+- Pull requests to `main` (lint and build only)
+
+Pipeline stages:
+
+1. **Security Scan** - Checks for secrets and vulnerabilities
+2. **Code Quality** - Runs ESLint, HTML validation, Markdown lint, and format
+   checks
+3. **Build** - Creates static production build
+4. **Deploy** - Deploys to VPS via rsync (tags only)
+5. **Verify** - Validates deployment (tags only)
+
+### Lint and Create Issues Workflow (`lint-and-create-issues.yml`)
+
+Automatically creates GitHub issues for TypeScript linting warnings:
+
+- **Triggers**: Push to `main` branch or pull requests
+- **Features**:
+  - Runs ESLint with JSON output
+  - Creates GitHub issues for each file with warnings/errors
+  - Prevents duplicates by updating existing issues
+  - Includes commit SHA, file name, line numbers, and rule IDs
+  - Auto-applies labels: `linting`, `automated`, `bug`
+
+Example issue format:
+
+```markdown
+## Linting warnings found in `src/app/page.tsx`
+
+**Commit:** abc1234 **Branch:** main
+
+### Warnings:
+
+1. **⚠️ Warning** (Line 8:9)
+   - **Rule:** `@typescript-eslint/no-unused-vars`
+   - **Message:** 'isDarkMode' is assigned a value but never used.
+```
+
 ### Common PWA Issues
 
 - **Viewport warnings**: Use separate `viewport` export in layout.tsx
