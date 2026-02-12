@@ -1,6 +1,6 @@
 {
   "name": "ta-cukrarna",
-  "version": "1.1.40",
+  "version": "1.1.41",
   "private": true,
   "engines": {
     "node": ">=20.9.0",
