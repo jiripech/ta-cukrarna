@@ -6,6 +6,10 @@ on:
       - main
   pull_request:
 
+permissions:
+  contents: read
+  issues: write
+
 jobs:
   lint-check:
     runs-on: ubuntu-latest
@@ -27,7 +31,7 @@ jobs:
         id: lint
         continue-on-error: true
         run: |
-          npm run lint --format json > lint-results.json || true
+          npm run lint -- --format json > lint-results.json || true
           
       - name: Parse lint results and create issues
         if: always()
