@@ -13,12 +13,36 @@ export default function RevealFooterAtBottom(): null {
     const SHOW_DURATION = 7000; // ms to keep the footer visible
     const BOTTOM_TOLERANCE = 2; // px tolerance for "at bottom" check
 
+    const originalText = footer.textContent || '';
+
     function showFooter() {
       if (!footer) return;
+
+      // show immediately
       footer.classList.add('visible');
+
+      // fetch /version.txt each time and prefer its content when available
+      fetch('/version.txt', { cache: 'no-store' })
+        .then(res => {
+          if (!res.ok) throw new Error('no version file');
+          return res.text();
+        })
+        .then(txt => {
+          const v = (txt || '').trim();
+          if (v) footer.textContent = v;
+          else footer.textContent = originalText;
+        })
+        .catch(() => {
+          // leave server-rendered content (originalText) if fetch fails
+          footer.textContent = originalText;
+        });
+
       if (showTimeout) window.clearTimeout(showTimeout);
       showTimeout = window.setTimeout(() => {
-        if (footer) footer.classList.remove('visible');
+        if (footer) {
+          footer.classList.remove('visible');
+          footer.textContent = originalText; // restore original text after hide
+        }
       }, SHOW_DURATION);
     }
 
