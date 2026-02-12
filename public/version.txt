@@ -1,1 +1,1 @@
-Version: v1.1.39
+Version: v1.1.40
