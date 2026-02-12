@@ -32,24 +32,17 @@ body {
   right: 0;
   text-align: center;
   font-size: 10px;
-  opacity: 0.9;
+  opacity: 0; /* hidden by default on all devices */
   z-index: 50;
   pointer-events: none;
   color: var(--foreground);
   transition:
     opacity 200ms ease,
     transform 200ms ease;
-  transform: translateY(0);
+  transform: translateY(6px);
 }
 
-/* Hidden by default on small screens; revealed when shaken (adds .visible) */
-@media (max-width: 640px) {
-  .version-footer {
-    opacity: 0;
-    transform: translateY(6px);
-  }
-  .version-footer.visible {
-    opacity: 0.9;
-    transform: translateY(0);
-  }
+.version-footer.visible {
+  opacity: 0.9;
+  transform: translateY(0);
 }

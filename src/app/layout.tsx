@@ -3,7 +3,7 @@ import { Geist, Geist_Mono } from 'next/font/google';
 import './globals.css';
 import PWARegistration from '@/components/PWARegistration';
 import ClarityTracker from '@/components/Clarity';
-import ShakeToShowFooter from '@/components/ShakeToShowFooter';
+import RevealFooterAtBottom from '@/components/RevealFooterAtBottom';
 import fs from 'fs';
 import path from 'path';
 import { execSync } from 'child_process';
@@ -98,7 +98,7 @@ export default function RootLayout({
             {version}
           </div>
         )}
-        <ShakeToShowFooter />
+        <RevealFooterAtBottom />
       </body>
     </html>
   );
