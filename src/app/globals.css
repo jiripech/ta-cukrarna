@@ -7,6 +7,9 @@
   --color-foreground: #171717;
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
+
+  /* Photo slideshow transition (ms) — override per-component via inline style */
+  --slideshow-transition-ms: 5000ms;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -59,7 +62,7 @@ body {
 }
 .photo-slideshow .slide-img {
   opacity: 0;
-  transition: opacity 5s ease;
+  transition: opacity var(--slideshow-transition-ms, 5000ms) ease;
 }
 .photo-slideshow .slide-img.active {
   opacity: 1;

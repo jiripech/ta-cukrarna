@@ -2,6 +2,7 @@
 
 import Image from 'next/image';
 import { useDarkMode } from '../hooks/useDarkMode';
+import PhotoSlideshow from '@/components/PhotoSlideshow';
 
 export default function Home() {
   const isDarkMode = useDarkMode();
@@ -57,16 +58,7 @@ export default function Home() {
         {/* Block Type A: Image + Text - Sweet Custom Dreams */}
         <div className="flex flex-col lg:flex-row items-center gap-2">
           <div id="leftCol" className="lg:w-1/2">
-            <Image
-              src={
-                isDarkMode ? '/img/sweetdream-dark.png' : '/img/sweetdream.png'
-              }
-              alt="Ilustrační obrázek sladkých snů v zakázkové cukrářské výrobě"
-              width={281}
-              height={300}
-              style={{ width: 'auto', height: 'auto' }}
-              className="rounded-lg"
-            />
+            <PhotoSlideshow className="h-[300px]" />
           </div>
           <div id="rightCol" className="lg:w-1/2 space-y-4">
             <h2 className="text-4xl font-bold text-zinc-900 dark:text-zinc-100 tracking-wide">
