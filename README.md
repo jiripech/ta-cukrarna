@@ -133,7 +133,7 @@ Pipeline stages:
 
 ### Lint and Create Issues Workflow (`lint-and-create-issues.yml`)
 
-Automatically creates GitHub issues for TypeScript linting warnings:
+Automatically creates GitHub issues for TypeScript linting warnings and errors:
 
 - **Triggers**: Push to `main` branch or pull requests
 - **Features**:
