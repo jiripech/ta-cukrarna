@@ -1,12 +1,9 @@
 'use client';
 
 import Image from 'next/image';
-import { useDarkMode } from '../hooks/useDarkMode';
 import PhotoSlideshow from '@/components/PhotoSlideshow';
 
 export default function Home() {
-  const isDarkMode = useDarkMode();
-
   return (
     <div className="min-h-screen bg-zinc-50 dark:bg-black">
       {/* Header Section with Background Image */}
