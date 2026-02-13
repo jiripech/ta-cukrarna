@@ -2,7 +2,6 @@
 
 import Image from 'next/image';
 import PhotoSlideshow from '@/components/PhotoSlideshow';
-
 export default function Home() {
   return (
     <div className="min-h-screen bg-zinc-50 dark:bg-black">
