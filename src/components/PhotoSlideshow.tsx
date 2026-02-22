@@ -37,7 +37,7 @@ export default function PhotoSlideshow({
           .split(/\r?\n/)
           .map(l => l.trim())
           .filter(Boolean)
-          .filter(l => /\.jpe?g$/i.test(l));
+          .filter(l => /\.webp$/i.test(l));
         if (list.length > 0) {
           // convert to full urls
           const urls = list.map(name => `${folder}/${name}`);
@@ -46,7 +46,7 @@ export default function PhotoSlideshow({
       })
       .catch(() => {
         // fallback: try a single file named photo.jpg
-        setImages([`${folder}/photo.jpg`]);
+        setImages([`${folder}/photo.webp`]);
       });
 
     return () => {
