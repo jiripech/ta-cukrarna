@@ -3,7 +3,7 @@ name: Lint and Create Issues for TS files
 on:
   push:
     branches:
-      - main
+      - dev
   pull_request:
 
 permissions:
