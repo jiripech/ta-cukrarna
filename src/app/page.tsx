@@ -16,9 +16,9 @@ export default function Home() {
         <div className="absolute inset-0 bg-black/40"></div>
 
         {/* Logo - Top Left */}
-        <div className="absolute top-6 left-6 z-20">
+        <div id="logoimg" className="absolute top-6 left-6 z-20">
           <Image
-            src="/img/logo.svg"
+            src="/img/logo.webp"
             alt="Ta Cukrárna Logo"
             width={240}
             height={120}
