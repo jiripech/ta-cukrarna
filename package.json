@@ -20,7 +20,7 @@
     "format:check": "prettier --check .",
     "format:md": "prettier --write \"**/*.md\"",
     "prepare": "husky",
-    "release": "./scripts/release.sh",
+    "release": "npm run format && ./scripts/release.sh",
     "verify": "./scripts/verify-deployment.sh",
     "check-all": "npm run lint && npm run lint:secrets && npm run lint:html && npm run lint:md && npm run format:check"
   },
