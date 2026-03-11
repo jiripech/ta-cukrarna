@@ -19,6 +19,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL('https://tacukrarna.cz'),
   title:
     'Cukrárna v centru Hradce Králové, Rodinná cukrárna přímo v centru města',
   description:
@@ -52,6 +53,25 @@ export const metadata: Metadata = {
   },
   formatDetection: {
     telephone: false,
+  },
+  openGraph: {
+    title: 'Ta Cukrárna',
+    description: 'Rodinná cukrárna v centru Hradce Králové',
+    siteName: 'Ta Cukrárna',
+    images: [{ url: '/img/logo.webp' }],
+    type: 'website',
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Ta Cukrárna',
+    description: 'Cukrárna v centru Hradce Králové',
+    images: ['/img/logo.webp'],
+  },
+  alternates: {
+    canonical: 'https://tacukrarna.cz',
+    types: {
+      'text/vcard': '/tacukrarna.vcf',
+    },
   },
 };
 
@@ -87,6 +107,49 @@ export default function RootLayout({
 
   return (
     <html lang="cs">
+      <head>
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              '@context': 'https://schema.org',
+              '@type': 'Bakery',
+              name: 'Ta Cukrárna',
+              url: 'https://tacukrarna.cz',
+              image: 'https://tacukrarna.cz/img/logo.webp',
+              telephone: '+420 725 528 580',
+              email: 'info@tacukrarna.cz',
+              address: {
+                '@type': 'PostalAddress',
+                streetAddress: 'Opletalova 328/3',
+                addressLocality: 'Hradec Králové',
+                postalCode: '500 03',
+                addressCountry: 'CZ',
+              },
+              openingHoursSpecification: [
+                {
+                  '@type': 'OpeningHoursSpecification',
+                  dayOfWeek: 'Monday',
+                  opens: '12:00',
+                  closes: '17:45',
+                },
+                {
+                  '@type': 'OpeningHoursSpecification',
+                  dayOfWeek: ['Tuesday', 'Thursday', 'Friday'],
+                  opens: '08:00',
+                  closes: '19:00',
+                },
+                {
+                  '@type': 'OpeningHoursSpecification',
+                  dayOfWeek: 'Wednesday',
+                  opens: '08:00',
+                  closes: '17:45',
+                },
+              ],
+            }),
+          }}
+        />
+      </head>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >

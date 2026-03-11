@@ -2,21 +2,37 @@
 
 import Image from 'next/image';
 import PhotoSlideshow from '@/components/PhotoSlideshow';
+
 export default function Home() {
   return (
-    <div className="min-h-screen bg-zinc-50 dark:bg-black">
+    <div className="flex flex-col min-h-screen bg-zinc-50 dark:bg-black">
       {/* Header Section with Background Image */}
       <header
-        className="relative h-[50vh] flex items-center justify-center bg-cover bg-center bg-no-repeat"
+        className="relative flex-1 md:flex-none md:h-[50vh] flex items-start pt-[20vh] md:pt-0 md:items-center justify-center bg-cover bg-center bg-no-repeat"
         style={{
           backgroundImage: "url('/img/header_bg.png')",
         }}
       >
-        {/* Overlay for better text readability */}
         <div className="absolute inset-0 bg-black/40"></div>
 
-        {/* Logo - Top Left */}
-        <div id="logoimg" className="absolute top-6 left-6 z-20">
+        {/* Mobile Logo - Centered (Hidden on md+) */}
+        <div className="relative z-20 px-6 w-full max-w-xs md:hidden block">
+          <Image
+            src="/img/logo.webp"
+            alt="Ta Cukrárna Logo"
+            width={800}
+            height={400}
+            style={{ width: '100%', height: 'auto' }}
+            className="brightness-0 invert drop-shadow-md"
+            priority
+          />
+        </div>
+
+        {/* Desktop Logo - Top Left (Hidden on mobile) */}
+        <div
+          id="logoimg"
+          className="absolute top-6 left-6 z-20 hidden md:block"
+        >
           <Image
             src="/img/logo.webp"
             alt="Ta Cukrárna Logo"
@@ -28,8 +44,8 @@ export default function Home() {
           />
         </div>
 
-        {/* Header Content */}
-        <div className="relative z-10 text-center text-white px-4">
+        {/* Desktop Header Content (Hidden on mobile) */}
+        <div className="relative z-10 text-center text-white px-4 hidden md:block">
           <h1 className="text-4xl md:text-6xl font-bold mb-4 tracking-tight">
             Cukrárna v centru Hradce Králové
           </h1>
@@ -46,10 +62,10 @@ export default function Home() {
         </div>
       </header>
 
-      {/* Main Content */}
+      {/* Main Content (Hidden on mobile) */}
       <main
         id="main-content"
-        className="container mx-auto px-4 py-12 space-y-16"
+        className="hidden md:block container mx-auto px-4 py-12 space-y-16"
       >
         {/* Block Type A: Image + Text - Sweet Custom Dreams */}
         <div className="flex flex-col lg:flex-row items-center gap-2">
@@ -69,8 +85,8 @@ export default function Home() {
         </div>
       </main>
 
-      {/* Dynamic Content Sections */}
-      <section className="bg-white dark:bg-zinc-900 py-12 border-t border-zinc-200 dark:border-zinc-800">
+      {/* Dynamic Content Sections (Hidden on mobile) */}
+      <section className="hidden md:block bg-white dark:bg-zinc-900 py-12 border-t border-zinc-200 dark:border-zinc-800">
         <div className="container mx-auto px-4 text-center">
           <div className="max-w-2xl mx-auto">
             <h2 className="text-3xl font-bold text-zinc-900 dark:text-zinc-100 mb-4">
@@ -98,18 +114,18 @@ export default function Home() {
       </section>
 
       {/* Footer */}
-      <footer className="bg-zinc-900 text-white py-8">
+      <footer className="bg-white dark:bg-zinc-900 md:bg-zinc-900! text-zinc-900 dark:text-zinc-100 md:text-white! py-8 border-t border-zinc-200 dark:border-zinc-800 md:border-t-0">
         <div className="container mx-auto px-4">
           <div className="grid md:grid-cols-2 gap-6 mb-6">
             {/* Contact Info */}
             <div>
-              <h3 className="text-lg font-semibold mb-3 text-amber-400">
+              <h3 className="text-lg font-semibold mb-3 text-amber-600 dark:text-amber-400 md:text-amber-400!">
                 Ta Cukrárna
               </h3>
-              <div className="space-y-2 text-zinc-300">
+              <div className="space-y-2 text-zinc-600 dark:text-zinc-300 md:text-zinc-300!">
                 <div className="flex items-center">
                   <svg
-                    className="w-4 h-4 mr-2 text-amber-400"
+                    className="w-4 h-4 mr-2 text-amber-600 dark:text-amber-400 md:text-amber-400!"
                     fill="currentColor"
                     viewBox="0 0 20 20"
                   >
@@ -121,7 +137,7 @@ export default function Home() {
                   </svg>
                   <span>
                     <a
-                      className="hover:text-amber-400 transition-colors"
+                      className="hover:text-amber-600 dark:hover:text-amber-400 transition-colors"
                       href="https://maps.app.goo.gl/e29gMHyM2tUf8a1u8"
                       title="Mapy Google"
                     >
@@ -131,7 +147,7 @@ export default function Home() {
                 </div>
                 <div className="flex items-center">
                   <svg
-                    className="w-4 h-4 mr-2 text-amber-400"
+                    className="w-4 h-4 mr-2 text-amber-600 dark:text-amber-400 md:text-amber-400!"
                     fill="currentColor"
                     viewBox="0 0 20 20"
                   >
@@ -139,23 +155,19 @@ export default function Home() {
                   </svg>
                   <a
                     href="tel:+420725528580"
-                    className="hover:text-amber-400 transition-colors"
+                    className="hover:text-amber-600 dark:hover:text-amber-400 transition-colors"
                   >
                     +420&nbsp;725&nbsp;528&nbsp;580
                   </a>
                 </div>
                 <div className="flex items-center">
-                  <svg
-                    className="w-4 h-4 mr-2 text-amber-400"
-                    fill="currentColor"
-                    viewBox="0 0 20 20"
-                  >
+                  <svg className="w-4 h-4 mr-2 text-amber-600 dark:text-amber-400 md:text-amber-400!">
                     <path d="M2.003 5.884L10 9.882l7.997-3.998A2 2 0 0016 4H4a2 2 0 00-1.997 1.884z" />
                     <path d="M18 8.118l-8 4-8-4V14a2 2 0 002 2h12a2 2 0 002-2V8.118z" />
                   </svg>
                   <a
                     href="mailto:info@tacukrarna.cz"
-                    className="hover:text-amber-400 transition-colors"
+                    className="hover:text-amber-600 dark:hover:text-amber-400 transition-colors"
                   >
                     info@tacukrarna.cz
                   </a>
@@ -165,10 +177,10 @@ export default function Home() {
 
             {/* Opening Hours */}
             <div>
-              <h3 className="text-lg font-semibold mb-3 text-amber-400">
+              <h3 className="text-lg font-semibold mb-3 text-amber-600 dark:text-amber-400 md:text-amber-400!">
                 Otevírací doba
               </h3>
-              <div className="space-y-2 text-zinc-300">
+              <div className="space-y-2 text-zinc-600 dark:text-zinc-300 md:text-zinc-300!">
                 <div className="flex justify-between">
                   <span>Pondělí</span>
                   <span className="font-medium">12:00 - 17:45</span>
@@ -191,13 +203,15 @@ export default function Home() {
                 </div>
                 <div className="flex justify-between">
                   <span>Sobota - Neděle, svátky</span>
-                  <span className="font-medium text-red-400">Zavřeno</span>
+                  <span className="font-medium text-red-600 dark:text-red-400 md:text-red-400!">
+                    Zavřeno
+                  </span>
                 </div>
               </div>
 
               {/* Social Links */}
               <div className="mt-4">
-                <h4 className="text-sm font-medium mb-2 text-amber-400">
+                <h4 className="text-sm font-medium mb-2 text-amber-600 dark:text-amber-400 md:text-amber-400!">
                   Sledujte nás
                 </h4>
                 <div className="flex space-x-3">
@@ -205,7 +219,7 @@ export default function Home() {
                     href="https://instagram.com/tacukrarna"
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="text-zinc-400 hover:text-pink-400 transition-colors"
+                    className="text-zinc-500 dark:text-zinc-400 md:text-zinc-400! hover:text-pink-500 dark:hover:text-pink-400 transition-colors"
                     title="Instagram"
                   >
                     <svg
@@ -220,7 +234,7 @@ export default function Home() {
                     href="https://wa.me/420720744786"
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="text-zinc-400 hover:text-green-400 transition-colors"
+                    className="text-zinc-500 dark:text-zinc-400 md:text-zinc-400! hover:text-green-500 dark:hover:text-green-400 transition-colors"
                     title="WhatsApp"
                   >
                     <svg
@@ -237,7 +251,7 @@ export default function Home() {
           </div>
 
           {/* Copyright */}
-          <div className="border-t border-zinc-800 pt-4 text-center text-zinc-400">
+          <div className="border-t border-zinc-200 dark:border-zinc-800 md:border-zinc-800! pt-4 text-center text-zinc-500 dark:text-zinc-400 md:text-zinc-400!">
             <p>&copy; 2025 RevoFab s.r.o. Všechna práva vyhrazena.</p>
           </div>
         </div>

@@ -1,0 +1,10 @@
+BEGIN:VCARD
+VERSION:3.0
+N:Ta Cukrárna;;;;
+FN:Ta Cukrárna
+ORG:Revofab s.r.o.
+TEL;TYPE=WORK,VOICE:+420725528580
+EMAIL;TYPE=WORK:info@tacukrarna.cz
+URL:https://tacukrarna.cz
+ADR;TYPE=WORK:;;Opletalova 328/3;Hradec Králové;;500 03;Czech Republic
+END:VCARD
