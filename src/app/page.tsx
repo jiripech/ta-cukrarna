@@ -28,37 +28,37 @@ export default function Home() {
           />
         </div>
 
-        {/* Desktop Logo - Top Left (Hidden on mobile) */}
-        <div
-          id="logoimg"
-          className="absolute top-6 left-6 z-20 hidden md:block"
-        >
-          <Image
-            src="/img/logo.webp"
-            alt="Ta Cukrárna Logo"
-            width={240}
-            height={120}
-            style={{ width: 'auto', height: 'auto' }}
-            className="brightness-0 invert max-h-32"
-            priority
-          />
-        </div>
+        {/* Desktop Container (Hidden on mobile) */}
+        <div className="absolute inset-0 z-10 hidden md:flex flex-col w-full h-full">
+          {/* Desktop Logo (Top Left) */}
+          <div id="logoimg" className="p-6 self-start">
+            <Image
+              src="/img/logo.webp"
+              alt="Ta Cukrárna Logo"
+              width={240}
+              height={120}
+              style={{ width: 'auto', height: 'auto' }}
+              className="brightness-0 invert max-h-32"
+              priority
+            />
+          </div>
 
-        {/* Desktop Header Content (Hidden on mobile) */}
-        <div className="relative z-10 text-center text-white px-4 hidden md:block">
-          <h1 className="text-4xl md:text-6xl font-bold mb-4 tracking-tight">
-            Cukrárna v centru Hradce Králové
-          </h1>
-          <h2
-            id="header-description"
-            className="text-lg md:text-xl mb-8 max-w-2xl mx-auto"
-          >
-            Rodinná cukrárna přímo v&nbsp;centru města
-          </h2>
-          <p className="text-lg md:text-xl mb-8 max-w-2xl mx-auto">
-            Rádi vás uvidíme v naší komorní kavárničce - čekají zde na vás
-            skvělé domácí koláče, zákusky a&nbsp;výtečné kafe
-          </p>
+          {/* Desktop Header Text (Centered in remaining space) */}
+          <div className="flex-1 flex flex-col items-center justify-center text-center text-white px-4 pb-20">
+            <h1 className="text-4xl md:text-6xl font-bold mb-4 tracking-tight">
+              Cukrárna v centru Hradce Králové
+            </h1>
+            <h2
+              id="header-description"
+              className="text-lg md:text-xl mb-6 max-w-2xl mx-auto"
+            >
+              Rodinná cukrárna přímo v&nbsp;centru města
+            </h2>
+            <p className="text-lg md:text-xl max-w-2xl mx-auto">
+              Rádi vás uvidíme v naší komorní kavárničce - čekají zde na vás
+              skvělé domácí koláče, zákusky a&nbsp;výtečné kafe
+            </p>
+          </div>
         </div>
       </header>
 
