@@ -24,13 +24,24 @@ export default defineConfig({
     trace: 'on-first-retry',
   },
 
-  /* Configure projects for major browsers */
+  /* Configure projects for major browsers and mobile devices */
   projects: [
     {
       name: 'chromium',
       use: { ...devices['Desktop Chrome'] },
     },
-    // We only need chromium for testing offline service worker functionality easily
+    {
+      name: 'Mobile Android (Pixel 5)',
+      use: { ...devices['Pixel 5'] },
+    },
+    {
+      name: 'Mobile Android Old (Galaxy S5)',
+      use: { ...devices['Galaxy S5'] },
+    },
+    {
+      name: 'Mobile iOS Old (iPhone SE)',
+      use: { ...devices['iPhone SE'] },
+    },
   ],
 
   /* Run your local dev server before starting the tests */
