@@ -12,17 +12,17 @@ test.describe('Mobile version footer', () => {
 
     await page.goto('/');
 
-    // Scroll slightly first if needed, then scroll to the absolute bottom using a massive static offset
-    // WebKit bounds simulation requires this to ensure bottom boundary detection
-    await page.evaluate(() => {
-      window.scrollTo(0, 99999);
-      window.dispatchEvent(new Event('scroll'));
-    });
-
     const footer = page.locator('.version-footer');
 
-    // Wait for the footer to become visible (triggered by scroll to bottom)
-    await expect(footer).toHaveClass(/visible/);
+    // Due to Next.js Hydration timing, the scroll listener might not be attached immediately after goto('/') resolves.
+    // Using toPass() ensures Playwright keeps actively scrolling and checking until the component officially reacts.
+    await expect(async () => {
+      await page.keyboard.press('End');
+      await page.mouse.wheel(0, 99999);
+      await page.evaluate(() => window.dispatchEvent(new Event('scroll')));
+
+      await expect(footer).toHaveClass(/visible/, { timeout: 1000 });
+    }).toPass({ timeout: 10000 });
 
     // Wait for a bit more than 7 seconds (7000ms duration)
     // We expect the visibility class to be removed
