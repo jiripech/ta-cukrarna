@@ -10,13 +10,15 @@ export default function RevealFooterAtBottom(): null {
     if (!footer) return;
 
     let showTimeout: number | null = null;
+    let isShowing = false;
     const SHOW_DURATION = 7000; // ms to keep the footer visible
-    const BOTTOM_TOLERANCE = 2; // px tolerance for "at bottom" check
+    const BOTTOM_TOLERANCE = 15; // px tolerance for "at bottom" check
 
     const originalText = footer.textContent || '';
 
     function showFooter() {
-      if (!footer) return;
+      if (!footer || isShowing) return;
+      isShowing = true;
 
       // show immediately
       footer.classList.add('visible');
@@ -43,6 +45,7 @@ export default function RevealFooterAtBottom(): null {
           footer.classList.remove('visible');
           footer.textContent = originalText; // restore original text after hide
         }
+        isShowing = false;
       }, SHOW_DURATION);
     }
 
