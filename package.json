@@ -22,7 +22,8 @@
     "prepare": "husky",
     "release": "npm run format && ./scripts/release.sh",
     "verify": "./scripts/verify-deployment.sh",
-    "check-all": "npm run lint && npm run lint:secrets && npm run lint:html && npm run lint:md && npm run format:check"
+    "check-all": "npm run lint && npm run lint:secrets && npm run lint:html && npm run lint:md && npm run format:check",
+    "test:e2e": "playwright test"
   },
   "dependencies": {
     "next": "16.1.1",
@@ -30,6 +31,7 @@
     "react-dom": "19.2.0"
   },
   "devDependencies": {
+    "@playwright/test": "^1.58.2",
     "@secretlint/secretlint-rule-preset-recommend": "^11.2.5",
     "@secretlint/secretlint-rule-privatekey": "^11.2.5",
     "@tailwindcss/postcss": "^4",
@@ -46,6 +48,7 @@
     "markdownlint-cli2": "^0.18.1",
     "prettier": "^3.6.2",
     "secretlint": "^11.2.5",
+    "serve": "^14.2.6",
     "tailwindcss": "^4",
     "typescript": "^5"
   },
