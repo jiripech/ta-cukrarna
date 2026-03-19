@@ -147,9 +147,6 @@ jobs:
           npm config set update-notifier false
           npm ci
 
-      - name: Install Playwright Browsers
-        run: npx playwright install --with-deps
-
       - name: Run E2E Tests
         run: npm run test:e2e
 
