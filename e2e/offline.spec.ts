@@ -41,7 +41,7 @@ test.describe('Offline Progressive Web App Capabilities', () => {
     // 4. Reload page (offline context)
     let reloadResponse;
     try {
-      reloadResponse = await page.reload({ waitUntil: 'networkidle' });
+      reloadResponse = await page.reload({ waitUntil: 'load', timeout: 8000 });
     } catch (e) {
       console.error('Page reload failed while offline:', e);
     }
