@@ -12,7 +12,7 @@ export default function RevealFooterAtBottom(): null {
     let showTimeout: number | null = null;
     let isShowing = false;
     const SHOW_DURATION = 7000; // ms to keep the footer visible
-    const BOTTOM_TOLERANCE = 15; // px tolerance for "at bottom" check
+    const BOTTOM_TOLERANCE = 50; // px tolerance for "at bottom" check
 
     const originalText = footer.textContent || '';
 
