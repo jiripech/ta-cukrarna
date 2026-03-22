@@ -1,9 +1,11 @@
-const CACHE_NAME = 'ta-cukrarna-v8';
+const CACHE_NAME = 'ta-cukrarna-v9';
 const urlsToCache = [
   '/',
   '/icon.ico',
   '/apple-touch-icon.png',
   '/img/favicon.png',
+  '/img/favicon-mid.png',
+  '/img/favicon.webp',
   '/img/logo.svg',
   '/img/header_bg.png',
   '/manifest.json',

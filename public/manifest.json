@@ -17,14 +17,14 @@
       "type": "image/png"
     },
     {
-      "src": "/img/favicon.png",
+      "src": "/img/favicon-mid.png",
       "sizes": "512x512",
       "type": "image/png"
     },
     {
-      "src": "/img/favicon.png",
+      "src": "/img/favicon.webp",
       "sizes": "any",
-      "type": "image/png",
+      "type": "image/webp",
       "purpose": "any maskable"
     }
   ]
