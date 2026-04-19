@@ -22,11 +22,11 @@ npm run clean
 npm run build
 
 # Deploy
-echo "📤 Deploying to VPS (public_html/)..."
-rsync -avz --delete -e "ssh" --exclude-from='.rsyncignore' ./out/ $VPS_USER@$VPS_HOST:public_html/
+echo "📤 Deploying to VPS (apps/website/)..."
+rsync -avz --delete -e "ssh" --exclude-from='.rsyncignore' ./out/ $VPS_USER@$VPS_HOST:apps/website/
 
 # Permissions
 echo "🔒 Setting remote file permissions..."
-ssh $VPS_USER@$VPS_HOST "find ./public_html -type f -exec chmod 644 {} \;"
+ssh $VPS_USER@$VPS_HOST "find ./apps/website -type f -exec chmod 644 {} \;"
 
 echo "✅ Manual deployment finished successfully!"

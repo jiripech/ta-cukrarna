@@ -64,9 +64,9 @@ sudo su - ta-cukrarna
 mkdir -p ~/.ssh
 chmod 700 ~/.ssh
 
-# Create public_html directory for static files
-mkdir -p ~/public_html
-chmod 755 ~/public_html
+# Create apps/website directory for static files
+mkdir -p ~/apps/website
+chmod 755 ~/apps/website
 ```
 
 #### Add public key to VPS
@@ -113,7 +113,7 @@ your-vps-ip-address-or-domain.com
 ta-cukrarna
 ```
 
-**Note**: VPS_PATH is no longer needed as we deploy to ~/public_html
+**Note**: VPS_PATH is no longer needed as we deploy to ~/apps/website
 
 ### 4. VPS Web Server Setup
 
@@ -134,14 +134,14 @@ sudo a2enmod expires
 sudo nano /etc/apache2/mods-enabled/userdir.conf
 ```
 
-Make sure the UserDir configuration allows serving from public_html:
+Make sure the UserDir configuration allows serving from apps/website:
 
 ```apache
 <IfModule mod_userdir.c>
-    UserDir public_html
+    UserDir apps/website
     UserDir disabled root
 
-    <Directory /home/*/public_html>
+    <Directory /home/*/apps/website>
         AllowOverride FileInfo AuthConfig Limit Indexes
         Options MultiViews Indexes SymLinksIfOwnerMatch IncludesNoExec
         Require method GET HEAD POST OPTIONS
@@ -164,9 +164,9 @@ Add configuration:
     ServerName tacukrarna.cz
     ServerAlias www.tacukrarna.cz
 
-    DocumentRoot /home/ta-cukrarna/public_html
+    DocumentRoot /home/ta-cukrarna/apps/website
 
-    <Directory /home/ta-cukrarna/public_html>
+    <Directory /home/ta-cukrarna/apps/website>
         AllowOverride All
         Require all granted
     </Directory>
@@ -232,11 +232,11 @@ applications. No runtime dependencies or process management needed on the VPS.
 # Option B: Manual rsync from local machine (for emergency)
 # From your local development machine:
 npm run build
-rsync -avz --delete -e "ssh -o StrictHostKeyChecking=no" out/ ta-cukrarna@your-vps-ip:~/public_html/
+rsync -avz --delete -e "ssh -o StrictHostKeyChecking=no" out/ ta-cukrarna@your-vps-ip:~/apps/website/
 
 # Option C: Manual build and upload (emergency only)
 # Build locally: npm run build
-# Upload out/ directory contents to ~/public_html on VPS
+# Upload out/ directory contents to ~/apps/website on VPS
 ```
 
 ### 8. Rollback Instructions
@@ -249,8 +249,8 @@ rsync -avz --delete -e "ssh -o StrictHostKeyChecking=no" out/ ta-cukrarna@your-v
 # Example manual rollback:
 ssh ta-cukrarna@your-vps-ip
 cd ~
-mv public_html public_html_current
-mv public_html_backup public_html
+mv apps/website apps/website_current
+mv apps/website_backup apps/website
 ```
 
 ## Security Notes
@@ -307,7 +307,7 @@ Simple Apache static file serving:
 # Only Apache needs to be running
 sudo systemctl status apache2
 
-# Apache serves static files directly from ~/public_html
+# Apache serves static files directly from ~/apps/website
 # No Node.js processes or PM2 needed
 ```
 
@@ -326,4 +326,4 @@ A record: www -> your-vps-ip
 - **VPS logs**: `sudo journalctl -u apache2 -f`
 - **Apache config test**: `sudo apache2ctl configtest`
 - **SSL certificate status**: `sudo certbot certificates`
-- **Static files**: Check `~/public_html` directory on VPS
+- **Static files**: Check `~/apps/website` directory on VPS

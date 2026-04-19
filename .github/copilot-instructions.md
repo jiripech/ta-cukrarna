@@ -29,7 +29,7 @@
   secret/HTML/Markdown checks (`lint:secrets`, `lint:html`, `lint:md`).
 - **Release**: Tag a commit (`v*`) to trigger GitHub Actions deployment to VPS.
   See `.github/workflows/deploy.yml`.
-- **Manual Deploy**: Use `rsync` to `~/public_html` on VPS if needed (see
+- **Manual Deploy**: Use `rsync` to `~/apps/website` on VPS if needed (see
   DEPLOYMENT.md).
 
 ## CI/CD & Deployment
@@ -37,7 +37,7 @@
 - **Static Only**: No Node.js runtime on VPS; all builds are static.
 - **GitHub Actions**: Security scan, lint, build, deploy, verify, and cleanup
   jobs. SSH key and VPS details in repo secrets.
-- **Rollback**: Restore from `public_html-backup-*` on VPS (see DEPLOYMENT.md).
+- **Rollback**: Restore from `apps/website-backup-*` on VPS (see DEPLOYMENT.md).
 
 ## Conventions & Gotchas
 
@@ -53,7 +53,7 @@
 
 - **Vercel/Netlify/Firebase**: Supported for static hosting, but main deployment
   is to custom VPS via GitHub Actions.
-- **Apache**: VPS serves static files from `~/public_html` (see DEPLOYMENT.md
+- **Apache**: VPS serves static files from `~/apps/website` (see DEPLOYMENT.md
   for config).
 
 ## Example File References

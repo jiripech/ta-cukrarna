@@ -213,9 +213,9 @@ jobs:
         run: |
           echo "🚀 Starting static deployment to VPS..."
 
-          # Create backup and ensure public_html exists
+          # Create backup and ensure apps/website exists
           echo "📦 Creating backup..."
-          ssh $VPS_USER@$VPS_HOST 'cp -r ./public_html public_html-backup-$(date +%Y%m%d-%H%M%S)'
+          ssh $VPS_USER@$VPS_HOST 'cp -r ./apps/website ./backups/website-backup-$(date +%Y%m%d-%H%M%S)'
 
       - name: Deploy to VPS
         if: always()
@@ -225,15 +225,15 @@ jobs:
         run: |
           echo "🚀 Starting static deployment to VPS..."
 
-          # Deploy static files to user's public_html
-          echo "📤 Deploying static files to ~/public_html..."
-          rsync -avz --delete -e "ssh -o StrictHostKeyChecking=no" --exclude-from='.rsyncignore' ./out/ $VPS_USER@$VPS_HOST:public_html/
+          # Deploy static files to user's apps/website
+          echo "📤 Deploying static files to ~/apps/website..."
+          rsync -avz --delete -e "ssh -o StrictHostKeyChecking=no" --exclude-from='.rsyncignore' ./out/ $VPS_USER@$VPS_HOST:apps/website/
 
           # Set proper permissions (no sudo needed)
           echo "Setting proper file permissions..."
           # The permissions should not be changed
-          # ssh $VPS_USER@$VPS_HOST chmod -R 755 ./public_html
-          ssh $VPS_USER@$VPS_HOST "find ./public_html -type f -exec chmod 644 {} \;"
+          # ssh $VPS_USER@$VPS_HOST chmod -R 755 ./apps/website
+          ssh $VPS_USER@$VPS_HOST "find ./apps/website -type f -exec chmod 644 {} \;"
           echo "Static deployment completed successfully!"
 
           echo "🎉 Static deployment finished!"
