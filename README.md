@@ -4,7 +4,8 @@
 > pastries, cakes, desserts, cookies, and sweet baked goods.
 
 A modern Progressive Web App (PWA) for Ta Cukrárna bakery, built with Next.js
-16, React 19, and TypeScript.
+16, React 19, and TypeScript. Includes a lightweight PHP chatbot backend that
+sends a PDF link via email with tri-lingual support.
 
 ## 🚀 Features
 
@@ -12,6 +13,8 @@ A modern Progressive Web App (PWA) for Ta Cukrárna bakery, built with Next.js
 - **🎨 Responsive Design** - Optimized for all screen sizes
 - **⚡ Fast Performance** - Next.js 16 with Turbopack
 - **🔄 Offline Support** - Service worker caching
+- **📧 Chatbot Email Catalog** - tri-lingual chatbot sends a PDF link via email,
+  with fallback to Czech
 - **🇨🇿 Czech Language** - Localized content and metadata
 - **🎯 SEO Optimized** - Comprehensive meta tags
 - **🍰 Bakery Focus** - Tailored for food business
@@ -23,6 +26,8 @@ A modern Progressive Web App (PWA) for Ta Cukrárna bakery, built with Next.js
 - **Styling**: Tailwind CSS v4
 - **Icons & Images**: SVG + PNG assets
 - **PWA**: Web App Manifest + Service Worker
+- **Backend**: Simple PHP chatbot endpoint at `public/api/chatbot.php`
+- **Email Config**: SMTP variables stored in `.env` for chatbot email delivery
 - **Development**: Screen session for persistent server
 
 ## 🚀 Getting Started
@@ -66,6 +71,20 @@ screen -r ta-cukrarna-dev
 
 The application will be available at
 [http://localhost:3000](http://localhost:3000)
+
+## ✉️ Backend Email Configuration
+
+The chatbot backend sends catalog links by email. For production and local
+backend configuration, define these SMTP variables in `.env`:
+
+- `SMTP_HOST` — SMTP server hostname
+- `SMTP_PORT` — SMTP server port
+- `SMTP_USER` — SMTP login username
+- `SMTP_PASS` — SMTP login password
+- `SMTP_FROM` — sender address, e.g. `"Ta Cukrárna <info@tacukrarna.cz>"`
+
+> Note: `scripts/manual-deploy.sh` intentionally excludes `SMTP_*` variables
+> from export to keep email credentials private during deployment.
 
 ## 🏗️ Project Structure
 

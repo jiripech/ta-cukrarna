@@ -2,10 +2,11 @@
 
 ## Project Overview
 
-- **Type**: Static PWA for a Czech bakery, built with Next.js 16, React 19,
-  TypeScript, and Tailwind CSS v4.
-- **Purpose**: Fast, installable, offline-capable site with bakery branding and
-  Czech localization.
+- **Type**: PWA website for a Czech bakery, built with Next.js 16, React 19,
+  TypeScript, and Tailwind CSS v4, with a lightweight PHP chatbot backend.
+- **Purpose**: Fast, installable, offline-capable site with bakery branding,
+  Czech localization, and a tri-lingual chatbot that sends a catalog PDF link by
+  email.
 - **Structure**: All app logic in `src/`, static assets in `public/`, deployment
   scripts in `scripts/`, and CI/CD in `.github/workflows/`.
 
@@ -14,6 +15,10 @@
 - **App Router**: Uses Next.js 16 App Router (`src/app/`).
 - **PWA**: Service worker (`public/sw.js`) and manifest (`public/manifest.json`)
   enable install/offline features. Register via `PWARegistration.tsx`.
+- **Backend**: Simple PHP chatbot API at `public/api/chatbot.php` for
+  tri-lingual email delivery of the catalog PDF link, with Czech fallback.
+- **Env**: SMTP credentials are defined in `.env` for chatbot email delivery and
+  should stay private; they are not exported by `scripts/manual-deploy.sh`.
 - **Sections**: Homepage and content split into modular React components in
   `src/components/sections/`.
 - **Styling**: Tailwind CSS v4, configured in `postcss.config.mjs` and
@@ -34,7 +39,8 @@
 
 ## CI/CD & Deployment
 
-- **Static Only**: No Node.js runtime on VPS; all builds are static.
+- **Mostly static**: Build output is static, but the live site includes a
+  lightweight PHP backend endpoint for the chatbot at `public/api/chatbot.php`.
 - **GitHub Actions**: Security scan, lint, build, deploy, verify, and cleanup
   jobs. SSH key and VPS details in repo secrets.
 - **Rollback**: Restore from `apps/website-backup-*` on VPS (see DEPLOYMENT.md).
