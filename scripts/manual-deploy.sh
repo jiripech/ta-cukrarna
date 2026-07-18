@@ -5,7 +5,7 @@ set -e
 if [ -f .env ]; then
   echo "📖 Loading .env file..."
   # This approach handles basic .env files (key=value)
-  export $(grep -v '^#' .env | xargs)
+  export $(grep -v '^#' .env | grep -v '^SMTP' | xargs)
 fi
 
 if [ -z "$VPS_USER" ] || [ -z "$VPS_HOST" ]; then
