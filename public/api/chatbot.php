@@ -1,7 +1,7 @@
 <?php
 /**
- * Ta Cukrárna - Chatbot Email Catalog API
- * 
+ * Ta Cukrárna - Chatbot PDF Emailing API
+ *
  * Handles secure email delivery of the cake catalog link.
  * Integrates with the local system MTA in production, and provides email logging
  * in local development environments.
@@ -98,7 +98,7 @@ if (!in_array($lang, ['cs', 'sk', 'en'])) {
 }
 
 // 3. Dynamic Base URL Detection for Catalog PDF
-$proto = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on') || 
+$proto = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on') ||
           (isset($_SERVER['HTTP_X_FORWARDED_PROTO']) && $_SERVER['HTTP_X_FORWARDED_PROTO'] === 'https') ? 'https' : 'http';
 $host = isset($_SERVER['HTTP_HOST']) ? $_SERVER['HTTP_HOST'] : 'tacukrarna.cz';
 
@@ -139,23 +139,24 @@ if ($is_dev) {
 
 // Production sending using local system MTA (Postfix/sendmail)
 $to = $email;
-$from = 'Ta Cukrárna <info@tacukrarna.cz>';
+$from_email = 'info@tacukrarna.cz';
+$from = 'Ta Cukrárna <' . $from_email . '>';
 
 $headers = [];
 $headers[] = 'MIME-Version: 1.0';
 $headers[] = 'Content-type: text/plain; charset=utf-8';
 $headers[] = 'From: ' . $from;
-$headers[] = 'Reply-To: ' . $from;
-$headers[] = 'X-Mailer: PHP/' . phpversion();
+$headers[] = 'Reply-To: ' . $from_email;
+// $headers[] = 'X-Mailer: PHP/' . phpversion();
 
 $mail_sent = false;
 if (function_exists('mb_send_mail')) {
     mb_internal_encoding("UTF-8");
-    $mail_sent = mb_send_mail($to, $subject, $message, implode("\r\n", $headers));
+    $mail_sent = mb_send_mail($to, $subject, $message, implode("\r\n", $headers), '-f' . $from_email);
 } else {
     // Base64 encode subject to protect special accents (UTF-8)
     $encoded_subject = '=?UTF-8?B?' . base64_encode($subject) . '?=';
-    $mail_sent = mail($to, $encoded_subject, $message, implode("\r\n", $headers));
+    $mail_sent = mail($to, $encoded_subject, $message, implode("\r\n", $headers), '-f' . $from_email);
 }
 
 if ($mail_sent) {
