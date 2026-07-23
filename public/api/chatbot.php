@@ -86,6 +86,41 @@ if (!$data) {
 
 $email = isset($data['email']) ? trim($data['email']) : '';
 $lang = isset($data['language']) ? trim($data['language']) : 'cs';
+$honeypot = isset($data['bot_honeypot']) ? trim($data['bot_honeypot']) : '';
+$anti_bot_token = isset($data['anti_bot_token']) ? trim($data['anti_bot_token']) : '';
+$rendered_at = isset($data['rendered_at']) ? filter_var($data['rendered_at'], FILTER_VALIDATE_INT) : false;
+$submitted_at = isset($data['submitted_at']) ? filter_var($data['submitted_at'], FILTER_VALIDATE_INT) : false;
+
+if ($honeypot !== '') {
+    header('HTTP/1.1 403 Forbidden');
+    echo json_encode(['error' => 'Verification failed.']);
+    exit;
+}
+
+if (empty($anti_bot_token) || preg_match('/[^A-Za-z0-9]/', $anti_bot_token) || strlen($anti_bot_token) < 12) {
+    header('HTTP/1.1 403 Forbidden');
+    echo json_encode(['error' => 'Verification failed.']);
+    exit;
+}
+
+if ($rendered_at === false || $submitted_at === false || $submitted_at < $rendered_at) {
+    header('HTTP/1.1 400 Bad Request');
+    echo json_encode(['error' => 'Invalid request metadata.']);
+    exit;
+}
+
+$wait_ms = $submitted_at - $rendered_at;
+if ($wait_ms < 1000) {
+    header('HTTP/1.1 403 Forbidden');
+    echo json_encode(['error' => 'Verification failed.']);
+    exit;
+}
+
+if ($wait_ms > 86400000) {
+    header('HTTP/1.1 403 Forbidden');
+    echo json_encode(['error' => 'Verification failed.']);
+    exit;
+}
 
 if (empty($email) || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
     header('HTTP/1.1 400 Bad Request');
@@ -121,7 +156,7 @@ $subject = $subjects[$lang];
 $message = $messages[$lang];
 
 // 5. Send Email (Mocking for local development/testing)
-$is_dev = (strpos($host, 'localhost') !== false || strpos($host, '127.0.0.1') !== false);
+$is_dev = (strpos($host, 'localhost') !== false || strpos($host, '127.0.0.1') !== false) || getenv('PLAYWRIGHT_TEST_MODE') === 'true';
 
 if ($is_dev) {
     // Log email to a local dev file for developer inspection and E2E testing validation

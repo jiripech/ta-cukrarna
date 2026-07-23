@@ -1,30 +1,57 @@
-import { test, expect } from '@playwright/test';
+import { test, expect, Page } from '@playwright/test';
+
+interface ChatbotRequest {
+  email: string;
+  language: string;
+  bot_honeypot: string;
+  anti_bot_token: string;
+  rendered_at: number;
+  submitted_at: number;
+}
+
+declare global {
+  interface Window {
+    __chatbotRequestBody: ChatbotRequest | null;
+  }
+}
 
 test.describe('Chatbot PWA widget', () => {
   test.beforeEach(async ({ page }) => {
-    // Intercept API calls to api/chatbot.php to mock backend response during testing
-    await page.route('**/api/chatbot.php', async route => {
-      const request = route.request();
-      if (request.method() === 'POST') {
-        const postData = JSON.parse(request.postData() || '{}');
+    // Store request data in a way the test can access it
+    await page.addInitScript(() => {
+      window.__chatbotRequestBody = null;
+    });
 
-        // Mock validation failure for specific email
-        if (postData.email === 'fail@example.com') {
-          await route.fulfill({
-            status: 400,
-            contentType: 'application/json',
-            body: JSON.stringify({ error: 'Mocked validation error' }),
-          });
-        } else {
-          await route.fulfill({
-            status: 200,
-            contentType: 'application/json',
-            body: JSON.stringify({ status: 'success' }),
-          });
+    // Mock the fetch function directly in the browser context
+    await page.addInitScript(() => {
+      const originalFetch = window.fetch;
+      window.fetch = async (
+        url: string | Request,
+        options?: RequestInit
+      ): Promise<Response> => {
+        // If it's a request to the chatbot API, return mock response
+        if (typeof url === 'string' && url.includes('/api/chatbot.php')) {
+          const postData = options?.body
+            ? JSON.parse(options.body as string)
+            : ({} as ChatbotRequest);
+          // Store for test verification
+          window.__chatbotRequestBody = postData;
+          // Mock validation failure for specific email
+          if (postData.email === 'fail@example.cz') {
+            return new Response(
+              JSON.stringify({ error: 'Mocked validation error' }),
+              { status: 400, headers: { 'content-type': 'application/json' } }
+            );
+          } else {
+            return new Response(JSON.stringify({ status: 'success' }), {
+              status: 200,
+              headers: { 'content-type': 'application/json' },
+            });
+          }
         }
-      } else {
-        await route.continue();
-      }
+        // Otherwise, use the original fetch
+        return originalFetch(url, options);
+      };
     });
 
     // Navigate to homepage
@@ -81,6 +108,20 @@ test.describe('Chatbot PWA widget', () => {
     const successMsg = page.locator('#chatbot-panel p');
     await expect(successMsg).toContainText(
       'Děkujeme! Odeslali jsme ti e-mail s odkazem na stažení katalogu.'
+    );
+
+    // Retrieve request body from page
+    const requestBody = await page.evaluate(() => window.__chatbotRequestBody);
+    expect(requestBody).not.toBeNull();
+    expect(requestBody?.bot_honeypot).toBe('');
+    expect(typeof requestBody?.anti_bot_token).toBe('string');
+    expect(
+      (requestBody?.anti_bot_token as string).length
+    ).toBeGreaterThanOrEqual(12);
+    expect(typeof requestBody?.rendered_at).toBe('number');
+    expect(typeof requestBody?.submitted_at).toBe('number');
+    expect(requestBody?.submitted_at).toBeGreaterThanOrEqual(
+      requestBody?.rendered_at
     );
 
     // Finish and close

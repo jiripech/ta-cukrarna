@@ -14,7 +14,7 @@ type ChatStep =
 const translations = {
   cs: {
     header: '🍰 Ta Cukrárna Bot',
-    greeting: 'Ahoj! Vítejte v naší rodinné cukrárně. 🍰',
+    greeting: 'Ahoj! Vítej v naší rodinné cukrárně. 🍰',
     question: 'Chcete si objednat svatební dort?',
     yes: 'Ano, chci',
     no: 'Ne, děkuji',
@@ -23,10 +23,8 @@ const translations = {
     emailPlaceholder: 'vas@email.cz',
     send: 'Odeslat',
     sending: 'Odesílám...',
-    success:
-      'Děkujeme! Odeslali jsme Vám e-mail s odkazem na stažení návodu. ✉️',
-    declined:
-      'Dobře, kdybyste změnil(a) názor, stačí kliknout na 🍰. Přejeme sladký den!',
+    success: 'Děkujeme! Odeslali jsme ti e-mail s odkazem na stažení katalogu.',
+    declined: 'Dobře, kdybys změnil(a) názor, stačí kliknout na 🍰.',
     invalidEmail: 'Zadejte prosím platnou e-mailovou adresu.',
     errorFallback:
       'Omlouváme se, došlo k chybě při odesílání. Zkus to prosím znovu.',
@@ -81,8 +79,22 @@ export default function Chatbot() {
   const [step, setStep] = useState<ChatStep>('GREETING');
   const [language, setLanguage] = useState<Language>('cs');
   const [email, setEmail] = useState('');
+  const [honeypot, setHoneypot] = useState('');
+  const [formToken, setFormToken] = useState('');
+  const [formRenderedAt, setFormRenderedAt] = useState<number | null>(null);
   const [errorMessage, setErrorMessage] = useState('');
   const emailInputRef = useRef<HTMLInputElement>(null);
+
+  const generateAntiBotToken = (): string => {
+    if (typeof window === 'undefined' || !window.crypto?.getRandomValues) {
+      return Math.random().toString(36).slice(2, 18) + Date.now().toString(36);
+    }
+    const bytes = new Uint8Array(16);
+    window.crypto.getRandomValues(bytes);
+    return Array.from(bytes)
+      .map(byte => byte.toString(16).padStart(2, '0'))
+      .join('');
+  };
 
   // Auto-detect browser language setting on mount (runs client-side only)
   useEffect(() => {
@@ -105,12 +117,19 @@ export default function Chatbot() {
     }
   }, []);
 
-  // Focus the email input when arriving at the email prompt step
+  // Focus the email input and generate anti-bot metadata when arriving at the email prompt step
   useEffect(() => {
     if (step === 'EMAIL_REQUEST' && isOpen) {
       setTimeout(() => {
         emailInputRef.current?.focus();
       }, 100);
+
+      // Initialize form state (acceptable since we're responding to step/isOpen changes)
+      queueMicrotask(() => {
+        setHoneypot('');
+        setFormToken(generateAntiBotToken());
+        setFormRenderedAt(Date.now());
+      });
     }
   }, [step, isOpen]);
 
@@ -143,6 +162,18 @@ export default function Chatbot() {
       return;
     }
 
+    if (honeypot.trim().length > 0) {
+      setErrorMessage(translations[language].errorFallback);
+      setStep('ERROR');
+      return;
+    }
+
+    if (!formToken || formRenderedAt === null) {
+      setErrorMessage(translations[language].errorFallback);
+      setStep('ERROR');
+      return;
+    }
+
     setStep('SENDING');
 
     try {
@@ -155,6 +186,10 @@ export default function Chatbot() {
         body: JSON.stringify({
           email: email.trim(),
           language: language,
+          bot_honeypot: honeypot,
+          anti_bot_token: formToken,
+          rendered_at: formRenderedAt,
+          submitted_at: Date.now(),
         }),
       });
 
@@ -235,6 +270,22 @@ export default function Chatbot() {
 
           {step === 'EMAIL_REQUEST' && (
             <form onSubmit={handleEmailSubmit} className="flex flex-col gap-3">
+              <div
+                className="absolute left-[-9999px] top-auto w-px h-px overflow-hidden"
+                aria-hidden="true"
+              >
+                <label htmlFor="chatbot-honeypot">Leave this field blank</label>
+                <input
+                  type="text"
+                  id="chatbot-honeypot"
+                  name="bot_honeypot"
+                  autoComplete="off"
+                  tabIndex={-1}
+                  value={honeypot}
+                  onChange={e => setHoneypot(e.target.value)}
+                  className="pointer-events-none"
+                />
+              </div>
               <label
                 htmlFor="chatbot-email-input"
                 className="font-medium text-zinc-700 dark:text-zinc-300"

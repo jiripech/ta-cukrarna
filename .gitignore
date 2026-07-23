@@ -58,3 +58,4 @@ next-env.d.ts
 
 # agent artifacts
 .gemini/
+chrome-mac-arm64.zip
