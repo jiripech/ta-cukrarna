@@ -23,6 +23,8 @@ npm run build
 
 # Deploy
 echo "📤 Deploying to VPS (apps/website/)..."
+ssh $VPS_USER@$VPS_HOST "./scripts/backup.sh website"
+
 rsync -avz --delete -e "ssh" --exclude-from='.rsyncignore' ./out/ $VPS_USER@$VPS_HOST:apps/website/
 
 # Permissions
