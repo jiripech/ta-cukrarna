@@ -27,9 +27,11 @@
   },
   "dependencies": {
     "fsevents": "^2.3.3",
-    "next": "^16.2.10",
+    "next": "^16.2.12",
+    "postcss": "^8.4.49",
     "react": "19.2.0",
-    "react-dom": "19.2.0"
+    "react-dom": "19.2.0",
+    "sharp": "^0.35.3"
   },
   "devDependencies": {
     "@playwright/test": "^1.58.2",
@@ -42,7 +44,7 @@
     "babel-plugin-react-compiler": "1.0.0",
     "baseline-browser-mapping": "^2.10.0",
     "eslint": "^9",
-    "eslint-config-next": "16.1.1",
+    "eslint-config-next": "^16.1.1",
     "html-validate": "^10.1.2",
     "husky": "^9.1.7",
     "lint-staged": "^16.2.5",
@@ -68,5 +70,11 @@
     "*.{json,css,scss,html}": [
       "prettier --write"
     ]
+  },
+  "allowScripts": {
+    "sharp@0.34.5": true,
+    "unrs-resolver@1.11.1": true,
+    "fsevents@2.3.2": true,
+    "fsevents@2.3.3": true
   }
 }
