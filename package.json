@@ -26,7 +26,6 @@
     "test:e2e": "playwright test"
   },
   "dependencies": {
-    "fsevents": "^2.3.3",
     "next": "^16.2.12",
     "postcss": "^8.4.49",
     "react": "19.2.0",
@@ -73,8 +72,6 @@
   },
   "allowScripts": {
     "sharp@0.34.5": true,
-    "unrs-resolver@1.11.1": true,
-    "fsevents@2.3.2": true,
-    "fsevents@2.3.3": true
+    "unrs-resolver@1.11.1": true
   }
 }
