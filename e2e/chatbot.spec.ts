@@ -1,4 +1,4 @@
-import { test, expect, Page } from '@playwright/test';
+import { test, expect } from '@playwright/test';
 
 interface ChatbotRequest {
   email: string;
@@ -26,13 +26,20 @@ test.describe('Chatbot PWA widget', () => {
     await page.addInitScript(() => {
       const originalFetch = window.fetch;
       window.fetch = async (
-        url: string | Request,
-        options?: RequestInit
+        input: URL | RequestInfo,
+        init?: RequestInit
       ): Promise<Response> => {
+        const urlStr =
+          typeof input === 'string'
+            ? input
+            : input instanceof URL
+              ? input.toString()
+              : input.url;
+
         // If it's a request to the chatbot API, return mock response
-        if (typeof url === 'string' && url.includes('/api/chatbot.php')) {
-          const postData = options?.body
-            ? JSON.parse(options.body as string)
+        if (urlStr.includes('/api/chatbot.php')) {
+          const postData = init?.body
+            ? JSON.parse(init.body as string)
             : ({} as ChatbotRequest);
           // Store for test verification
           window.__chatbotRequestBody = postData;
@@ -50,7 +57,7 @@ test.describe('Chatbot PWA widget', () => {
           }
         }
         // Otherwise, use the original fetch
-        return originalFetch(url, options);
+        return originalFetch(input, init);
       };
     });
 
@@ -78,7 +85,7 @@ test.describe('Chatbot PWA widget', () => {
     // 4. Verify greeting is shown (default Czech language fallback)
     const greetingText = page.locator('#chatbot-panel p').first();
     await expect(greetingText).toContainText(
-      'Ahoj! Vítej v naší rodinné cukrárně.'
+      'Dobrý den! Vítejte v naší rodinné cukrárně.'
     );
 
     // 5. Click close button and check if panel hides
@@ -107,7 +114,7 @@ test.describe('Chatbot PWA widget', () => {
     // Check success state
     const successMsg = page.locator('#chatbot-panel p');
     await expect(successMsg).toContainText(
-      'Děkujeme! Odeslali jsme ti e-mail s odkazem na stažení katalogu.'
+      'Děkujeme! Odeslali jsme Vám e-mail s odkazem na stažení návodu.'
     );
 
     // Retrieve request body from page
@@ -120,8 +127,8 @@ test.describe('Chatbot PWA widget', () => {
     ).toBeGreaterThanOrEqual(12);
     expect(typeof requestBody?.rendered_at).toBe('number');
     expect(typeof requestBody?.submitted_at).toBe('number');
-    expect(requestBody?.submitted_at).toBeGreaterThanOrEqual(
-      requestBody?.rendered_at
+    expect(requestBody!.submitted_at).toBeGreaterThanOrEqual(
+      requestBody!.rendered_at
     );
 
     // Finish and close
@@ -143,7 +150,7 @@ test.describe('Chatbot PWA widget', () => {
     // Check decline message
     const declineMsg = page.locator('#chatbot-panel p');
     await expect(declineMsg).toContainText(
-      'Dobře, kdybys změnil(a) názor, stačí kliknout na 🍰.'
+      'Dobře, pokud byste změnili názor, stačí kdykoliv kliknout na 🍰.'
     );
 
     // Close

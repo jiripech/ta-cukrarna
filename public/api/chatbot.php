@@ -141,15 +141,15 @@ $pdf_url = $proto . '://' . $host . '/AtJstePysnaNaKazdyOkamzik.pdf';
 
 // 4. Localized Subjects & Bodies
 $subjects = [
-    'cs' => 'Katalog dortů - Ta Cukrárna',
-    'sk' => 'Katalóg tort - Ta Cukrárna',
-    'en' => 'Cake Catalog - Ta Cukrárna'
+    'cs' => 'Praktický návod pro svatební sladký bar - Ta Cukrárna',
+    'sk' => 'Praktický návod pre svadobný sladký bar - Ta Cukrárna',
+    'en' => 'Wedding Cake & Dessert Bar Guide - Ta Cukrárna'
 ];
 
 $messages = [
-    'cs' => "Dobrý den,\n\nděkujeme za Váš zájem o naše dorty. Na níže uvedeném odkazu si můžete stáhnout náš kompletní katalog:\n\n" . $pdf_url . "\n\nTěšíme se na Vaši objednávku!\n\nTým Ta Cukrárna\nhttps://tacukrarna.cz",
-    'sk' => "Dobrý deň,\n\nďakujeme za Váš záujem o naše torty. Na nižšie uvedenom odkaze si môžete stiahnuť náš kompletný katalóg:\n\n" . $pdf_url . "\n\nTešíme se na Vašu objednávku!\n\nTým Ta Cukrárna\nhttps://tacukrarna.cz",
-    'en' => "Hello,\n\nthank you for your interest in our cakes. You can download our complete catalog at the link below:\n\n" . $pdf_url . "\n\nWe look forward to your order!\n\nThe Ta Cukrárna Team\nhttps://tacukrarna.cz"
+    'cs' => "Dobrý den,\n\nděkujeme za Váš zájem o naši rodinnou cukrárnu. Na níže uvedeném odkazu si můžete stáhnout náš praktický návod a průvodce pro svatební sladký bar a dorty:\n\n" . $pdf_url . "\n\nPřejeme krásný den a těšíme se na Vás!\n\nTým Ta Cukrárna\nhttps://tacukrarna.cz",
+    'sk' => "Dobrý deň,\n\nďakujeme za Váš záujem o našu rodinnú cukráreň. Na nižšie uvedenom odkaze si môžete stiahnuť náš praktický návod a sprievodcu pre svadobný sladký bar a torty:\n\n" . $pdf_url . "\n\nPrajeme krásny deň a tešíme sa na Vás!\n\nTím Ta Cukrárna\nhttps://tacukrarna.cz",
+    'en' => "Hello,\n\nthank you for your interest in our family bakery. You can download our practical wedding guide and handbook at the link below:\n\n" . $pdf_url . "\n\nWe wish you a wonderful day and look forward to hearing from you!\n\nThe Ta Cukrárna Team\nhttps://tacukrarna.cz"
 ];
 
 $subject = $subjects[$lang];

@@ -14,59 +14,62 @@ type ChatStep =
 const translations = {
   cs: {
     header: '🍰 Ta Cukrárna Bot',
-    greeting: 'Ahoj! Vítej v naší rodinné cukrárně. 🍰',
-    question: 'Chcete si objednat svatební dort?',
+    greeting: 'Dobrý den! Vítejte v naší rodinné cukrárně. 🍰',
+    question: 'Chcete si stáhnout náš praktický svatební návod a průvodce?',
     yes: 'Ano, chci',
     no: 'Ne, děkuji',
     emailPrompt:
-      'Super! Zadejte prosím svůj e-mail, abychom Vám mohli poslat odkaz na náš skvělý návod:',
+      'Super! Zadejte prosím svůj e-mail, abychom Vám mohli poslat odkaz na náš návod:',
     emailPlaceholder: 'vas@email.cz',
     send: 'Odeslat',
     sending: 'Odesílám...',
-    success: 'Děkujeme! Odeslali jsme ti e-mail s odkazem na stažení katalogu.',
-    declined: 'Dobře, kdybys změnil(a) názor, stačí kliknout na 🍰.',
+    success:
+      'Děkujeme! Odeslali jsme Vám e-mail s odkazem na stažení návodu. ✉️',
+    declined:
+      'Dobře, pokud byste změnili názor, stačí kdykoliv kliknout na 🍰. Přejeme krásný den!',
     invalidEmail: 'Zadejte prosím platnou e-mailovou adresu.',
     errorFallback:
-      'Omlouváme se, došlo k chybě při odesílání. Zkus to prosím znovu.',
+      'Omlouváme se, došlo k chybě při odesílání. Zkuste to prosím znovu.',
     close: 'Zavřít',
     startOver: 'Začít znovu',
   },
   sk: {
     header: '🍰 Ta Cukrárna Bot',
-    greeting: 'Ahoj! Vitajte v našej rodinnej cukrárni. 🍰',
-    question: 'Chcete si objednať tortu?',
+    greeting: 'Dobrý deň! Vitajte v našej rodinnej cukrárni. 🍰',
+    question: 'Chcete si stiahnuť náš praktický svadobný návod a sprievodcu?',
     yes: 'Áno, chcem',
     no: 'Nie, ďakujem',
     emailPrompt:
-      'Super! Zadajte prosím svoj e-mail, aby sme Vám mohli poslať odkaz na náš skvelý návod:',
+      'Super! Zadajte prosím svoj e-mail, aby sme Vám mohli poslať odkaz na náš návod:',
     emailPlaceholder: 'vas@email.sk',
     send: 'Odoslať',
     sending: 'Odosielam...',
     success:
       'Ďakujeme! Odoslali sme Vám e-mail s odkazom na stiahnutie návodu. ✉️',
     declined:
-      'Dobre, keby ste zmenili názor, stačí kliknúť na 🍰. Prajeme sladký deň!',
+      'Dobre, ak by ste zmenili názor, stačí kedykoľvek kliknúť na 🍰. Prajeme sladký deň!',
     invalidEmail: 'Zadajte prosím platnú e-mailovú adresu.',
     errorFallback:
-      'Omlúvame sa, došlo k chybe pri odosielaní. Skúste to prosím znova.',
+      'Ospravedlňujeme sa, došlo k chybe pri odosielaní. Skúste to prosím znova.',
     close: 'Zavrieť',
     startOver: 'Začať znova',
   },
   en: {
     header: '🍰 Ta Cukrárna Bot',
     greeting: 'Hello! Welcome to our family bakery. 🍰',
-    question: 'Would you like to order a cake?',
+    question:
+      'Would you like to download our practical wedding guide & handbook?',
     yes: 'Yes, please',
     no: 'No, thanks',
     emailPrompt:
-      'Great! Please enter your email address and we will send you a link to our complete catalog:',
+      'Great! Please enter your email address so we can send you the download link for our guide:',
     emailPlaceholder: 'your@email.com',
     send: 'Send',
     sending: 'Sending...',
     success:
-      'Thank you! We have sent you an email with the link to download the catalog. ✉️',
+      'Thank you! We have sent you an email with the download link for the guide. ✉️',
     declined:
-      'Alright, if you change your mind, just click the 🍰 again. Have a sweet day!',
+      'Alright, if you change your mind, just click the 🍰 anytime. Have a sweet day!',
     invalidEmail: 'Please enter a valid email address.',
     errorFallback: 'Sorry, an error occurred while sending. Please try again.',
     close: 'Close',
