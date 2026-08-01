@@ -18,7 +18,7 @@ export default defineConfig({
   /* Shared settings for all the projects below. See https://playwright.dev/docs/api/class-testoptions. */
   use: {
     /* Base URL to use in actions like `await page.goto('/')`. */
-    baseURL: 'http://localhost:3001',
+    baseURL: 'http://127.0.0.1:3001',
 
     /* Set locale to Czech for tests */
     locale: 'cs-CZ',
@@ -49,8 +49,8 @@ export default defineConfig({
 
   /* Run your local dev server before starting the tests */
   webServer: {
-    command: 'npm run build && npx serve out -p 3001',
-    url: 'http://localhost:3001',
+    command: 'npx serve out -l tcp://127.0.0.1:3001',
+    url: 'http://127.0.0.1:3001',
     reuseExistingServer: !process.env.CI,
     timeout: 120 * 1000,
   },
