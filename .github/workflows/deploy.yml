@@ -81,6 +81,7 @@ jobs:
     name: Build Application
     runs-on: self-hosted
     needs: [security, lint]
+    environment: production
     permissions:
       contents: read # Read repository code
       actions: write # Upload artifacts
@@ -131,6 +132,7 @@ jobs:
     name: E2E Tests (Playwright)
     needs: build
     runs-on: self-hosted
+    environment: production
     permissions:
       contents: read
     steps:

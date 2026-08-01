@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test';
+import { USE_CHATBOT } from '@/lib/featureFlags';
 
 interface ChatbotRequest {
   email: string;
@@ -16,6 +17,8 @@ declare global {
 }
 
 test.describe('Chatbot PWA widget', () => {
+  test.skip(!USE_CHATBOT, 'Chatbot disabled via USE_CHATBOT=0');
+
   test.beforeEach(async ({ page }) => {
     // Store request data in a way the test can access it
     await page.addInitScript(() => {

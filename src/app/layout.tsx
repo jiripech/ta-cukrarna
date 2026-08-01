@@ -5,6 +5,7 @@ import PWARegistration from '@/components/PWARegistration';
 import ClarityTracker from '@/components/Clarity';
 import RevealFooterAtBottom from '@/components/RevealFooterAtBottom';
 import Chatbot from '@/components/Chatbot';
+import { USE_CHATBOT } from '@/lib/featureFlags';
 import fs from 'fs';
 import path from 'path';
 import { execSync } from 'child_process';
@@ -164,7 +165,7 @@ export default function RootLayout({
           </div>
         )}
         <RevealFooterAtBottom />
-        <Chatbot />
+        {USE_CHATBOT && <Chatbot />}
       </body>
     </html>
   );

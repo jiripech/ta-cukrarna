@@ -28,13 +28,16 @@ sends a PDF link via email with tri-lingual support.
 - **PWA**: Web App Manifest + Service Worker
 - **Backend**: Simple PHP chatbot endpoint at `public/api/chatbot.php`
 - **Email Config**: SMTP variables stored in `.env` for chatbot email delivery
+- **Chatbot Flag**: Set `USE_CHATBOT=1` or `USE_CHATBOT=0` in `.env` and keep
+  the same value in the GitHub `production` environment to include or exclude
+  the chatbot from builds and E2E tests.
 - **Development**: Screen session for persistent server
 
 ## 🚀 Getting Started
 
 ### Prerequisites
 
-- Node.js 18+
+- Node.js 20.9+
 - npm or yarn
 
 ### Installation
@@ -82,6 +85,8 @@ backend configuration, define these SMTP variables in `.env`:
 - `SMTP_USER` — SMTP login username
 - `SMTP_PASS` — SMTP login password
 - `SMTP_FROM` — sender address, e.g. `"Ta Cukrárna <info@tacukrarna.cz>"`
+- `USE_CHATBOT` — set to `1` to render and test the chatbot, or `0` to build and
+  test the site without it
 
 > Note: `scripts/manual-deploy.sh` intentionally excludes `SMTP_*` variables
 > from export to keep email credentials private during deployment.
