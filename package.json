@@ -27,14 +27,13 @@
   },
   "dependencies": {
     "next": "^16.2.12",
-    "playwright": "1.61",
     "postcss": "^8.4.49",
     "react": "19.2.0",
     "react-dom": "19.2.0",
     "sharp": "^0.35.3"
   },
   "devDependencies": {
-    "@playwright/test": "^1.58.2",
+    "@playwright/test": "1.61.0",
     "@secretlint/secretlint-rule-preset-recommend": "^11.2.5",
     "@secretlint/secretlint-rule-privatekey": "^11.2.5",
     "@tailwindcss/postcss": "^4",
