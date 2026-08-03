@@ -2,6 +2,7 @@
 
 import Image from 'next/image';
 import PhotoSlideshow from '@/components/PhotoSlideshow';
+import OpeningHours from '@/components/OpeningHours';
 
 export default function Home() {
   return (
@@ -179,39 +180,9 @@ export default function Home() {
               </div>
             </div>
 
-            {/* Opening Hours */}
+            {/* Column 2: Opening Hours & Social Links */}
             <div>
-              <h3 className="text-lg font-semibold mb-3 text-amber-600 dark:text-amber-400 md:text-amber-400!">
-                Otevírací doba
-              </h3>
-              <div className="space-y-2 text-zinc-600 dark:text-zinc-300 md:text-zinc-300!">
-                <div className="flex justify-between">
-                  <span>Pondělí</span>
-                  <span className="font-medium">12:00 - 17:45</span>
-                </div>
-                <div className="flex justify-between">
-                  <span>Úterý</span>
-                  <span className="font-medium">8:00 - 19:00</span>
-                </div>
-                <div className="flex justify-between">
-                  <span>Středa</span>
-                  <span className="font-medium">8:00 - 17:45</span>
-                </div>
-                <div className="flex justify-between">
-                  <span>Čtvrtek</span>
-                  <span className="font-medium">8:00 - 19:00</span>
-                </div>
-                <div className="flex justify-between">
-                  <span>Pátek</span>
-                  <span className="font-medium">8:00 - 19:00</span>
-                </div>
-                <div className="flex justify-between">
-                  <span>Sobota - Neděle, svátky</span>
-                  <span className="font-medium text-red-600 dark:text-red-400 md:text-red-400!">
-                    Zavřeno
-                  </span>
-                </div>
-              </div>
+              <OpeningHours />
 
               {/* Social Links */}
               <div className="mt-4">
