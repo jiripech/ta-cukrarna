@@ -56,7 +56,7 @@ git commit -s -S -m "🔖 Release $NEW_VERSION
 
 # Create and push tag
 echo "🏷️  Creating release tag..."
-git tag -s "$NEW_VERSION"
+git tag -s "$NEW_VERSION" -m "Release $NEW_VERSION"
 git push origin main
 git push origin "$NEW_VERSION"
 
