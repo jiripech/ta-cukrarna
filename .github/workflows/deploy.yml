@@ -25,19 +25,8 @@ jobs:
       contents: read # Read repository code for scanning
 
     steps:
-      - name: Checkout code
-        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
-
-      - name: Setup Node.js
-        uses: actions/setup-node@1d0ff469b7ec7b3cb9d8673fde0c81c44821de2a
-        with:
-          node-version: '24'
-          cache: 'npm'
-
-      - name: Install dependencies
-        run: |
-          npm config set update-notifier false
-          npm ci
+      - name: Setup Node.js environment
+        uses: ./.github/actions/setup-node-and-install
 
       - name: Run security scan
         run: npm run lint:secrets
@@ -51,19 +40,8 @@ jobs:
     # needs: security
 
     steps:
-      - name: Checkout code
-        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
-
-      - name: Setup Node.js
-        uses: actions/setup-node@1d0ff469b7ec7b3cb9d8673fde0c81c44821de2a
-        with:
-          node-version: '24'
-          cache: 'npm'
-
-      - name: Install dependencies
-        run: |
-          npm config set update-notifier false
-          npm ci
+      - name: Setup Node.js environment
+        uses: ./.github/actions/setup-node-and-install
 
       - name: Run ESLint
         run: npm run lint
@@ -87,14 +65,8 @@ jobs:
       actions: write # Upload artifacts
 
     steps:
-      - name: Checkout code
-        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
-
-      - name: Setup Node.js
-        uses: actions/setup-node@1d0ff469b7ec7b3cb9d8673fde0c81c44821de2a
-        with:
-          node-version: '24'
-          cache: 'npm'
+      - name: Setup Node.js environment
+        uses: ./.github/actions/setup-node-and-install
 
       - name: Cache Next.js build
         uses: actions/cache@d4323d4df104b026a6aa633fdb11d772146be0bf
@@ -106,11 +78,6 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-nextjs-${{ hashFiles('**/package-lock.json') }}-
             ${{ runner.os }}-nextjs-
-
-      - name: Install dependencies
-        run: |
-          npm config set update-notifier false
-          npm ci
 
       - name: Build application
         env:
@@ -135,19 +102,8 @@ jobs:
     permissions:
       contents: read
     steps:
-      - name: Checkout code
-        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
-
-      - name: Setup Node.js
-        uses: actions/setup-node@1d0ff469b7ec7b3cb9d8673fde0c81c44821de2a
-        with:
-          node-version: '24'
-          cache: 'npm'
-
-      - name: Install dependencies
-        run: |
-          npm config set update-notifier false
-          npm ci
+      - name: Setup Node.js environment
+        uses: ./.github/actions/setup-node-and-install
 
       - name: Download build artifacts
         uses: actions/download-artifact@fa0a91b85d4f404e444e00e005971372dc801d16
@@ -187,8 +143,10 @@ jobs:
       actions: read # Download artifacts
 
     steps:
-      - name: Checkout code
-        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+      - name: Setup repository checkout
+        uses: ./.github/actions/setup-node-and-install
+        with:
+          install-dependencies: 'false'
 
       - name: Download build artifacts
         uses: actions/download-artifact@fa0a91b85d4f404e444e00e005971372dc801d16
@@ -270,8 +228,10 @@ jobs:
       contents: read # Read repository code for verification
 
     steps:
-      - name: Checkout code
-        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+      - name: Setup repository checkout
+        uses: ./.github/actions/setup-node-and-install
+        with:
+          install-dependencies: 'false'
 
       - name: Wait for deployment stabilization
         run: |
