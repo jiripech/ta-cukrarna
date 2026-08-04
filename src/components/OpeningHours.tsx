@@ -12,6 +12,8 @@ export function isSummerSeason(date: Date = new Date()): boolean {
 export default function OpeningHours() {
   const isSummer = isSummerSeason();
 
+  const notClosedText = 'Výdej objednávek, dle aktuální potřeby';
+
   return (
     <div id="openinghours">
       <div id="opening-hours">
@@ -28,7 +30,7 @@ export default function OpeningHours() {
                   : 'font-medium'
               }
             >
-              {isSummer ? 'Zavřeno' : '12:00 - 17:45'}
+              {isSummer ? notClosedText : '12:00 - 17:45'}
             </span>
           </div>
           <div className="flex justify-between">
@@ -58,13 +60,13 @@ export default function OpeningHours() {
                   : 'font-medium'
               }
             >
-              {isSummer ? 'Zavřeno' : '8:00 - 19:00'}
+              {isSummer ? notClosedText : '8:00 - 19:00'}
             </span>
           </div>
           <div className="flex justify-between">
             <span>Sobota - Neděle, svátky</span>
             <span className="font-medium text-red-600 dark:text-red-400 md:text-red-400!">
-              Zavřeno
+              {notClosedText}
             </span>
           </div>
         </div>
