@@ -6,42 +6,43 @@ on:
   pull_request:
     branches: [main]
 
-# 🔒 SECURITY: Define minimal permissions for GITHUB_TOKEN
 permissions:
-  contents: read # Allow checkout
-  actions: read # Allow artifact operations
+  contents: read
+  actions: write
 
 env:
-  # Security: Define trusted events for self-hosted runners
   IS_TRUSTED_EVENT: ${{ github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository }}
   SSH_AUTH_SOCK: /tmp/ssh_agent.sock
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
 jobs:
-  security:
-    name: Security Scan
+  ci:
+    name: Validate, Build and Test
     runs-on: self-hosted
+    environment: production
     permissions:
-      contents: read # Read repository code for scanning
+      contents: read
+      actions: write
 
     steps:
-      - name: Setup Node.js environment
-        uses: ./.github/actions/setup-node-and-install
+      - name: Checkout code
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+
+      - name: Setup Node.js
+        uses: actions/setup-node@1d0ff469b7ec7b3cb9d8673fde0c81c44821de2a
+        with:
+          node-version: '24'
+          cache: 'npm'
+          cache-dependency-path: |
+            package-lock.json
+
+      - name: Install dependencies
+        run: |
+          npm config set update-notifier false
+          npm ci
 
       - name: Run security scan
         run: npm run lint:secrets
-
-  lint:
-    name: Code Quality
-    runs-on: self-hosted
-    permissions:
-      contents: read # Read repository code for linting
-    # Lint can run in parallel with security
-    # needs: security
-
-    steps:
-      - name: Setup Node.js environment
-        uses: ./.github/actions/setup-node-and-install
 
       - name: Run ESLint
         run: npm run lint
@@ -54,19 +55,6 @@ jobs:
 
       - name: Check formatting
         run: npm run format:check
-
-  build:
-    name: Build Application
-    runs-on: self-hosted
-    needs: [security, lint]
-    environment: production
-    permissions:
-      contents: read # Read repository code
-      actions: write # Upload artifacts
-
-    steps:
-      - name: Setup Node.js environment
-        uses: ./.github/actions/setup-node-and-install
 
       - name: Cache Next.js build
         uses: actions/cache@d4323d4df104b026a6aa633fdb11d772146be0bf
@@ -84,6 +72,12 @@ jobs:
           NEXT_PUBLIC_CLARITY_ID: ${{ secrets.NEXT_PUBLIC_CLARITY_ID }}
         run: npm run build
 
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps
+
+      - name: Run E2E Tests
+        run: npm run test:e2e
+
       - name: Upload build artifacts
         uses: actions/upload-artifact@65c4c4a1ddee5b72f698fdd19549f0f0fb45cf08
         with:
@@ -94,38 +88,9 @@ jobs:
             package-lock.json
           retention-days: 1
 
-  e2e:
-    name: E2E Tests (Playwright)
-    needs: build
-    runs-on: self-hosted
-    environment: production
-    permissions:
-      contents: read
-    steps:
-      - name: Setup Node.js environment
-        uses: ./.github/actions/setup-node-and-install
-
-      - name: Download build artifacts
-        uses: actions/download-artifact@fa0a91b85d4f404e444e00e005971372dc801d16
-        with:
-          name: ta-cukrarna-build
-
-      - name: Verify static build output exists
-        run: |
-          if [ ! -d "out" ]; then
-            echo "❌ Missing out/ directory. Build artifacts were not restored correctly."
-            exit 1
-          fi
-
-      - name: Install Playwright Browsers
-        run: npx playwright install --with-deps
-
-      - name: Run E2E Tests
-        run: npm run test:e2e
-
       - name: Upload Playwright Report
-        uses: actions/upload-artifact@65c4c4a1ddee5b72f698fdd19549f0f0fb45cf08
         if: always()
+        uses: actions/upload-artifact@65c4c4a1ddee5b72f698fdd19549f0f0fb45cf08
         with:
           name: playwright-report
           path: playwright-report/
@@ -133,20 +98,17 @@ jobs:
 
   deploy:
     name: Deploy to VPS
-    needs: [build, e2e]
+    needs: ci
     runs-on: self-hosted
-    # 🔒 SECURITY: Only deploy on version tags (not PRs)
     if: startsWith(github.ref, 'refs/tags/v')
     environment: production
     permissions:
-      contents: read # Read repository code
-      actions: read # Download artifacts
+      contents: read
+      actions: read
 
     steps:
-      - name: Setup repository checkout
-        uses: ./.github/actions/setup-node-and-install
-        with:
-          install-dependencies: 'false'
+      - name: Checkout code
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
 
       - name: Download build artifacts
         uses: actions/download-artifact@fa0a91b85d4f404e444e00e005971372dc801d16
@@ -186,8 +148,6 @@ jobs:
           VPS_USER: ${{ secrets.VPS_USER }}
         run: |
           echo "🚀 Starting static deployment to VPS..."
-
-          # Create backup and ensure apps/website exists
           echo "📦 Creating backup..."
           ssh $VPS_USER@$VPS_HOST 'cp -r ./apps/website ./backups/website-backup-$(date +%Y%m%d-%H%M%S)'
 
@@ -198,18 +158,11 @@ jobs:
           VPS_USER: ${{ secrets.VPS_USER }}
         run: |
           echo "🚀 Starting static deployment to VPS..."
-
-          # Deploy static files to user's apps/website
           echo "📤 Deploying static files to ~/apps/website..."
           rsync -avz --delete -e "ssh -o StrictHostKeyChecking=no" --exclude-from='.rsyncignore' ./out/ $VPS_USER@$VPS_HOST:apps/website/
-
-          # Set proper permissions (no sudo needed)
           echo "Setting proper file permissions..."
-          # The permissions should not be changed
-          # ssh $VPS_USER@$VPS_HOST chmod -R 755 ./apps/website
           ssh $VPS_USER@$VPS_HOST "find ./apps/website -type f -exec chmod 644 {} \;"
           echo "Static deployment completed successfully!"
-
           echo "🎉 Static deployment finished!"
 
       - name: Cleanup SSH agent
@@ -225,13 +178,11 @@ jobs:
     runs-on: self-hosted
     if: startsWith(github.ref, 'refs/tags/v')
     permissions:
-      contents: read # Read repository code for verification
+      contents: read
 
     steps:
-      - name: Setup repository checkout
-        uses: ./.github/actions/setup-node-and-install
-        with:
-          install-dependencies: 'false'
+      - name: Checkout code
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
 
       - name: Wait for deployment stabilization
         run: |
