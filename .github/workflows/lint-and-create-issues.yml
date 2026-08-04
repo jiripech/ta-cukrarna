@@ -10,7 +10,6 @@ permissions:
   contents: read
   issues: write
 
-
 jobs:
   lint-check:
     runs-on: ubuntu-latest
