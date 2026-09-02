@@ -1,11 +1,13 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { startRegistration } from '@/lib/webauthn';
 import { USE_ADMIN } from '@/lib/featureFlags';
 
 type View =
+  | { name: 'request' }
+  | { name: 'sent' }
   | { name: 'validating' }
   | { name: 'invalid'; message: string }
   | { name: 'password' }
@@ -13,28 +15,35 @@ type View =
   | { name: 'error'; message: string }
   | { name: 'success' };
 
-const inputClasses =
-  'w-full rounded-md border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 px-3 py-2 text-sm text-zinc-900 dark:text-zinc-100 focus:border-amber-500 focus:outline-none focus:ring-1 focus:ring-amber-500';
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 export default function RegisterPage() {
-  const [view, setView] = useState<View>({ name: 'validating' });
+  const [view, setView] = useState<View>({ name: 'request' });
+  const [email, setEmail] = useState('');
+  const [sentReady, setSentReady] = useState(false);
   const [password, setPassword] = useState('');
   const [passwordError, setPasswordError] = useState<string | null>(null);
+  const emailRef = useRef<HTMLInputElement>(null);
+
+  const emailValid = EMAIL_RE.test(email.trim());
+
+  useEffect(() => {
+    if (!USE_ADMIN) return;
+    emailRef.current?.focus();
+  }, [view.name]);
 
   useEffect(() => {
     if (!USE_ADMIN) return;
     const token = new URLSearchParams(window.location.search).get('token');
 
+    // Without a token, we show the bare request-links screen (no clues).
     if (!token) {
-      setView({
-        name: 'invalid',
-        message:
-          'Chybí registrační odkaz. / Missing registration link. Zkontrolujte e-mail, který vám přišel. / Check the email you received.',
-      });
+      setView({ name: 'request' });
       return;
     }
 
     let cancelled = false;
+    setView({ name: 'validating' });
 
     const validate = async () => {
       try {
@@ -42,9 +51,7 @@ export default function RegisterPage() {
           `/api/register.php?action=validate-token&token=${encodeURIComponent(
             token
           )}`,
-          {
-            credentials: 'include',
-          }
+          { credentials: 'include' }
         );
         const data = await res.json().catch(() => null);
         if (cancelled) return;
@@ -69,13 +76,28 @@ export default function RegisterPage() {
     };
 
     validate();
-
     return () => {
       cancelled = true;
     };
   }, []);
 
   if (!USE_ADMIN) return null;
+
+  const handleRequest = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!emailValid) return;
+    setView({ name: 'sent' });
+    try {
+      await fetch('/api/register.php?action=request-token', {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username: email.trim() }),
+      });
+    } catch {
+      // Swallow the error to avoid revealing anything.
+    }
+  };
 
   const handleVerifyPassword = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -159,109 +181,125 @@ export default function RegisterPage() {
     }
   };
 
-  const errorMessage =
-    view.name === 'invalid'
-      ? view.message
-      : view.name === 'error'
-        ? view.message
-        : null;
+  const handleEmailChange = (v: string) => {
+    setEmail(v);
+    setSentReady(false);
+  };
 
   return (
-    <main className="min-h-screen flex items-center justify-center bg-zinc-50 dark:bg-black p-4">
-      <div className="mx-auto w-full max-w-md rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-8 shadow-sm text-center">
-        {view.name === 'validating' && (
-          <div>
-            <div className="mx-auto mb-4 h-8 w-8 animate-spin rounded-full border-2 border-zinc-300 border-t-amber-500" />
-            <h1 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">
-              Ověřuji registrační odkaz… / Verifying registration link…
-            </h1>
-          </div>
-        )}
+    <main className="glass-page min-h-screen flex items-center justify-center px-4">
+      {/* Request-links screen: bare input, no clues */}
+      {view.name === 'request' && (
+        <form
+          onSubmit={handleRequest}
+          className="glass-field w-full max-w-sm"
+          aria-label="registration"
+        >
+          <input
+            ref={emailRef}
+            type="email"
+            autoCapitalize="off"
+            autoCorrect="off"
+            spellCheck={false}
+            value={email}
+            onChange={e => handleEmailChange(e.target.value)}
+            className="glass-input"
+            aria-label="email"
+          />
+          {emailValid && !sentReady && (
+            <button
+              type="submit"
+              className="glass-submit"
+              onClick={() => setSentReady(true)}
+            >
+              →
+            </button>
+          )}
+        </form>
+      )}
 
-        {view.name === 'registering' && (
-          <div>
-            <div className="mx-auto mb-4 h-8 w-8 animate-spin rounded-full border-2 border-zinc-300 border-t-amber-500" />
-            <h1 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">
-              Registruji zařízení… / Registering device…
-            </h1>
-            <p className="mt-1 text-sm text-zinc-600 dark:text-zinc-400">
-              Postupujte podle pokynů v prohlížeči. / Follow the prompts in your
-              browser.
-            </p>
-          </div>
-        )}
+      {/* Neutral sent confirmation — no clue about whether the account exists */}
+      {view.name === 'sent' && (
+        <div className="glass-card w-full max-w-sm text-center">
+          <p className="glass-text">
+            Pokud účet existuje, e-mail s odkazem byl odeslán. / If the account
+            exists, the link was sent by email.
+          </p>
+          <button
+            type="button"
+            onClick={() => {
+              setEmail('');
+              setSentReady(false);
+              setView({ name: 'request' });
+              emailRef.current?.focus();
+            }}
+            className="glass-ghost"
+          >
+            Zpět / Back
+          </button>
+        </div>
+      )}
 
-        {view.name === 'password' && (
-          <form onSubmit={handleVerifyPassword} className="text-left">
-            <h1 className="mb-1 text-xl font-bold text-zinc-900 dark:text-zinc-100">
-              Registrace nového zařízení
-            </h1>
-            <p className="mb-6 text-sm text-zinc-600 dark:text-zinc-400">
-              Pro pokračování zadejte heslo vaší e-mailové schránky. / Enter
-              your mailbox password to continue.
-            </p>
-            {passwordError && (
-              <div className="mb-4 rounded-md border border-red-300 bg-red-50 dark:border-red-800 dark:bg-red-950/40 px-3 py-2 text-sm text-red-700 dark:text-red-200">
-                {passwordError}
-              </div>
-            )}
-            <label className="mb-1 block text-xs font-medium text-zinc-600 dark:text-zinc-300">
-              Heslo / Password
-            </label>
+      {view.name === 'validating' && (
+        <div className="glass-card w-full max-w-sm text-center">
+          <p className="glass-text">…</p>
+        </div>
+      )}
+
+      {view.name === 'registering' && (
+        <div className="glass-card w-full max-w-sm text-center">
+          <p className="glass-text">
+            Postupujte podle pokynů v prohlížeči. / Follow the prompts in your
+            browser.
+          </p>
+        </div>
+      )}
+
+      {view.name === 'password' && (
+        <form
+          onSubmit={handleVerifyPassword}
+          className="glass-card w-full max-w-sm"
+        >
+          <label className="glass-label">
+            Heslo / Password
             <input
               type="password"
               value={password}
               onChange={e => setPassword(e.target.value)}
               autoFocus
-              className={inputClasses}
+              className="glass-input"
             />
-            <button
-              type="submit"
-              className="mt-4 w-full rounded-md bg-amber-500 px-6 py-2.5 text-sm font-semibold text-white hover:bg-amber-600 transition-colors"
-            >
-              Pokračovat / Continue
-            </button>
-          </form>
-        )}
+          </label>
+          {passwordError && <p className="glass-error">{passwordError}</p>}
+          <button type="submit" className="glass-submit-full">
+            Pokračovat / Continue
+          </button>
+        </form>
+      )}
 
-        {errorMessage && (
-          <div>
-            <h1 className="mb-2 text-lg font-semibold text-red-600 dark:text-red-400">
-              {view.name === 'invalid'
-                ? 'Registraci nelze dokončit'
-                : 'Došlo k chybě'}
-            </h1>
-            <p className="mb-6 text-sm text-zinc-600 dark:text-zinc-400">
-              {errorMessage}
-            </p>
-            <Link
-              href="/"
-              className="rounded-md bg-amber-500 px-5 py-2 text-sm font-semibold text-white hover:bg-amber-600 transition-colors"
-            >
-              Zpět na web / Back to site
-            </Link>
-          </div>
-        )}
+      {(view.name === 'invalid' || view.name === 'error') && (
+        <div className="glass-card w-full max-w-sm text-center">
+          <p className="glass-text">
+            {view.name === 'invalid'
+              ? view.message
+              : view.message || 'Došlo k chybě. / Something went wrong.'}
+          </p>
+          <Link href="/" className="glass-ghost">
+            Zpět na web / Back to site
+          </Link>
+        </div>
+      )}
 
-        {view.name === 'success' && (
-          <div>
-            <h1 className="mb-2 text-xl font-bold text-zinc-900 dark:text-zinc-100">
-              Zařízení úspěšně zaregistrováno
-            </h1>
-            <p className="mb-6 text-sm text-zinc-600 dark:text-zinc-400">
-              Vaše zařízení je připraveno. Nyní se můžete přihlásit do
-              administrace. / Your device is ready. You can now sign in to the
-              admin panel.
-            </p>
-            <a
-              href="/admin/"
-              className="rounded-md bg-amber-500 px-5 py-2 text-sm font-semibold text-white hover:bg-amber-600 transition-colors"
-            >
-              Přejít do administrace / Go to admin
-            </a>
-          </div>
-        )}
-      </div>
+      {view.name === 'success' && (
+        <div className="glass-card w-full max-w-sm text-center">
+          <p className="glass-text">
+            Vaše zařízení je připraveno. / Your device is ready.
+          </p>
+          <a href="/admin/" className="glass-submit-full">
+            Přejít do administrace / Go to admin
+          </a>
+        </div>
+      )}
     </main>
   );
 }
