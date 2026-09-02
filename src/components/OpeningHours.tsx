@@ -56,9 +56,9 @@ export default function OpeningHours() {
 
   const summerSchedule = {
     pondeli: notClosedText,
-    utery: '9:00 - 15:00',
-    streda: '9:00 - 15:00',
-    ctvrtek: '9:00 - 15:00',
+    utery: '9:00 - 16:00',
+    streda: '9:00 - 16:00',
+    ctvrtek: '9:00 - 19:00',
     patek: notClosedText,
   };
 
