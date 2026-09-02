@@ -9,7 +9,6 @@ const urlsToCache = [
   '/img/logo.svg',
   '/img/header_bg.png',
   '/manifest.json',
-  '/opening-hours.json',
 ];
 
 // Install service worker
