@@ -1,0 +1,43 @@
+#!/bin/sh
+# Ensure newly-pushed release tags (vX.Y.Z) are strictly incremental.
+# Aborts the push if a tag would skip, duplicate, or go backwards relative
+# to the highest existing release tag on the remote.
+
+# Defensive: this script is run via `sh -e` (husky helper), so guard against
+# set -e aborting on expected non-zero statuses (no remote tags, grep misses).
+set +e
+
+HIGHEST_REMOTE_TAG=$(git ls-remote --tags origin 2>/dev/null | awk '{print $2}' | sed 's#refs/tags/##' | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+$' | sort -V | tail -n1)
+
+error=""
+
+# Read pre-push stdin lines: <local ref> <local sha> <remote ref> <remote sha>
+# Exit the read loop cleanly even on final EOF (set -e safety).
+while read -r local_ref local_sha remote_ref remote_sha; do
+  [ "$local_ref" = "" ] && break
+  case "$local_ref" in
+    refs/tags/v[0-9]*\.[0-9]*\.[0-9]*)
+      # Compare bare tag name (strip refs/tags/ prefix) against highest remote tag
+      local_tag=${local_ref#refs/tags/}
+      if [ -n "$HIGHEST_REMOTE_TAG" ]; then
+        HIGHER=$(printf '%s\n%s\n' "$local_tag" "$HIGHEST_REMOTE_TAG" | sort -V | tail -n1)
+        if [ "$HIGHER" = "$HIGHEST_REMOTE_TAG" ]; then
+          error="$error  ✗ tag '$local_ref' is not strictly greater than existing '$HIGHEST_REMOTE_TAG'\n"
+        fi
+      fi
+      ;;
+  esac
+done < /dev/stdin
+
+if [ -n "$error" ]; then
+  echo ""
+  echo "❌ Pre-push check rejected non-incremental release tag(s):"
+  printf "$error"
+  echo ""
+  echo "Release tags must be strictly greater than the current highest ($HIGHEST_REMOTE_TAG)."
+  echo "If this was intentional, use 'git push --no-verify' after double-checking."
+  echo ""
+  exit 1
+fi
+
+exit 0
