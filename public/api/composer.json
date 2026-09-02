@@ -1,0 +1,12 @@
+{
+  "name": "tacukrarna/webauthn",
+  "description": "WebAuthn backend for Ta Cukrárna admin",
+  "require": {
+    "php": ">=8.0",
+    "lbuchs/webauthn": "^2.2"
+  },
+  "config": {
+    "optimize-autoloader": true,
+    "preferred-install": "dist"
+  }
+}

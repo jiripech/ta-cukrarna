@@ -56,6 +56,11 @@ next-env.d.ts
 *.code-workspace
 
 
+# SQLite databases
+public/api/DB/*.sqlite
+public/api/DB/*.sqlite-wal
+public/api/DB/*.sqlite-shm
+
 # agent artifacts
 .gemini/
 chrome-mac-arm64.zip

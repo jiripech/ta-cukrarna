@@ -164,6 +164,20 @@ jobs:
           echo "Static deployment completed successfully!"
           echo "🎉 Static deployment finished!"
 
+      - name: Ensure DB directory exists with correct permissions
+        env:
+          VPS_HOST: ${{ secrets.VPS_HOST }}
+          VPS_USER: ${{ secrets.VPS_USER }}
+        run: |
+          ssh $VPS_USER@$VPS_HOST "mkdir -p ./apps/website/api/DB && chmod 700 ./apps/website/api/DB"
+
+      - name: Initialize SQLite database
+        env:
+          VPS_HOST: ${{ secrets.VPS_HOST }}
+          VPS_USER: ${{ secrets.VPS_USER }}
+        run: |
+          ssh $VPS_USER@$VPS_HOST "php ./apps/website/api/DB/init.php"
+
       - name: Cleanup SSH agent
         if: always()
         run: |

@@ -1,5 +1,7 @@
 'use client';
 
+import { useEffect, useState } from 'react';
+
 export type Season = 'spring' | 'summer' | 'autumn' | 'winter';
 
 /**
@@ -62,24 +64,79 @@ export default function OpeningHours() {
     patek: notClosedText,
   };
 
+  const [customDays, setCustomDays] = useState<Record<string, string> | null>(
+    null
+  );
+
+  useEffect(() => {
+    const today = new Date().toISOString().slice(0, 10);
+    fetch(`/opening-hours.json?v=${Date.now()}`)
+      .then(res => {
+        if (!res.ok) return null;
+        return res.json();
+      })
+      .then(data => {
+        if (
+          !data ||
+          !Array.isArray(data.schedule) ||
+          data.schedule.length === 0
+        ) {
+          return;
+        }
+
+        const entry = data.schedule.find(
+          (s: {
+            startDate: string;
+            endDate: string;
+            days: Record<string, string>;
+          }) =>
+            s.startDate <= today &&
+            s.endDate >= today &&
+            s.days &&
+            typeof s.days === 'object'
+        );
+
+        if (entry) {
+          const d = entry.days;
+          setCustomDays({
+            pondeli: d.mon,
+            utery: d.tue,
+            streda: d.wed,
+            ctvrtek: d.thu,
+            patek: d.fri,
+          });
+        }
+      })
+      .catch(() => {
+        // Silently fall back to hardcoded schedule
+      });
+  }, []);
+
   const useSummer = extendedSummer || season === 'summer';
-  const schedule = useSummer ? summerSchedule : nonSummerSchedule;
+  const baseSchedule = useSummer ? summerSchedule : nonSummerSchedule;
+  const schedule = customDays ?? baseSchedule;
+  const isCustomSchedule = customDays !== null;
+
+  const heading = isCustomSchedule ? 'Otevírací doba' : headingBySeason[season];
 
   const redClosedClasses =
     'font-medium text-red-600 dark:text-red-400 md:text-red-400!';
+
+  const hasNotClosedText = (text: string) =>
+    text === notClosedText || text.includes('Výdej');
 
   return (
     <div id="openinghours">
       <div id="opening-hours">
         <h3 className="text-lg font-semibold mb-3 text-amber-600 dark:text-amber-400 md:text-amber-400!">
-          {headingBySeason[season]}
+          {heading}
         </h3>
         <div className="space-y-2 text-zinc-600 dark:text-zinc-300 md:text-zinc-300!">
           <div className="flex justify-between">
             <span>Pondělí</span>
             <span
               className={
-                schedule.pondeli === notClosedText
+                hasNotClosedText(schedule.pondeli)
                   ? redClosedClasses
                   : 'font-medium'
               }
@@ -103,7 +160,7 @@ export default function OpeningHours() {
             <span>Pátek</span>
             <span
               className={
-                schedule.patek === notClosedText
+                hasNotClosedText(schedule.patek)
                   ? redClosedClasses
                   : 'font-medium'
               }

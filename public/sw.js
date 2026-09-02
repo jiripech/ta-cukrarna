@@ -1,4 +1,4 @@
-const CACHE_NAME = 'ta-cukrarna-v9';
+const CACHE_NAME = 'ta-cukrarna-v10';
 const urlsToCache = [
   '/',
   '/icon.ico',
@@ -9,6 +9,7 @@ const urlsToCache = [
   '/img/logo.svg',
   '/img/header_bg.png',
   '/manifest.json',
+  '/opening-hours.json',
 ];
 
 // Install service worker
@@ -25,6 +26,33 @@ self.addEventListener('install', event => {
 // Fetch event - Network-First for the root and HTML, Cache-First for others
 self.addEventListener('fetch', event => {
   const url = new URL(event.request.url);
+
+  // Never cache /api/* or /admin/* paths — always network-only
+  if (url.pathname.startsWith('/api/') || url.pathname.startsWith('/admin/')) {
+    event.respondWith(fetch(event.request));
+    return;
+  }
+
+  // Stale-while-revalidate for /opening-hours.json
+  if (url.pathname === '/opening-hours.json') {
+    event.respondWith(
+      caches.open(CACHE_NAME).then(cache =>
+        cache.match(event.request).then(cachedResponse => {
+          const fetchPromise = fetch(event.request)
+            .then(networkResponse => {
+              if (networkResponse && networkResponse.status === 200) {
+                cache.put(event.request, networkResponse.clone());
+              }
+              return networkResponse;
+            })
+            .catch(() => cachedResponse);
+
+          return cachedResponse || fetchPromise;
+        })
+      )
+    );
+    return;
+  }
 
   // Use Network-First for the root page and any HTML requests
   if (
