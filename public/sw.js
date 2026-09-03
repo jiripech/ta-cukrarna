@@ -1,4 +1,4 @@
-const CACHE_NAME = 'ta-cukrarna-v10';
+const CACHE_NAME = 'ta-cukrarna-v11';
 const urlsToCache = [
   '/',
   '/icon.ico',
@@ -32,8 +32,8 @@ self.addEventListener('fetch', event => {
     return;
   }
 
-  // Stale-while-revalidate for /opening-hours.json
-  if (url.pathname === '/opening-hours.json') {
+  // Stale-while-revalidate for /opening-hours.jsonc
+  if (url.pathname === '/opening-hours.jsonc') {
     event.respondWith(
       caches.open(CACHE_NAME).then(cache =>
         cache.match(event.request).then(cachedResponse => {

@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { parseJsonc } from '@/lib/jsonc';
 
 export type Season = 'spring' | 'summer' | 'autumn' | 'winter';
 
@@ -36,6 +37,52 @@ export function isSummerSeason(date: Date = new Date()): boolean {
   return getSeason(date) === 'summer';
 }
 
+export interface HoursException {
+  date: string; // YYYY-MM-DD
+  hours: string; // '' = closed on that date
+}
+
+interface HoursData {
+  schedule?: Array<{
+    startDate: string;
+    endDate: string;
+    days: Record<string, string>;
+  }>;
+  exceptions?: HoursException[];
+}
+
+/**
+ * Builds a local YYYY-MM-DD string from a Date. Unlike
+ * toISOString().slice(0, 10) this does not shift the date into UTC, which
+ * matters around midnight for the Czech CET/CEST timezone.
+ */
+export function todayLocalIso(date: Date = new Date()): string {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+
+type WeekdayKey = 'pondeli' | 'utery' | 'streda' | 'ctvrtek' | 'patek';
+
+// Maps JS getDay() (0 = Sunday … 6 = Saturday) to the Mon–Fri row keys.
+const ROW_BY_JS_DAY: Record<number, WeekdayKey> = {
+  1: 'pondeli',
+  2: 'utery',
+  3: 'streda',
+  4: 'ctvrtek',
+  5: 'patek',
+};
+
+/**
+ * Returns the JS day index (0 = Sunday … 6 = Saturday) for a local
+ * YYYY-MM-DD string, parsed without UTC timezone shifts.
+ */
+function localJsDay(isoDate: string): number {
+  const [year, month, day] = isoDate.split('-').map(Number);
+  return new Date(year, month - 1, day).getDay();
+}
+
 const headingBySeason: Record<Season, string> = {
   spring: 'Jarní otevírací doba',
   summer: 'Letní otevírací doba',
@@ -67,15 +114,27 @@ export default function OpeningHours() {
   const [customDays, setCustomDays] = useState<Record<string, string> | null>(
     null
   );
+  const [exceptions, setExceptions] = useState<HoursException[]>([]);
 
   useEffect(() => {
-    const today = new Date().toISOString().slice(0, 10);
-    fetch(`/opening-hours.json?v=${Date.now()}`)
+    const today = todayLocalIso();
+    fetch(`/opening-hours.jsonc?v=${Date.now()}`)
       .then(res => {
         if (!res.ok) return null;
-        return res.json();
+        // JSONC: the file is hand-edited and may contain comments and
+        // trailing commas, which strict res.json() would reject.
+        return res.text().then(text => parseJsonc<HoursData>(text));
       })
       .then(data => {
+        if (Array.isArray(data?.exceptions)) {
+          setExceptions(
+            data.exceptions.filter(
+              (e: { date?: unknown; hours?: unknown }) =>
+                typeof e?.date === 'string' && typeof e?.hours === 'string'
+            )
+          );
+        }
+
         if (
           !data ||
           !Array.isArray(data.schedule) ||
@@ -125,6 +184,33 @@ export default function OpeningHours() {
   const hasNotClosedText = (text: string) =>
     text === notClosedText || text.includes('Výdej');
 
+  // An exact-date exception overrides the weekly schedule for today.
+  const today = todayLocalIso();
+  const exception = exceptions.find(x => x.date === today);
+  const exceptionDay = exception ? localJsDay(exception.date) : -1;
+  const weekdayExceptionKey = exception
+    ? (ROW_BY_JS_DAY[exceptionDay] ?? null)
+    : null;
+  const weekendException =
+    exception && (exceptionDay === 0 || exceptionDay === 6) ? exception : null;
+
+  const dayCell = (key: WeekdayKey): { text: string; closed: boolean } => {
+    if (exception && weekdayExceptionKey === key) {
+      return { text: exception.hours, closed: exception.hours === '' };
+    }
+    const text = schedule[key];
+    return {
+      text,
+      closed: (key === 'pondeli' || key === 'patek') && hasNotClosedText(text),
+    };
+  };
+
+  const pondeli = dayCell('pondeli');
+  const utery = dayCell('utery');
+  const streda = dayCell('streda');
+  const ctvrtek = dayCell('ctvrtek');
+  const patek = dayCell('patek');
+
   return (
     <div id="openinghours">
       <div id="opening-hours">
@@ -134,43 +220,49 @@ export default function OpeningHours() {
         <div className="space-y-2 text-zinc-600 dark:text-zinc-300 md:text-zinc-300!">
           <div className="flex justify-between">
             <span>Pondělí</span>
-            <span
-              className={
-                hasNotClosedText(schedule.pondeli)
-                  ? redClosedClasses
-                  : 'font-medium'
-              }
-            >
-              {schedule.pondeli}
+            <span className={pondeli.closed ? redClosedClasses : 'font-medium'}>
+              {pondeli.text}
             </span>
           </div>
           <div className="flex justify-between">
             <span>Úterý</span>
-            <span className="font-medium">{schedule.utery}</span>
+            <span className={utery.closed ? redClosedClasses : 'font-medium'}>
+              {utery.text}
+            </span>
           </div>
           <div className="flex justify-between">
             <span>Středa</span>
-            <span className="font-medium">{schedule.streda}</span>
+            <span className={streda.closed ? redClosedClasses : 'font-medium'}>
+              {streda.text}
+            </span>
           </div>
           <div className="flex justify-between">
             <span>Čtvrtek</span>
-            <span className="font-medium">{schedule.ctvrtek}</span>
+            <span className={ctvrtek.closed ? redClosedClasses : 'font-medium'}>
+              {ctvrtek.text}
+            </span>
           </div>
           <div className="flex justify-between">
             <span>Pátek</span>
-            <span
-              className={
-                hasNotClosedText(schedule.patek)
-                  ? redClosedClasses
-                  : 'font-medium'
-              }
-            >
-              {schedule.patek}
+            <span className={patek.closed ? redClosedClasses : 'font-medium'}>
+              {patek.text}
             </span>
           </div>
           <div className="flex justify-between">
             <span>Sobota - Neděle, svátky</span>
-            <span className={redClosedClasses}>{notClosedText}</span>
+            {weekendException ? (
+              <span
+                className={
+                  weekendException.hours === ''
+                    ? redClosedClasses
+                    : 'font-medium'
+                }
+              >
+                {weekendException.hours}
+              </span>
+            ) : (
+              <span className={redClosedClasses}>{notClosedText}</span>
+            )}
           </div>
         </div>
       </div>

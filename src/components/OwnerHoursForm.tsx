@@ -16,6 +16,11 @@ export interface ScheduleEntry {
   };
 }
 
+export interface HoursException {
+  date: string; // YYYY-MM-DD
+  hours: string; // '' = closed on that date
+}
+
 const DAY_KEYS = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'] as const;
 const DAY_LABELS: Record<(typeof DAY_KEYS)[number], string> = {
   mon: 'Pondělí',
@@ -56,6 +61,7 @@ interface CsrfOptions {
 
 export default function OwnerHoursForm({ csrf }: { csrf?: CsrfOptions }) {
   const [entries, setEntries] = useState<ScheduleEntry[]>([]);
+  const [exceptions, setExceptions] = useState<HoursException[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -77,6 +83,14 @@ export default function OwnerHoursForm({ csrf }: { csrf?: CsrfOptions }) {
       const schedule: ScheduleEntry[] = Array.isArray(data.schedule)
         ? data.schedule
         : [];
+      setExceptions(
+        Array.isArray(data.exceptions)
+          ? data.exceptions.filter(
+              (e: { date?: unknown; hours?: unknown }) =>
+                typeof e?.date === 'string' && typeof e?.hours === 'string'
+            )
+          : []
+      );
       if (schedule.length === 0) {
         setEntries([emptyEntry()]);
       } else {
@@ -125,6 +139,25 @@ export default function OwnerHoursForm({ csrf }: { csrf?: CsrfOptions }) {
     setEntries(prev => prev.filter((_, i) => i !== index));
   }, []);
 
+  const updateException = useCallback(
+    (index: number, patch: Partial<HoursException>) => {
+      setExceptions(prev =>
+        prev.map((exception, i) =>
+          i === index ? { ...exception, ...patch } : exception
+        )
+      );
+    },
+    []
+  );
+
+  const addException = useCallback(() => {
+    setExceptions(prev => [...prev, { date: '', hours: '' }]);
+  }, []);
+
+  const removeException = useCallback((index: number) => {
+    setExceptions(prev => prev.filter((_, i) => i !== index));
+  }, []);
+
   const validate = useCallback((): string | null => {
     if (entries.length === 0) {
       return 'Přidejte prosím alespoň jedno období. / Please add at least one period.';
@@ -159,8 +192,31 @@ export default function OwnerHoursForm({ csrf }: { csrf?: CsrfOptions }) {
         }
       }
     }
+    for (let i = 0; i < exceptions.length; i++) {
+      const exception = exceptions[i];
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(exception.date)) {
+        return 'Neplatné datum výjimky. / Invalid exception date.';
+      }
+      if (exception.hours.length > 100) {
+        return 'Text výjimky je příliš dlouhý. / Exception text is too long.';
+      }
+      if (
+        !/^[A-Za-z0-9áčďéěíňóřšťúůýžÁČĎÉĚÍŇÓŘŠŤÚŮÝŽ .,:\-]*$/.test(
+          exception.hours
+        )
+      ) {
+        return 'Neplatné znaky v textu výjimky. / Invalid characters in exception text.';
+      }
+    }
+    for (let i = 0; i < exceptions.length; i++) {
+      for (let j = i + 1; j < exceptions.length; j++) {
+        if (exceptions[i].date === exceptions[j].date) {
+          return 'Data výjimek se nesmí opakovat. / Exception dates must be unique.';
+        }
+      }
+    }
     return null;
-  }, [entries]);
+  }, [entries, exceptions]);
 
   const save = useCallback(async () => {
     const validationError = validate();
@@ -184,7 +240,7 @@ export default function OwnerHoursForm({ csrf }: { csrf?: CsrfOptions }) {
         method: 'POST',
         credentials: 'include',
         headers,
-        body: JSON.stringify({ schedule: entries }),
+        body: JSON.stringify({ schedule: entries, exceptions }),
       });
       if (!res.ok) {
         let message =
@@ -211,7 +267,7 @@ export default function OwnerHoursForm({ csrf }: { csrf?: CsrfOptions }) {
     } finally {
       setSaving(false);
     }
-  }, [entries, validate, csrfToken]);
+  }, [entries, exceptions, validate, csrfToken]);
 
   const previewText = useMemo(() => {
     if (entries.length === 0) return 'Zatím žádné období. / No periods yet.';
@@ -320,6 +376,71 @@ export default function OwnerHoursForm({ csrf }: { csrf?: CsrfOptions }) {
           >
             + Přidat období / Add period
           </button>
+
+          <div className="space-y-3">
+            <div>
+              <h4 className="text-sm font-semibold text-zinc-700 dark:text-zinc-200">
+                Výjimky / Exceptions
+              </h4>
+              <p className="text-xs text-zinc-500 dark:text-zinc-400">
+                Výjimka pro konkrétní datum přepíše týdenní otevírací dobu;
+                prázdné hodiny znamenají zavřeno. / An exception for a specific
+                date overrides the weekly schedule; empty hours means closed.
+              </p>
+            </div>
+
+            {exceptions.map((exception, index) => (
+              <div
+                key={index}
+                className="flex flex-col gap-3 rounded-lg border border-zinc-200 dark:border-zinc-800 p-4 sm:flex-row sm:items-end"
+              >
+                <label className="block sm:w-56">
+                  <span className="mb-1 block text-xs font-medium text-zinc-600 dark:text-zinc-300">
+                    Datum / Date
+                  </span>
+                  <input
+                    type="date"
+                    value={exception.date}
+                    onChange={e =>
+                      updateException(index, { date: e.target.value })
+                    }
+                    aria-label={`Datum výjimky / Exception date${exception.date ? ` ${exception.date}` : ''}`}
+                    className={inputClasses}
+                  />
+                </label>
+                <label className="block flex-1">
+                  <span className="mb-1 block text-xs font-medium text-zinc-600 dark:text-zinc-300">
+                    Hodiny / Hours
+                  </span>
+                  <input
+                    type="text"
+                    value={exception.hours}
+                    onChange={e =>
+                      updateException(index, { hours: e.target.value })
+                    }
+                    placeholder="9:00 - 15:00"
+                    aria-label={`Hodiny pro ${exception.date || 'výjimku'} / Hours for ${exception.date || 'exception'}`}
+                    className={inputClasses}
+                  />
+                </label>
+                <button
+                  type="button"
+                  onClick={() => removeException(index)}
+                  className="text-sm text-red-600 hover:text-red-500 dark:text-red-400 disabled:opacity-50"
+                >
+                  Odebrat / Remove
+                </button>
+              </div>
+            ))}
+
+            <button
+              type="button"
+              onClick={addException}
+              className="rounded-md border border-amber-500 px-4 py-2 text-sm font-medium text-amber-600 hover:bg-amber-50 dark:text-amber-400 dark:hover:bg-amber-950/40 transition-colors"
+            >
+              + Přidat výjimku / Add exception
+            </button>
+          </div>
 
           <div className="mt-6 flex items-center gap-3">
             <button
