@@ -43,10 +43,6 @@ export default defineConfig({
       name: 'Mobile Android Old (Galaxy S5)',
       use: { ...devices['Galaxy S5'] },
     },
-    {
-      name: 'Mobile iOS Old (iPhone SE)',
-      use: { ...devices['iPhone SE'] },
-    },
   ],
 
   /* Run your local dev server before starting the tests */

@@ -22,7 +22,17 @@ function bufferToBase64Url(buffer: ArrayBuffer): string {
     .replace(/=/g, '');
 }
 
-function base64UrlToArrayBuffer(base64url: string): ArrayBuffer {
+/**
+ * Converts an ArrayBuffer to a base64url string (no padding).
+ * Exported for unit testing.
+ */
+export { bufferToBase64Url };
+
+/**
+ * Converts a base64url string to an ArrayBuffer.
+ * Exported for unit testing.
+ */
+export function base64UrlToArrayBuffer(base64url: string): ArrayBuffer {
   const base64 = base64url.replace(/-/g, '+').replace(/_/g, '/');
   const padded = base64 + '='.repeat((4 - (base64.length % 4)) % 4);
   const binary = atob(padded);
