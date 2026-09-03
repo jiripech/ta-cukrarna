@@ -69,6 +69,8 @@ jobs:
       - name: Build application
         env:
           NEXT_PUBLIC_CLARITY_ID: ${{ secrets.NEXT_PUBLIC_CLARITY_ID }}
+          USE_ADMIN: ${{ vars.USE_ADMIN }}
+          USE_CHATBOT: ${{ vars.USE_CHATBOT }}
         run: npm run build
 
       - name: Install Playwright browsers
