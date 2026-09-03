@@ -196,6 +196,32 @@ creates at runtime must be listed in `.rsyncignore` or the next deploy wipes it:
 the workflow — the schema creation is idempotent, the data survives via the
 rsync exclusions above.
 
+### Ownership and permissions on the VPS
+
+PHP (www-data) must be able to WRITE `api/DB/` (SQLite + `api-debug.log`) and
+the docroot root (atomic tmp+rename of `opening-hours.jsonc`). The deploy
+workflow leaves files `644` / dir `700` owned by the deploy user, so a
+post-deploy step (after the `init.php` step, so the freshly created schema file
+is covered) is required:
+
+```bash
+ssh $VPS_USER@$VPS_HOST "
+  chown -R ta-cukrarna:www-data ./apps/website
+  chmod g+s ./apps/website/api/DB        # new files inherit group www-data
+  chmod -R g+rwX ./apps/website/api/DB   # group write: SQLite WAL + log
+  chmod g+w ./apps/website               # group write: opening-hours.jsonc saves
+"
+```
+
+Note `g+s` alone does not grant write access — the workflow's `700`/`644`
+defaults leave the group read-only, hence `g+rwX`. Until this runs, the register
+API fails its token insert (clean 500) and `api-debug.log` never appears,
+because `logEvent()` silently no-ops when unwritable. Conversely, once group
+access exists, `api/DB/.htaccess` (`Require all denied`) is what keeps
+`passkeys.sqlite` and the log unreachable over HTTP — verify it after any
+permission change: `ls -la apps/website/api/DB/` (dotfile!) and
+`curl -I https://tacukrarna.cz/api/DB/passkeys.sqlite` must be 403/404.
+
 ## 🐞 Debug logging (api/DB/api-debug.log)
 
 `register.php` writes a JSONL audit trail via `logEvent()` (`db.php`) into
