@@ -59,6 +59,12 @@ function loadEnv(): void
     $env_path = __DIR__ . '/../../.env';
 
     if (!file_exists($env_path)) {
+        // Missing file is expected when vars come from Apache/systemd;
+        // has_maildb_host tells the two situations apart in the log.
+        logEvent('env_file_missing', [
+            'path' => $env_path,
+            'has_maildb_host' => getenv('MAILDB_HOST') !== false,
+        ]);
         return;
     }
 
