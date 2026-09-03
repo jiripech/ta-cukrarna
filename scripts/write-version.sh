@@ -1,22 +1,56 @@
 #!/bin/bash
 
-# Writes a version string to public/version.txt
-# If an argument is provided, it is used as the version (e.g. a released version tag).
-# If no argument is provided it falls back to the current git short commit id.
+# Single source of truth for release versioning.
+#
+# Syncs the version across package.json, package-lock.json (BOTH version
+# fields — the root one and packages[""].version) and public/version.txt so
+# the pre-push hook finds them already in sync with the release tag and
+# `git push origin main --follow-tags` succeeds on the first attempt.
+#
+# Usage:
+#   scripts/write-version.sh vX.Y.Z   # explicit release version
+#   scripts/write-version.sh          # derive from the highest v* git tag,
+#                                     # fall back to package.json version;
+#                                     # last resort (no tags, fresh clone):
+#                                     # stamp version.txt with git short SHA
+#
+# Called automatically by `npm run dev` and `npm run build`; idempotent when
+# everything is already in sync.
 
 set -euo pipefail
 
-# If public/version.txt already exists and looks like a released version (e.g. "Version: v1.2.3"), preserve it.
-# Otherwise use provided argument or fall back to git short SHA.
+NUM_RE='^[0-9]+\.[0-9]+\.[0-9]+$'
+VER="${1-}"
 
-if [ -n "${1-}" ]; then
-  VER="$1"
-else
-  # If a released version already exists in public/version.txt, do nothing.
-  grep -qE '^Version: v[0-9]+\.[0-9]+\.[0-9]+' public/version.txt 2>/dev/null && exit 0
-
-  # Best-effort: get short git sha
-  VER=$(git rev-parse --short HEAD 2>/dev/null || echo "unknown")
+if [ -z "$VER" ]; then
+  # Highest reachable release tag (fails on shallow CI checkouts without
+  # tags — the package.json fallback covers that case).
+  VER=$(git describe --tags --match 'v[0-9]*' --abbrev=0 2>/dev/null || true)
 fi
 
-echo "Version: $VER" > public/version.txt
+if [ -z "$VER" ]; then
+  VER=$(node -p 'require("./package.json").version' 2>/dev/null || true)
+fi
+
+# Normalize: drop a leading "v" for the JSON files; the footer keeps it.
+NUM="${VER#v}"
+
+if [[ "$NUM" =~ $NUM_RE ]]; then
+  node -e '
+    const fs = require("fs");
+    const ver = process.argv[1];
+    for (const f of ["package.json", "package-lock.json"]) {
+      const p = JSON.parse(fs.readFileSync(f, "utf8"));
+      if (f === "package-lock.json" && p.packages && p.packages[""]) {
+        p.packages[""].version = ver;
+      }
+      p.version = ver;
+      fs.writeFileSync(f, JSON.stringify(p, null, 2) + "\n");
+    }
+  ' "$NUM"
+  echo "Version: v$NUM" > public/version.txt
+else
+  # No semver derivable (fresh clone without tags): stamp the footer only,
+  # never touch the JSON files with a non-release version.
+  echo "Version: $VER" > public/version.txt
+fi

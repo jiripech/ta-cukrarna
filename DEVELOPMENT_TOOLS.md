@@ -97,3 +97,112 @@ _Example (gh):_
 # Create or update variable
 gh api repos/:owner/:repo/actions/variables -f name='PREF_RUNNER' -f value='hq-runner-x64'
 ```
+
+## 🏷️ Release pushes and the pre-push hook
+
+### Hooks in this repository
+
+- `pre-commit` (`npx lint-staged`): secretlint + eslint --fix + prettier on the
+  staged files; the commit is blocked if a check fails.
+- `pre-push` (`.husky/pre-push`): release-tag guard (strictly incremental
+  `vX.Y.Z`) plus version-file sync for pushed release tags.
+
+### The three pre-push outcomes for a `vX.Y.Z` tag
+
+1. **Guard rejection** — the tag is not strictly greater than the highest
+   `vX.Y.Z` tag on the remote. Push aborted. A real check failure; the message
+   names the offending tag.
+2. **Sync failure** — the hook tried to rewrite/commit/re-point the version
+   files and something failed (reported as `✗ …`). Push aborted for inspection.
+   A real failure.
+3. **Sync-then-abort** — the version files on disk do not match the tag. The
+   hook rewrites `package.json`, `package-lock.json` and `public/version.txt` to
+   the tag's version, creates the `🔖 Sync version files to vX.Y.Z` commit on
+   `main`, re-points the local tag at that commit, and then **exits 1 on
+   purpose**. This is the designed behavior, not a broken check.
+
+### Why outcome 3 aborts on purpose
+
+`git push` resolves the OIDs it is going to send _before_ the pre-push hook
+runs. Re-pointing a tag inside the hook therefore cannot change what the
+in-flight push delivers: without the abort the remote would receive the stale
+tag (pre-sync commit) and stale `main`, and the deployed site would show the
+wrong version footer. Aborting forces a second push that carries the corrected
+refs. This was verified empirically during the v1.2.2 rollout: without the abort
+the remote received the old tag.
+
+### Pattern A — tag HEAD directly (abort expected once)
+
+```bash
+git commit -s -S -m "..."
+git tag -a -s vX.Y.Z -m "Release vX.Y.Z"
+git push origin main --follow-tags # exits 1: sync done, tag re-pointed
+git push origin main --follow-tags # identical command now succeeds
+```
+
+The first push prints
+`🔖 Version sync performed during pre-push … the in-flight push carried the OLD tag, so it was aborted.`
+— exit code 1 here is expected. Re-run the same push; it delivers `main` at the
+sync commit and the re-pointed tag. Never bypass with `--no-verify`; a guard
+rejection (outcome 1) means the tag number is wrong, not that the hook is
+misbehaving.
+
+### Pattern B — commit version files first (no abort, single push)
+
+```bash
+npm version patch --no-git-tag-version
+bash ./scripts/write-version.sh X.Y.Z
+git add package.json package-lock.json public/version.txt
+git commit -s -S -m "🔖 Release vX.Y.Z"
+git tag -a -s vX.Y.Z -m "Release vX.Y.Z"
+git push origin main --follow-tags # succeeds on the first push
+```
+
+When the version files already match the tag, `sync_version_files()` returns
+early, no sync commit is made, and the push goes straight through. This is the
+flow `scripts/release.sh` automates and the historical v1.1.x behavior.
+
+### Why version files must be inside the tag at all
+
+The VPS build checks out the tag and reads `public/version.txt` / `package.json`
+to render the version footer. The sync exists because `scripts/release.sh`
+historically left `public/version.txt` stale (the v1.1.x footer bug), so the
+hook guarantees the pushed tag always carries a version consistent with itself.
+
+### Verifying a release landed
+
+```bash
+git rev-list -n1 vX.Y.Z # tag target (sync commit under Pattern A)
+git rev-parse HEAD      # equals the tag target after Pattern A, push 2
+gh run list --limit 1   # deploy run triggered by the tag push
+```
+
+### Runtime state on the VPS (excluded from rsync --delete)
+
+The deploy runs `rsync --delete ./out/ → apps/website/`, so anything the server
+creates at runtime must be listed in `.rsyncignore` or the next deploy wipes it:
+
+- `api/DB/*.sqlite` (+ `-wal`/`-shm`) — passkeys and registration tokens.
+- `opening-hours.jsonc` (docroot root) — admin-edited opening hours, JSONC
+  format: comments and trailing commas are fine for hand edits (parsed
+  tolerantly by `src/lib/jsonc.ts` / `jsoncDecode()`; note that an admin save
+  normalizes the file back to strict JSON, so manual comments do not survive a
+  save). It is never committed; on a fresh VPS create it manually, e.g.
+  `{"schedule":[],"exceptions":[]}` — or call `GET /api/opening-hours.php` once
+  as admin, which creates the empty file (the docblock in
+  `public/api/opening-hours.php` documents the schema).
+
+`api/DB/` is also `chmod 700` and re-initialized (`init.php`) on every deploy by
+the workflow — the schema creation is idempotent, the data survives via the
+rsync exclusions above.
+
+## 🐞 Debug logging (api/DB/api-debug.log)
+
+`register.php` writes a JSONL audit trail via `logEvent()` (`db.php`) into
+`api/DB/api-debug.log` (web-protected by `DB/.htaccess`, 1 MiB rotation).
+Events: `request`, `rate_limited`, `request_token_parsed`, `maildb_check`,
+`maildb_error`, `token_created`, `token_insert_failed`, `mail_attempt`,
+`mail_result`, `mail_unavailable`, `mail_skipped_not_found`, `validate_token`,
+`token_invalid`, `imap_failed`, `imap_ok`, `reset`. Tokens are logged as 8-char
+prefixes only; passwords never. Read it with
+`tail -n 50 apps/website/api/DB/api-debug.log` on the VPS.
