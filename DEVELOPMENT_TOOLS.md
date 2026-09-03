@@ -196,6 +196,29 @@ creates at runtime must be listed in `.rsyncignore` or the next deploy wipes it:
 the workflow — the schema creation is idempotent, the data survives via the
 rsync exclusions above.
 
+### Environment (.env)
+
+`loadEnv()` (`public/api/db.php`) reads `apps/.env` — **one level above the
+docroot** (`__DIR__/../../.env` from `api/db.php`), which keeps it outside
+Apache's reach. The register/mail/IMAP flow needs these keys (values live only
+on the VPS):
+
+- `MAILDB_HOST` (IMAP + MySQL host, e.g. `127.0.0.1`), `MAILDB_NAME`,
+  `MAILDB_USER`, `MAILDB_PASSWORD`
+- optional: `MAILDB_TABLE` (default `admin`), `SMTP_FROM`
+
+Vars already present via Apache/systemd `getenv()` take precedence; a missing
+file is logged as `env_file_missing` with a `has_maildb_host` flag so the benign
+case (vars provided by the service config) is distinguishable from a fully
+unconfigured server.
+
+Note: the deploy's `find ... chmod 644` re-applies read-only file permissions to
+`api/DB/passkeys.sqlite` on every deploy (the file itself never ships, but the
+chmod hits whatever exists) — the ownership/permission fixup below must
+therefore run after `init.php`, and re-run manually if a deploy lands before the
+fixup step exists: `chmod g+w apps/website/api/DB/passkeys.sqlite*`
+(SQLITE_READONLY on the token insert is this exact failure).
+
 ### Ownership and permissions on the VPS
 
 PHP (www-data) must be able to WRITE `api/DB/` (SQLite + `api-debug.log`) and
