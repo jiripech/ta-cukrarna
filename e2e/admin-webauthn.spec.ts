@@ -1,84 +1,116 @@
-import { test, expect, type BrowserContext, type Page } from '@playwright/test';
+import { test, expect } from '@playwright/test';
 
 /**
  * Admin WebAuthn round trip (register a device, then sign in) — client-side
  * orchestration test.
  *
- * The Playwright harness serves the static export (npx serve) with no PHP, so
- * the /api/webauthn.php and /api/register.php backends are mocked. A CDP
- * virtual authenticator (CTAP2, resident key) drives the real
- * navigator.credentials.create/get calls.
+ * The Playwright harness serves the static export (npx serve) from
+ * http://127.0.0.1:3001 with no PHP backend, so two things are mocked:
  *
- * The test first performs a real registration ceremony (which creates a
- * discoverable credential on the authenticator), then a login ceremony that
- * discovers it. A discovery flow (empty allowCredentials) cannot succeed on an
- * authenticator that holds no credential, so the register step must run first.
+ *  1. The PHP endpoints (/api/register.php, /api/webauthn.php, /api/csrf.php,
+ *     /api/opening-hours.php).
+ *  2. `navigator.credentials` itself. A real ceremony cannot run here: the
+ *     app's RP ID is tacukrarna.cz, and WebAuthn rejects an RP ID that is not
+ *     a registrable suffix of the test origin (127.0.0.1), so both
+ *     credentials.create() and credentials.get() would always fail.
  *
- * Real attestation/assertion verification lives on the PHP side and is out of
- * scope for the static harness; only the browser orchestration is asserted.
+ * Stubbing the browser API keeps what the app actually owns under test: the
+ * base64url -> ArrayBuffer mapping of the backend options, the sequencing of
+ * the challenge/verify fetches, and the view transitions.
  */
 
-const B64URL = 'ZGV2aWNlLWNoYWxsZW5nZQ'; // base64url of some bytes
-
-function createArgs() {
-  const rpId = 'tacukrarna.cz';
-  return {
-    createArgs: {
-      publicKey: {
-        rp: { id: rpId, name: 'Ta Cukrárna' },
-        user: {
-          id: B64URL,
-          name: 'owner@example.cz',
-          displayName: 'Owner',
-        },
-        challenge: B64URL,
-        pubKeyCredParams: [{ type: 'public-key', alg: -7 }],
-        timeout: 120000,
-        attestation: 'none',
-        authenticatorSelection: {
-          authenticatorAttachment: 'platform',
-          residentKey: 'required',
-          userVerification: 'required',
-        },
-      },
-    },
-  };
+declare global {
+  interface Window {
+    __webauthnCalls: {
+      create: { challenge: number[]; userId: number[] } | null;
+      get: { challenge: number[] } | null;
+    };
+  }
 }
 
-function getArgs() {
-  return {
-    getArgs: {
-      publicKey: {
-        challenge: B64URL,
-        rpId: 'tacukrarna.cz',
-        userVerification: 'required',
-        timeout: 120000,
-        allowCredentials: [],
-      },
-    },
-  };
-}
+// base64url of "device-challenge" / "device-user" test vectors.
+const CHALLENGE_B64URL = 'ZGV2aWNlLWNoYWxsZW5nZQ';
+const USER_ID_B64URL = 'ZGV2aWNlLXVzZXI';
+const EXPECTED_CHALLENGE_BYTES = [...'device-challenge'].map(c =>
+  c.charCodeAt(0)
+);
+const EXPECTED_USER_BYTES = [...'device-user'].map(c => c.charCodeAt(0));
 
-async function enableVirtualAuthenticator(
-  context: BrowserContext,
-  page: Page
+const CREATE_ARGS = {
+  createArgs: {
+    publicKey: {
+      rp: { id: 'tacukrarna.cz', name: 'Ta Cukrárna' },
+      user: {
+        id: USER_ID_B64URL,
+        name: 'owner@example.cz',
+        displayName: 'Owner',
+      },
+      challenge: CHALLENGE_B64URL,
+      pubKeyCredParams: [{ type: 'public-key', alg: -7 }],
+      timeout: 120000,
+      attestation: 'none',
+      authenticatorSelection: { residentKey: 'required' },
+    },
+  },
+};
+
+const GET_ARGS = {
+  getArgs: {
+    publicKey: {
+      challenge: CHALLENGE_B64URL,
+      rpId: 'tacukrarna.cz',
+      userVerification: 'required',
+      timeout: 120000,
+      allowCredentials: [],
+    },
+  },
+};
+
+async function mockBackends(
+  page: import('@playwright/test').Page
 ): Promise<void> {
-  const cdp = await context.newCDPSession(page);
-  await cdp.send('WebAuthn.enable');
-  await cdp.send('WebAuthn.addVirtualAuthenticator', {
-    options: {
-      protocol: 'ctap2',
-      transport: 'internal',
-      hasResidentKey: true,
-      hasUserVerification: true,
-      isUserVerified: true,
-    },
-  });
-}
-
-async function mockBackends(page: Page): Promise<void> {
   await page.addInitScript(
     ({ createArgs, getArgs }) => {
+      // Stub the browser WebAuthn API (RP ID cannot match the test origin).
+      const fakeResponse = { clientDataJSON: new ArrayBuffer(8) };
+      Object.defineProperty(window.navigator, 'credentials', {
+        configurable: true,
+        get: () => ({
+          create: async (opts: CredentialCreationOptions) => {
+            const pk = opts.publicKey!;
+            window.__webauthnCalls.create = {
+              challenge: [...new Uint8Array(pk.challenge as ArrayBuffer)],
+              userId: [
+                ...new Uint8Array(
+                  (pk.user as PublicKeyCredentialUserEntity).id
+                ),
+              ],
+            };
+            return {
+              response: {
+                clientDataJSON: fakeResponse.clientDataJSON,
+                attestationObject: new ArrayBuffer(8),
+              },
+            } as unknown as PublicKeyCredential;
+          },
+          get: async (opts: CredentialRequestOptions) => {
+            const pk = opts.publicKey!;
+            window.__webauthnCalls.get = {
+              challenge: [...new Uint8Array(pk.challenge as ArrayBuffer)],
+            };
+            return {
+              rawId: new ArrayBuffer(8),
+              response: {
+                clientDataJSON: fakeResponse.clientDataJSON,
+                authenticatorData: new ArrayBuffer(8),
+                signature: new ArrayBuffer(8),
+              },
+            } as unknown as PublicKeyCredential;
+          },
+        }),
+      });
+      window.__webauthnCalls = { create: null, get: null };
+
       const originalFetch = window.fetch;
       window.fetch = async (
         input: URL | RequestInfo,
@@ -103,13 +135,13 @@ async function mockBackends(page: Page): Promise<void> {
           return json({ ok: true });
         }
         if (urlStr.includes('action=challenge_register')) {
-          return json(createArgs());
+          return json(createArgs);
         }
         if (urlStr.includes('action=verify_register')) {
           return json({ status: 'success' });
         }
         if (urlStr.includes('action=challenge_login')) {
-          return json(getArgs());
+          return json(getArgs);
         }
         if (urlStr.includes('action=verify_login')) {
           return json({ status: 'success', csrfToken: 'test-csrf-token' });
@@ -124,31 +156,34 @@ async function mockBackends(page: Page): Promise<void> {
         return originalFetch(input, init);
       };
     },
-    { createArgs, getArgs }
+    {
+      createArgs: CREATE_ARGS,
+      getArgs: GET_ARGS,
+    }
   );
 }
 
 test('registers a device then signs in, reaching the opening-hours form', async ({
-  context,
   page,
-  browserName,
 }) => {
-  // CDP virtual authenticators are only supported on Chromium.
-  if (browserName !== 'chromium') test.skip();
-
-  await enableVirtualAuthenticator(context, page);
   await mockBackends(page);
 
   // --- Registration ceremony via /admin/register/ with a valid token. ---
   await page.goto('/admin/register/?token=test-token');
-  // The token is validated and the password prompt is shown.
   const pwInput = page.locator('input[type="password"]');
   await expect(pwInput).toBeVisible();
   await pwInput.fill('hunter2');
   await page.getByRole('button', { name: /Pokračovat/ }).click();
 
-  // The browser WebAuthn prompt registers a resident credential; the mocked
-  // verify_register returns success and the "ready" screen appears.
+  // credentials.create was called with the decoded binary fields.
+  await expect
+    .poll(() => page.evaluate(() => window.__webauthnCalls.create))
+    .toEqual({
+      challenge: EXPECTED_CHALLENGE_BYTES,
+      userId: EXPECTED_USER_BYTES,
+    });
+
+  // The mocked verify_register returned success -> "ready" screen.
   await expect(page.getByText('Vaše zařízení je připraveno.')).toBeVisible();
 
   // --- Login ceremony via /admin/. ---
@@ -157,11 +192,14 @@ test('registers a device then signs in, reaching the opening-hours form', async 
   await expect(signIn).toBeVisible();
   await signIn.click();
 
-  // The login discovers the resident credential and reaches the form.
+  // credentials.get was called with the decoded challenge.
+  await expect
+    .poll(() => page.evaluate(() => window.__webauthnCalls.get))
+    .toEqual({ challenge: EXPECTED_CHALLENGE_BYTES });
+
+  // The login reached the opening-hours form with the CSRF token.
   await expect(
     page.getByRole('heading', { name: /Správa otevírací doby/ })
   ).toBeVisible();
-
-  // The form received the CSRF token from the mocked verify_login.
   await expect(page.getByRole('button', { name: /Uložit/ })).toBeVisible();
 });
