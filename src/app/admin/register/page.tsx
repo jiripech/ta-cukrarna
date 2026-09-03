@@ -87,16 +87,42 @@ export default function RegisterPage() {
     e.preventDefault();
     if (!emailValid) return;
     setSending(true);
-    setView({ name: 'sent' });
     try {
-      await fetch('/api/register.php?action=request-token', {
+      const res = await fetch('/api/register.php?action=request-token', {
         method: 'POST',
         credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ username: email.trim() }),
       });
+      // 429 and 5xx are unconditional responses - showing them leaks nothing
+      // about whether the account exists (that stays behind the neutral 200).
+      if (res.status === 429) {
+        const data = await res.json().catch(() => null);
+        setView({
+          name: 'error',
+          message:
+            data?.error ||
+            'Příliš mnoho požadavků. Zkuste to prosím později. / Too many requests. Please try again later.',
+        });
+        return;
+      }
+      if (!res.ok) {
+        setView({
+          name: 'error',
+          message:
+            'Odeslání se nezdařilo. Zkuste to prosím později. / Sending failed. Please try again later.',
+        });
+        return;
+      }
+      setView({ name: 'sent' });
     } catch {
-      // Swallow the error to avoid revealing anything.
+      setView({
+        name: 'error',
+        message:
+          'Odeslání se nezdařilo. Zkuste to prosím později. / Sending failed. Please try again later.',
+      });
+    } finally {
+      setSending(false);
     }
   };
 

@@ -25,6 +25,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
 
 $action = isset($_GET['action']) ? trim($_GET['action']) : '';
 
+logEvent('request', [
+    'action' => $action,
+    'method' => $_SERVER['REQUEST_METHOD'] ?? '',
+    'ip' => getClientIp(),
+]);
+
 switch ($action) {
 
     case 'request-token':
@@ -78,6 +84,7 @@ function handleRequestToken(): void
     }
 
     if (count($timestamps) >= 3) {
+        logEvent('rate_limited', ['ip' => $ip, 'attempts' => count($timestamps)]);
         jsonResponse(['error' => 'Příliš mnoho požadavků. Zkuste to prosím později. / Too many requests. Please try again later.'], 429);
     }
     $timestamps[] = $now;
@@ -87,6 +94,11 @@ function handleRequestToken(): void
     $data = json_decode($input, true);
 
     $username = ($data && isset($data['username'])) ? trim($data['username']) : '';
+
+    logEvent('request_token_parsed', [
+        'username' => $username,
+        'body_ok' => is_array($data),
+    ]);
 
     if (empty($username) || !filter_var($username, FILTER_VALIDATE_EMAIL)) {
         jsonResponse(['error' => 'Zadejte prosím platnou e-mailovou adresu. / Please enter a valid email address.'], 400);
@@ -101,18 +113,29 @@ function handleRequestToken(): void
         $stmt = $mailDb->prepare("SELECT username FROM `{$table}` WHERE username = ? AND active = 1");
         $stmt->execute([$username]);
         $exists = (bool) $stmt->fetch();
+        logEvent('maildb_check', ['username' => $username, 'exists' => $exists, 'table' => $table]);
     } catch (PDOException $e) {
         // Behave as if the account may exist; never reveal DB errors.
+        logEvent('maildb_error', [
+            'username' => $username,
+            'error' => $e->getMessage(),
+        ]);
     }
 
     // Regardless of existence, generate a token so behaviour is identical
     $token = bin2hex(random_bytes(32));
+    logEvent('token_created', ['username' => $username, 'token_prefix' => substr($token, 0, 8)]);
 
-    $pdo = getSqliteDb();
-    $stmt = $pdo->prepare(
-        'INSERT INTO reg_tokens (token, username, expires_at) VALUES (?, ?, datetime(\'now\', \'+1 hour\'))'
-    );
-    $stmt->execute([$token, $username]);
+    try {
+        $pdo = getSqliteDb();
+        $stmt = $pdo->prepare(
+            'INSERT INTO reg_tokens (token, username, expires_at) VALUES (?, ?, datetime(\'now\', \'+1 hour\'))'
+        );
+        $stmt->execute([$token, $username]);
+    } catch (Throwable $e) {
+        logEvent('token_insert_failed', ['error' => $e->getMessage()]);
+        jsonResponse(['error' => 'Registraci se nepodařilo zahájit. Zkuste to prosím později. / Could not start the registration. Please try again later.'], 500);
+    }
 
     if ($exists) {
         $link = 'https://tacukrarna.cz/admin/register/?token=' . $token;
@@ -126,15 +149,34 @@ function handleRequestToken(): void
             . "Tým Ta Cukrárna\n"
             . "https://tacukrarna.cz";
 
+        $from_header = getenv('SMTP_FROM') ?: 'Ta Cukrárna <info@tacukrarna.cz>';
         $headers = [];
         $headers[] = 'MIME-Version: 1.0';
         $headers[] = 'Content-type: text/plain; charset=utf-8';
-        $headers[] = 'From: ' . (getenv('SMTP_FROM') ?: 'Ta Cukrárna <info@tacukrarna.cz>');
+        $headers[] = 'From: ' . $from_header;
 
-        if (function_exists('mb_send_mail')) {
-            mb_internal_encoding('UTF-8');
-            @mb_send_mail($username, $subject, $message, implode("\r\n", $headers));
+        // Envelope sender must match the From domain (SPF/DMARC alignment);
+        // without -f Postfix uses www-data@<host> and receivers reject the mail.
+        $from_email = 'info@tacukrarna.cz';
+        if (preg_match('/<([^>]+)>/', $from_header, $m)) {
+            $from_email = $m[1];
         }
+
+        if (!function_exists('mb_send_mail')) {
+            logEvent('mail_unavailable', ['to' => $username]);
+        } else {
+            mb_internal_encoding('UTF-8');
+            $sent = @mb_send_mail(
+                $username,
+                $subject,
+                $message,
+                implode("\r\n", $headers),
+                '-f' . $from_email
+            );
+            logEvent('mail_result', ['to' => $username, 'sent' => (bool) $sent]);
+        }
+    } else {
+        logEvent('mail_skipped_not_found', ['username' => $username]);
     }
 
     // Generic response regardless of whether the account exists
@@ -154,6 +196,7 @@ function handleValidateToken(): void
     startSession();
 
     $token = isset($_GET['token']) ? trim($_GET['token']) : '';
+    logEvent('validate_token', ['token_prefix' => substr($token, 0, 8)]);
 
     if (empty($token)) {
         jsonResponse(['error' => 'Token neplatný nebo vypršel. / Token invalid or expired.'], 400);
@@ -167,6 +210,7 @@ function handleValidateToken(): void
     $row = $stmt->fetch();
 
     if (!$row) {
+        logEvent('token_invalid', ['token_prefix' => substr($token, 0, 8)]);
         jsonResponse(['error' => 'Token neplatný nebo vypršel. / Token invalid or expired.'], 400);
     }
 
@@ -213,10 +257,15 @@ function handleVerifyPassword(): void
     $imap = @imap_open($mailbox, $_SESSION['reg_username'], $password);
 
     if ($imap === false) {
+        logEvent('imap_failed', [
+            'username' => $_SESSION['reg_username'],
+            'imap_error' => function_exists('imap_last_error') ? (string) imap_last_error() : '',
+        ]);
         jsonResponse(['error' => 'Nesprávné heslo. / Incorrect password.'], 401);
     }
 
     imap_close($imap);
+    logEvent('imap_ok', ['username' => $_SESSION['reg_username']]);
 
     // Mark the token as used
     if (!empty($_SESSION['reg_token_id'])) {
@@ -242,6 +291,7 @@ function handleReset(): void
     }
 
     startSession();
+    logEvent('reset', ['username' => $_SESSION['reg_username'] ?? '']);
 
     unset(
         $_SESSION['reg_username'],

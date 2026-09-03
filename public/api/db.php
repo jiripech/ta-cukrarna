@@ -111,6 +111,36 @@ function jsonResponse(array $data, int $statusCode = 200): void
 }
 
 /**
+ * Appends a structured event to the API debug log.
+ *
+ * The log lives in the DB directory next to the SQLite database (writable by
+ * the web server) and is protected from HTTP access by DB/.htaccess. Never
+ * log passwords, secrets or full tokens — use a token prefix when correlation
+ * is needed. Logging failures are silently ignored so the API flow can never
+ * break because of logging.
+ *
+ * @param string $event   Short event identifier (e.g. 'mail_result')
+ * @param array  $context Additional scalar context for the event
+ * @return void
+ */
+function logEvent(string $event, array $context = []): void
+{
+    $log_path = __DIR__ . '/DB/api-debug.log';
+    $max_bytes = 1048576; // 1 MiB, then rotate to api-debug.log.1
+
+    if (file_exists($log_path) && filesize($log_path) > $max_bytes) {
+        @rename($log_path, $log_path . '.1');
+    }
+
+    $entry = array_merge(['ts' => date('c'), 'event' => $event], $context);
+    @file_put_contents(
+        $log_path,
+        json_encode($entry, JSON_UNESCAPED_UNICODE) . "\n",
+        FILE_APPEND | LOCK_EX
+    );
+}
+
+/**
  * Returns the client IP address, honoring X-Forwarded-For.
  *
  * @return string

@@ -114,3 +114,46 @@ test('submitting sends the request-token call and shows the neutral confirmation
     'owner@example.cz'
   );
 });
+
+test('shows a generic error when the API rate-limits the request', async ({
+  page,
+}) => {
+  // Wrap the beforeEach mock: this script runs after it, so it intercepts
+  // first and returns 429 for the register endpoint.
+  await page.addInitScript(() => {
+    const previous = window.fetch;
+    window.fetch = async (
+      input: URL | RequestInfo,
+      init?: RequestInit
+    ): Promise<Response> => {
+      const url =
+        typeof input === 'string'
+          ? input
+          : input instanceof URL
+            ? input.toString()
+            : input.url;
+      if (url.includes('/api/register.php')) {
+        return new Response(
+          JSON.stringify({
+            error:
+              'Příliš mnoho požadavků. Zkuste to prosím později. / Too many requests. Please try again later.',
+          }),
+          { status: 429, headers: { 'content-type': 'application/json' } }
+        );
+      }
+      return previous(input, init);
+    };
+  });
+
+  await page.goto('/admin/register/');
+  await page.locator('input[type="email"]').fill('owner@example.cz');
+  const submit = page.locator('button.glass-submit');
+  await expect(submit).toBeVisible();
+  await submit.click();
+
+  // The rate-limit error is generic (it leaks nothing about the account),
+  // so the page may show it verbatim.
+  await expect(page.locator('.glass-card')).toContainText(
+    'Příliš mnoho požadavků.'
+  );
+});
