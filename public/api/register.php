@@ -246,21 +246,33 @@ function handleVerifyPassword(): void
         jsonResponse(['error' => 'Zadejte prosím heslo. / Please enter a password.'], 400);
     }
 
-    // Verify the mailbox password over IMAP (localhost, no cert validation)
+    // Verify the mailbox password over IMAP on loopback.
+    //
+    // /notls is deliberate: PHP's imap extension (libc-client) offers legacy
+    // TLS during STARTTLS, which Dovecot's ssl_min_protocol = TLSv1.2
+    // rejects ("SSL_accept() failed: unsupported protocol"). Plaintext on
+    // loopback is fine because Dovecot exempts localhost connections from
+    // disable_plaintext_auth.
     if (!function_exists('imap_open')) {
         jsonResponse(['error' => 'Ověření hesla není momentálně dostupné. / Password verification is currently unavailable.'], 500);
     }
 
     $host = getenv('MAILDB_HOST') ?: '127.0.0.1';
-    $mailbox = '{' . $host . ':143/imap/novalidate-cert}';
+    $mailbox = '{' . $host . ':143/imap/notls}';
 
     $imap = @imap_open($mailbox, $_SESSION['reg_username'], $password);
 
     if ($imap === false) {
+        $imap_error = function_exists('imap_last_error') ? (string) imap_last_error() : '';
         logEvent('imap_failed', [
             'username' => $_SESSION['reg_username'],
-            'imap_error' => function_exists('imap_last_error') ? (string) imap_last_error() : '',
+            'imap_error' => $imap_error,
         ]);
+        // A TLS/transport failure is not a wrong password - tell them apart
+        // so the user is not sent chasing credentials.
+        if (preg_match('/ssl|tls|certificat/i', $imap_error) === 1) {
+            jsonResponse(['error' => 'Ověření hesla není momentálně dostupné. / Password verification is currently unavailable.'], 503);
+        }
         jsonResponse(['error' => 'Nesprávné heslo. / Incorrect password.'], 401);
     }
 
