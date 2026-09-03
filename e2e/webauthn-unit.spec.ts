@@ -25,8 +25,8 @@ test('bufferToBase64Url encodes arbitrary bytes as unpadded base64url', () => {
   // Empty input.
   expect(bufferToBase64Url(new ArrayBuffer(0))).toBe('');
 
-  // 0xff 0xfe -> base64 '/v4=' -> base64url '_v4'.
-  expect(bufferToBase64Url(Uint8Array.from([0xff, 0xfe]).buffer)).toBe('_v4');
+  // 0xff 0xfe -> base64 '//4=' -> base64url '__4'.
+  expect(bufferToBase64Url(Uint8Array.from([0xff, 0xfe]).buffer)).toBe('__4');
 });
 
 test('Round-trips base64url to bytes and back', () => {

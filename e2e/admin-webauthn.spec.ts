@@ -83,6 +83,10 @@ test('signs in via the WebAuthn ceremony and reaches the opening-hours form', as
       if (urlStr.includes('/api/csrf.php')) {
         return json({ csrf_token: 'test-csrf-token' });
       }
+      if (urlStr.includes('/api/opening-hours.php')) {
+        // OwnerHoursForm exits its loading state when this resolves.
+        return json({ schedule: [] });
+      }
       return originalFetch(input, init);
     };
   });

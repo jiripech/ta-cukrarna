@@ -20,7 +20,7 @@ const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 export default function RegisterPage() {
   const [view, setView] = useState<View>({ name: 'request' });
   const [email, setEmail] = useState('');
-  const [sentReady, setSentReady] = useState(false);
+  const [sending, setSending] = useState(false);
   const [password, setPassword] = useState('');
   const [passwordError, setPasswordError] = useState<string | null>(null);
   const emailRef = useRef<HTMLInputElement>(null);
@@ -86,6 +86,7 @@ export default function RegisterPage() {
   const handleRequest = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!emailValid) return;
+    setSending(true);
     setView({ name: 'sent' });
     try {
       await fetch('/api/register.php?action=request-token', {
@@ -183,7 +184,7 @@ export default function RegisterPage() {
 
   const handleEmailChange = (v: string) => {
     setEmail(v);
-    setSentReady(false);
+    setSending(false);
   };
 
   return (
@@ -206,11 +207,12 @@ export default function RegisterPage() {
             className="glass-input"
             aria-label="email"
           />
-          {emailValid && !sentReady && (
+          {emailValid && (
             <button
               type="submit"
               className="glass-submit"
-              onClick={() => setSentReady(true)}
+              disabled={sending}
+              aria-label="Odeslat"
             >
               →
             </button>
@@ -229,7 +231,7 @@ export default function RegisterPage() {
             type="button"
             onClick={() => {
               setEmail('');
-              setSentReady(false);
+              setSending(false);
               setView({ name: 'request' });
               emailRef.current?.focus();
             }}
