@@ -248,8 +248,10 @@ permission change: `ls -la apps/website/api/DB/` (dotfile!) and
 ## 🐞 Debug logging (api/DB/api-debug.log)
 
 `register.php` writes a JSONL audit trail via `logEvent()` (`db.php`) into
-`api/DB/api-debug.log` (web-protected by `DB/.htaccess`, 1 MiB rotation).
-Events: `request`, `rate_limited`, `request_token_parsed`, `maildb_check`,
+`api/DB/api-debug.log` (web-protected by `DB/.htaccess`, 1 MiB rotation). For
+IMAP/Dovecot handshake problems run the read-only probe on the VPS:
+`sudo bash scripts/vps-imap-probe.sh` (no changes, dummy credentials). Events:
+`request`, `rate_limited`, `request_token_parsed`, `maildb_check`,
 `maildb_error`, `token_created`, `token_insert_failed`, `mail_attempt`,
 `mail_result`, `mail_unavailable`, `mail_skipped_not_found`, `validate_token`,
 `token_invalid`, `imap_failed`, `imap_ok`, `reset`. Tokens are logged as 8-char
