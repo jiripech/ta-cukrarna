@@ -205,6 +205,10 @@ on the VPS):
 
 - `MAILDB_HOST` (IMAP + MySQL host, e.g. `127.0.0.1`), `MAILDB_NAME`,
   `MAILDB_USER`, `MAILDB_PASSWORD`
+- `IMAP_SERVER` — full mailbox specification for `imap_open()` in the register
+  password check, e.g. `127.0.0.1:993/imap/ssl/novalidate-cert` (host, port and
+  TLS flags in one value, so a server-side change is a `.env` edit rather than a
+  deploy)
 - optional: `MAILDB_TABLE` (default `admin`), `SMTP_FROM`
 
 Vars already present via Apache/systemd `getenv()` take precedence; a missing

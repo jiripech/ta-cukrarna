@@ -163,6 +163,7 @@ jobs:
           rsync -avz --delete -e "ssh -o StrictHostKeyChecking=no" --exclude-from='.rsyncignore' ./out/ $VPS_USER@$VPS_HOST:apps/website/
           echo "Setting proper file permissions..."
           ssh $VPS_USER@$VPS_HOST "find ./apps/website -type f -exec chmod 644 {} \;"
+          ssh $VPS_USER@$VPS_HOST "chown -R ${VPS_USER}:www-data ./apps/website"
           echo "Static deployment completed successfully!"
           echo "🎉 Static deployment finished!"
 
@@ -171,7 +172,7 @@ jobs:
           VPS_HOST: ${{ secrets.VPS_HOST }}
           VPS_USER: ${{ secrets.VPS_USER }}
         run: |
-          ssh $VPS_USER@$VPS_HOST "mkdir -p ./apps/website/api/DB && chmod 700 ./apps/website/api/DB"
+          ssh $VPS_USER@$VPS_HOST "mkdir -p ./apps/website/api/DB && chown "${VPS_USER}:www-data" ./apps/website/api/DB && chmod 2775 ./apps/website/api/DB"
 
       - name: Initialize SQLite database
         env:
@@ -179,6 +180,17 @@ jobs:
           VPS_USER: ${{ secrets.VPS_USER }}
         run: |
           ssh $VPS_USER@$VPS_HOST "php ./apps/website/api/DB/init.php"
+
+      - name: Fix runtime file permissions and reload PHP
+        env:
+          VPS_HOST: ${{ secrets.VPS_HOST }}
+          VPS_USER: ${{ secrets.VPS_USER }}
+        run: |
+          # The 644 sweep above re-breaks group-write on runtime state on
+          # every deploy; restore it (files may not exist yet on fresh VPS).
+          ssh $VPS_USER@$VPS_HOST "chmod g+w ./apps/website/opening-hours.jsonc ./apps/website/api/DB/passkeys.sqlite 2>/dev/null || true"
+          # Pick up PHP file changes even when opcache.validate_timestamps=0.
+          ssh $VPS_USER@$VPS_HOST "systemctl reload php8.5-fpm 2>/dev/null || sudo -n systemctl reload php8.5-fpm 2>/dev/null || systemctl reload php-fpm 2>/dev/null || echo 'FPM reload skipped - no privileges; reload manually if opcache.validate_timestamps=0'"
 
       - name: Cleanup SSH agent
         if: always()

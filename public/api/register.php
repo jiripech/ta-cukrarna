@@ -246,19 +246,21 @@ function handleVerifyPassword(): void
         jsonResponse(['error' => 'Zadejte prosím heslo. / Please enter a password.'], 400);
     }
 
-    // Verify the mailbox password over IMAP on loopback.
+    // Verify the mailbox password over IMAP.
     //
-    // /notls is deliberate: PHP's imap extension (libc-client) offers legacy
-    // TLS during STARTTLS, which Dovecot's ssl_min_protocol = TLSv1.2
-    // rejects ("SSL_accept() failed: unsupported protocol"). Plaintext on
-    // loopback is fine because Dovecot exempts localhost connections from
-    // disable_plaintext_auth.
+    // The full IMAP server specification (host:port/flags) comes from the
+    // IMAP_SERVER env var, so port/TLS changes are a .env edit, not a
+    // deploy. Do NOT fall back to port 143: this host's FPM libc-client
+    // ignores /notls and still attempts legacy-TLS STARTTLS on 143, which
+    // Dovecot's ssl_min_protocol = TLSv1.2 rejects ("SSL negotiation
+    // failed"). The default below (implicit TLS 993) is verified working
+    // against production FPM; novalidate-cert because the loopback
+    // certificate is not valid for 127.0.0.1.
     if (!function_exists('imap_open')) {
         jsonResponse(['error' => 'Ověření hesla není momentálně dostupné. / Password verification is currently unavailable.'], 500);
     }
 
-    $host = getenv('MAILDB_HOST') ?: '127.0.0.1';
-    $mailbox = '{' . $host . ':143/imap/notls}';
+    $mailbox = '{' . (getenv('IMAP_SERVER') ?: ((getenv('MAILDB_HOST') ?: '127.0.0.1') . ':993/imap/ssl/novalidate-cert')) . '}';
 
     $imap = @imap_open($mailbox, $_SESSION['reg_username'], $password);
 
@@ -266,7 +268,8 @@ function handleVerifyPassword(): void
         $imap_error = function_exists('imap_last_error') ? (string) imap_last_error() : '';
         logEvent('imap_failed', [
             'username' => $_SESSION['reg_username'],
-            'imap_error' => $imap_error,
+            'mailbox' => $mailbox,
+            'imap_error' => function_exists('imap_last_error') ? (string) imap_last_error() : '',
         ]);
         // A TLS/transport failure is not a wrong password - tell them apart
         // so the user is not sent chasing credentials.
