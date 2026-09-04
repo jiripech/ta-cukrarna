@@ -1,6 +1,8 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import { parseJsonc } from '@/lib/jsonc';
+import { makeT, useLang } from '@/lib/i18n';
 
 export interface ScheduleEntry {
   startDate: string; // YYYY-MM-DD
@@ -22,14 +24,17 @@ export interface HoursException {
 }
 
 const DAY_KEYS = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'] as const;
-const DAY_LABELS: Record<(typeof DAY_KEYS)[number], string> = {
-  mon: 'Pondělí',
-  tue: 'Úterý',
-  wed: 'Středa',
-  thu: 'Čtvrtek',
-  fri: 'Pátek',
-  sat: 'Sobota',
-  sun: 'Neděle',
+const DAY_LABELS: Record<
+  (typeof DAY_KEYS)[number],
+  Record<'cs' | 'en', string>
+> = {
+  mon: { cs: 'Pondělí', en: 'Monday' },
+  tue: { cs: 'Úterý', en: 'Tuesday' },
+  wed: { cs: 'Středa', en: 'Wednesday' },
+  thu: { cs: 'Čtvrtek', en: 'Thursday' },
+  fri: { cs: 'Pátek', en: 'Friday' },
+  sat: { cs: 'Sobota', en: 'Saturday' },
+  sun: { cs: 'Neděle', en: 'Sunday' },
 };
 
 const EMPTY_DAYS: ScheduleEntry['days'] = {
@@ -60,6 +65,8 @@ interface CsrfOptions {
 }
 
 export default function OwnerHoursForm({ csrf }: { csrf?: CsrfOptions }) {
+  const lang = useLang();
+  const t = makeT(lang);
   const [entries, setEntries] = useState<ScheduleEntry[]>([]);
   const [exceptions, setExceptions] = useState<HoursException[]>([]);
   const [loading, setLoading] = useState(true);
@@ -79,12 +86,17 @@ export default function OwnerHoursForm({ csrf }: { csrf?: CsrfOptions }) {
       if (!res.ok) {
         throw new Error('Nepodařilo se načíst otevírací dobu.');
       }
-      const data = await res.json();
-      const schedule: ScheduleEntry[] = Array.isArray(data.schedule)
+      // The runtime file is JSONC (hand-edited: comments and trailing
+      // commas), so strict res.json() would throw on it.
+      const data = parseJsonc<{
+        schedule?: ScheduleEntry[];
+        exceptions?: HoursException[];
+      }>(await res.text());
+      const schedule: ScheduleEntry[] = Array.isArray(data?.schedule)
         ? data.schedule
         : [];
       setExceptions(
-        Array.isArray(data.exceptions)
+        Array.isArray(data?.exceptions)
           ? data.exceptions.filter(
               (e: { date?: unknown; hours?: unknown }) =>
                 typeof e?.date === 'string' && typeof e?.hours === 'string'
@@ -98,12 +110,15 @@ export default function OwnerHoursForm({ csrf }: { csrf?: CsrfOptions }) {
       }
     } catch {
       setError(
-        'Nepodařilo se načíst otevírací dobu. / Could not load the opening hours.'
+        t(
+          'Nepodařilo se načíst otevírací dobu.',
+          'Could not load the opening hours.'
+        )
       );
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [t]);
 
   useEffect(() => {
     loadSchedule();
@@ -160,26 +175,35 @@ export default function OwnerHoursForm({ csrf }: { csrf?: CsrfOptions }) {
 
   const validate = useCallback((): string | null => {
     if (entries.length === 0) {
-      return 'Přidejte prosím alespoň jedno období. / Please add at least one period.';
+      return t(
+        'Přidejte prosím alespoň jedno období.',
+        'Please add at least one period.'
+      );
     }
     for (let i = 0; i < entries.length; i++) {
       const entry = entries[i];
       if (!/^\d{4}-\d{2}-\d{2}$/.test(entry.startDate)) {
-        return 'Neplatné počáteční datum. / Invalid start date.';
+        return t('Neplatné počáteční datum.', 'Invalid start date.');
       }
       if (!/^\d{4}-\d{2}-\d{2}$/.test(entry.endDate)) {
-        return 'Neplatné koncové datum. / Invalid end date.';
+        return t('Neplatné koncové datum.', 'Invalid end date.');
       }
       if (entry.startDate > entry.endDate) {
-        return 'Počáteční datum nemůže být později než koncové datum. / Start date cannot be after the end date.';
+        return t(
+          'Počáteční datum nemůže být později než koncové datum.',
+          'Start date cannot be after the end date.'
+        );
       }
       for (const key of DAY_KEYS) {
         const text = entry.days[key];
         if (text.length > 100) {
-          return 'Text dne je příliš dlouhý. / Day text is too long.';
+          return t('Text dne je příliš dlouhý.', 'Day text is too long.');
         }
         if (!/^[A-Za-z0-9áčďéěíňóřšťúůýžÁČĎÉĚÍŇÓŘŠŤÚŮÝŽ .,:\-]*$/.test(text)) {
-          return 'Neplatné znaky v textu dne. / Invalid characters in day text.';
+          return t(
+            'Neplatné znaky v textu dne.',
+            'Invalid characters in day text.'
+          );
         }
       }
     }
@@ -188,35 +212,44 @@ export default function OwnerHoursForm({ csrf }: { csrf?: CsrfOptions }) {
         const a = entries[i];
         const b = entries[j];
         if (a.startDate <= b.endDate && b.startDate <= a.endDate) {
-          return 'Období se překrývají. / Periods overlap.';
+          return t('Období se překrývají.', 'Periods overlap.');
         }
       }
     }
     for (let i = 0; i < exceptions.length; i++) {
       const exception = exceptions[i];
       if (!/^\d{4}-\d{2}-\d{2}$/.test(exception.date)) {
-        return 'Neplatné datum výjimky. / Invalid exception date.';
+        return t('Neplatné datum výjimky.', 'Invalid exception date.');
       }
       if (exception.hours.length > 100) {
-        return 'Text výjimky je příliš dlouhý. / Exception text is too long.';
+        return t(
+          'Text výjimky je příliš dlouhý.',
+          'Exception text is too long.'
+        );
       }
       if (
         !/^[A-Za-z0-9áčďéěíňóřšťúůýžÁČĎÉĚÍŇÓŘŠŤÚŮÝŽ .,:\-]*$/.test(
           exception.hours
         )
       ) {
-        return 'Neplatné znaky v textu výjimky. / Invalid characters in exception text.';
+        return t(
+          'Neplatné znaky v textu výjimky.',
+          'Invalid characters in exception text.'
+        );
       }
     }
     for (let i = 0; i < exceptions.length; i++) {
       for (let j = i + 1; j < exceptions.length; j++) {
         if (exceptions[i].date === exceptions[j].date) {
-          return 'Data výjimek se nesmí opakovat. / Exception dates must be unique.';
+          return t(
+            'Data výjimek se nesmí opakovat.',
+            'Exception dates must be unique.'
+          );
         }
       }
     }
     return null;
-  }, [entries, exceptions]);
+  }, [t, entries, exceptions]);
 
   const save = useCallback(async () => {
     const validationError = validate();
@@ -243,8 +276,10 @@ export default function OwnerHoursForm({ csrf }: { csrf?: CsrfOptions }) {
         body: JSON.stringify({ schedule: entries, exceptions }),
       });
       if (!res.ok) {
-        let message =
-          'Uložení se nezdařilo. Zkuste to prosím znovu. / Saving failed. Please try again.';
+        let message = t(
+          'Uložení se nezdařilo. Zkuste to prosím znovu.',
+          'Saving failed. Please try again.'
+        );
         try {
           const data = await res.json();
           if (data && data.error) {
@@ -256,30 +291,37 @@ export default function OwnerHoursForm({ csrf }: { csrf?: CsrfOptions }) {
         throw new Error(message);
       }
       setSuccess(
-        'Otevírací doba byla úspěšně uložena. / Opening hours saved successfully.'
+        t(
+          'Otevírací doba byla úspěšně uložena.',
+          'Opening hours saved successfully.'
+        )
       );
     } catch (e) {
       setError(
         e instanceof Error
           ? e.message
-          : 'Uložení se nezdařilo. Zkuste to prosím znovu. / Saving failed. Please try again.'
+          : t(
+              'Uložení se nezdařilo. Zkuste to prosím znovu.',
+              'Saving failed. Please try again.'
+            )
       );
     } finally {
       setSaving(false);
     }
-  }, [entries, exceptions, validate, csrfToken]);
+  }, [t, entries, exceptions, validate, csrfToken]);
 
   const previewText = useMemo(() => {
-    if (entries.length === 0) return 'Zatím žádné období. / No periods yet.';
+    if (entries.length === 0)
+      return t('Zatím žádné období.', 'No periods yet.');
     return entries
       .map(entry => {
         const days = DAY_KEYS.filter(k => entry.days[k].trim() !== '')
-          .map(k => `${DAY_LABELS[k]}: ${entry.days[k] || '—'}`)
+          .map(k => `${DAY_LABELS[k][lang]}: ${entry.days[k] || '—'}`)
           .join(', ');
         return `${entry.startDate} → ${entry.endDate}: ${days || '—'}`;
       })
       .join('\n');
-  }, [entries]);
+  }, [t, entries, lang]);
 
   return (
     <div className="space-y-6">
@@ -296,7 +338,7 @@ export default function OwnerHoursForm({ csrf }: { csrf?: CsrfOptions }) {
 
       {loading ? (
         <div className="py-10 text-center text-zinc-500 dark:text-zinc-400">
-          Načítám otevírací dobu… / Loading opening hours…
+          {t('Načítám otevírací dobu…', 'Loading opening hours…')}
         </div>
       ) : (
         <div className="space-y-6">
@@ -308,7 +350,7 @@ export default function OwnerHoursForm({ csrf }: { csrf?: CsrfOptions }) {
               >
                 <div className="flex items-center justify-between">
                   <h4 className="text-sm font-semibold text-zinc-700 dark:text-zinc-200">
-                    Období {index + 1} / Period {index + 1}
+                    {t('Období', 'Period')} {index + 1}
                   </h4>
                   <button
                     type="button"
@@ -316,14 +358,14 @@ export default function OwnerHoursForm({ csrf }: { csrf?: CsrfOptions }) {
                     className="text-sm text-red-600 hover:text-red-500 dark:text-red-400 disabled:opacity-50"
                     disabled={entries.length === 1}
                   >
-                    Odebrat / Remove
+                    {t('Odebrat', 'Remove')}
                   </button>
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <label className="block">
                     <span className="mb-1 block text-xs font-medium text-zinc-600 dark:text-zinc-300">
-                      Počáteční datum / Start date
+                      {t('Počáteční datum', 'Start date')}
                     </span>
                     <input
                       type="date"
@@ -336,7 +378,7 @@ export default function OwnerHoursForm({ csrf }: { csrf?: CsrfOptions }) {
                   </label>
                   <label className="block">
                     <span className="mb-1 block text-xs font-medium text-zinc-600 dark:text-zinc-300">
-                      Koncové datum / End date
+                      {t('Koncové datum', 'End date')}
                     </span>
                     <input
                       type="date"
@@ -353,7 +395,7 @@ export default function OwnerHoursForm({ csrf }: { csrf?: CsrfOptions }) {
                   {DAY_KEYS.map(key => (
                     <label key={key} className="block">
                       <span className="mb-1 block text-xs font-medium text-zinc-600 dark:text-zinc-300">
-                        {DAY_LABELS[key]}
+                        {DAY_LABELS[key][lang]}
                       </span>
                       <input
                         type="text"
@@ -374,18 +416,19 @@ export default function OwnerHoursForm({ csrf }: { csrf?: CsrfOptions }) {
             onClick={addEntry}
             className="rounded-md border border-amber-500 px-4 py-2 text-sm font-medium text-amber-600 hover:bg-amber-50 dark:text-amber-400 dark:hover:bg-amber-950/40 transition-colors"
           >
-            + Přidat období / Add period
+            {t('+ Přidat období', '+ Add period')}
           </button>
 
           <div className="space-y-3">
             <div>
               <h4 className="text-sm font-semibold text-zinc-700 dark:text-zinc-200">
-                Výjimky / Exceptions
+                {t('Výjimky', 'Exceptions')}
               </h4>
               <p className="text-xs text-zinc-500 dark:text-zinc-400">
-                Výjimka pro konkrétní datum přepíše týdenní otevírací dobu;
-                prázdné hodiny znamenají zavřeno. / An exception for a specific
-                date overrides the weekly schedule; empty hours means closed.
+                {t(
+                  'Výjimka pro konkrétní datum přepíše týdenní otevírací dobu; prázdné hodiny znamenají zavřeno.',
+                  'An exception for a specific date overrides the weekly schedule; empty hours means closed.'
+                )}
               </p>
             </div>
 
@@ -396,7 +439,7 @@ export default function OwnerHoursForm({ csrf }: { csrf?: CsrfOptions }) {
               >
                 <label className="block sm:w-56">
                   <span className="mb-1 block text-xs font-medium text-zinc-600 dark:text-zinc-300">
-                    Datum / Date
+                    {t('Datum', 'Date')}
                   </span>
                   <input
                     type="date"
@@ -404,13 +447,13 @@ export default function OwnerHoursForm({ csrf }: { csrf?: CsrfOptions }) {
                     onChange={e =>
                       updateException(index, { date: e.target.value })
                     }
-                    aria-label={`Datum výjimky / Exception date${exception.date ? ` ${exception.date}` : ''}`}
+                    aria-label={`${t('Datum výjimky', 'Exception date')}${exception.date ? ` ${exception.date}` : ''}`}
                     className={inputClasses}
                   />
                 </label>
                 <label className="block flex-1">
                   <span className="mb-1 block text-xs font-medium text-zinc-600 dark:text-zinc-300">
-                    Hodiny / Hours
+                    {t('Hodiny', 'Hours')}
                   </span>
                   <input
                     type="text"
@@ -419,7 +462,11 @@ export default function OwnerHoursForm({ csrf }: { csrf?: CsrfOptions }) {
                       updateException(index, { hours: e.target.value })
                     }
                     placeholder="9:00 - 15:00"
-                    aria-label={`Hodiny pro ${exception.date || 'výjimku'} / Hours for ${exception.date || 'exception'}`}
+                    aria-label={
+                      exception.date
+                        ? `${t('Hodiny pro', 'Hours for')} ${exception.date}`
+                        : t('Hodiny pro výjimku', 'Hours for exception')
+                    }
                     className={inputClasses}
                   />
                 </label>
@@ -428,7 +475,7 @@ export default function OwnerHoursForm({ csrf }: { csrf?: CsrfOptions }) {
                   onClick={() => removeException(index)}
                   className="text-sm text-red-600 hover:text-red-500 dark:text-red-400 disabled:opacity-50"
                 >
-                  Odebrat / Remove
+                  {t('Odebrat', 'Remove')}
                 </button>
               </div>
             ))}
@@ -438,7 +485,7 @@ export default function OwnerHoursForm({ csrf }: { csrf?: CsrfOptions }) {
               onClick={addException}
               className="rounded-md border border-amber-500 px-4 py-2 text-sm font-medium text-amber-600 hover:bg-amber-50 dark:text-amber-400 dark:hover:bg-amber-950/40 transition-colors"
             >
-              + Přidat výjimku / Add exception
+              {t('+ Přidat výjimku', '+ Add exception')}
             </button>
           </div>
 
@@ -449,18 +496,18 @@ export default function OwnerHoursForm({ csrf }: { csrf?: CsrfOptions }) {
               disabled={saving}
               className="rounded-md bg-amber-500 px-6 py-2.5 text-sm font-semibold text-white hover:bg-amber-600 transition-colors disabled:opacity-50"
             >
-              {saving ? 'Ukládám… / Saving…' : 'Uložit / Save'}
+              {saving ? t('Ukládám…', 'Saving…') : t('Uložit', 'Save')}
             </button>
             {saving && (
               <span className="text-sm text-zinc-500 dark:text-zinc-400">
-                Ukládám změny…
+                {t('Ukládám změny…', 'Saving changes…')}
               </span>
             )}
           </div>
 
           <div className="rounded-lg border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900/50 p-4">
             <h4 className="mb-2 text-xs font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
-              Náhled / Preview
+              {t('Náhled', 'Preview')}
             </h4>
             <pre className="whitespace-pre-wrap text-sm text-zinc-700 dark:text-zinc-300">
               {previewText}

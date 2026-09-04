@@ -1,0 +1,213 @@
+/* =====================================================
+    Liquid glass UI — portable design system
+    =====================================================
+    Self-contained, dependency-free CSS. Copy this single
+    file into any project and sketch your markup like this:
+
+    <div class="glass-page">
+      <div class="glass-card">
+        <label class="glass-label">
+          E-mail
+          <div class="glass-field">
+            <input class="glass-input" type="email" />
+            <button class="glass-submit">&rarr;</button>
+          </div>
+        </label>
+        <p class="glass-text">…</p>
+        <p class="glass-error">…</p>
+        <button class="glass-submit-full">Continue</button>
+        <a class="glass-ghost" href="/">Back</a>
+      </div>
+    </div>
+
+    The glass layers rely on a colorful page background
+    (.glass-page) behind them - the blur has nothing to
+    blur on a plain white page.
+    ===================================================== */
+
+.glass-page {
+  position: relative;
+  overflow: hidden;
+  background: radial-gradient(
+    120% 120% at 15% 10%,
+    #f7c873 0%,
+    #e89b3c 30%,
+    #b05a2a 60%,
+    #7a3a1e 100%
+  );
+}
+.glass-page::before {
+  content: '';
+  position: absolute;
+  inset: -20%;
+  background:
+    radial-gradient(
+      40% 40% at 70% 20%,
+      rgba(255, 255, 255, 0.55),
+      transparent 60%
+    ),
+    radial-gradient(
+      30% 30% at 20% 80%,
+      rgba(255, 255, 255, 0.35),
+      transparent 60%
+    );
+  animation: glass-bg-move 14s ease-in-out infinite alternate;
+  z-index: 0;
+}
+@keyframes glass-bg-move {
+  from {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+  to {
+    transform: translate3d(3%, -2%, 0) scale(1.08);
+  }
+}
+.glass-card,
+.glass-field {
+  position: relative;
+  z-index: 1;
+  border-radius: 2rem;
+  padding: 1.5rem 1.75rem;
+  color: #fff;
+  box-shadow:
+    0 6px 6px rgba(0, 0, 0, 0.2),
+    0 0 20px rgba(0, 0, 0, 0.12),
+    inset 1px 1px 0 rgba(255, 255, 255, 0.75),
+    inset 0 0 8px rgba(255, 255, 255, 0.35);
+  background: linear-gradient(
+    145deg,
+    rgba(255, 255, 255, 0.32),
+    rgba(255, 255, 255, 0.14)
+  );
+  backdrop-filter: blur(16px) saturate(160%);
+  -webkit-backdrop-filter: blur(16px) saturate(160%);
+}
+.glass-field {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+.glass-input {
+  width: 100%;
+  background: rgba(255, 255, 255, 0.14);
+  border: 0;
+  outline: none;
+  color: #fff;
+  font-size: 1rem;
+  padding: 0.6rem 0.75rem;
+  border-radius: 1.25rem;
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.15);
+  transition: background 0.3s ease;
+}
+.glass-input::placeholder {
+  color: rgba(255, 255, 255, 0.55);
+}
+.glass-input:focus {
+  background: rgba(255, 255, 255, 0.22);
+}
+.glass-submit,
+.glass-submit-full {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 0;
+  cursor: pointer;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #fff;
+  background: rgba(255, 255, 255, 0.18);
+  box-shadow:
+    inset 1px 1px 0 rgba(255, 255, 255, 0.6),
+    0 4px 8px rgba(0, 0, 0, 0.15);
+  transition:
+    transform 0.25s cubic-bezier(0.175, 0.885, 0.32, 2.2),
+    background 0.3s ease;
+}
+.glass-submit {
+  border-radius: 50%;
+  width: 2.6rem;
+  height: 2.6rem;
+}
+.glass-submit:hover,
+.glass-submit-full:hover {
+  background: rgba(255, 255, 255, 0.3);
+  transform: scale(1.05);
+}
+.glass-submit-full {
+  width: 100%;
+  margin-top: 0.75rem;
+  padding: 0.6rem 1rem;
+  border-radius: 1.5rem;
+}
+.glass-text {
+  margin: 0.25rem 0;
+  font-size: 0.95rem;
+  text-shadow: 0 0 4px rgba(0, 0, 0, 0.2);
+}
+.glass-label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: rgba(255, 255, 255, 0.85);
+  text-shadow: 0 0 3px rgba(0, 0, 0, 0.2);
+}
+.glass-error {
+  margin: 0.75rem 0 0;
+  font-size: 0.85rem;
+  color: #ffe3ea;
+}
+.glass-ghost {
+  display: inline-block;
+  margin-top: 0.75rem;
+  font-size: 0.85rem;
+  color: rgba(255, 255, 255, 0.9);
+  text-decoration: none;
+  text-shadow: 0 0 3px rgba(0, 0, 0, 0.2);
+  background: none;
+  border: 0;
+  cursor: pointer;
+}
+.glass-ghost:hover {
+  text-decoration: underline;
+}
+
+/* Language toggle (top-right of a glass-page; needs a positioned parent) */
+.glass-lang-toggle {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  z-index: 2;
+  display: flex;
+  gap: 0.5rem;
+}
+.glass-lang-toggle button {
+  border: 0;
+  cursor: pointer;
+  background: rgba(255, 255, 255, 0.18);
+  box-shadow:
+    inset 1px 1px 0 rgba(255, 255, 255, 0.6),
+    0 4px 8px rgba(0, 0, 0, 0.15);
+  border-radius: 9999px;
+  width: 2.2rem;
+  height: 2.2rem;
+  font-size: 1rem;
+  line-height: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0.5;
+  transition:
+    opacity 0.3s ease,
+    transform 0.25s cubic-bezier(0.175, 0.885, 0.32, 2.2),
+    background 0.3s ease;
+}
+.glass-lang-toggle button:hover {
+  transform: scale(1.08);
+}
+.glass-lang-toggle button.is-active {
+  opacity: 1;
+}

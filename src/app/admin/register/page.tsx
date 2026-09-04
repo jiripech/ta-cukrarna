@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { startRegistration } from '@/lib/webauthn';
 import { USE_ADMIN } from '@/lib/featureFlags';
+import { LanguageToggle, makeT, useLang } from '@/lib/i18n';
 
 type View =
   | { name: 'request' }
@@ -18,6 +19,8 @@ type View =
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 export default function RegisterPage() {
+  const lang = useLang();
+  const t = makeT(lang);
   const [view, setView] = useState<View>({ name: 'request' });
   const [email, setEmail] = useState('');
   const [sending, setSending] = useState(false);
@@ -60,7 +63,10 @@ export default function RegisterPage() {
             name: 'invalid',
             message:
               data?.error ||
-              'Registrační odkaz je neplatný nebo vypršel. / The registration link is invalid or has expired.',
+              t(
+                'Registrační odkaz je neplatný nebo vypršel.',
+                'The registration link is invalid or has expired.'
+              ),
           });
           return;
         }
@@ -69,8 +75,10 @@ export default function RegisterPage() {
         if (cancelled) return;
         setView({
           name: 'error',
-          message:
-            'Nepodařilo se ověřit registrační odkaz. / Could not verify the registration link.',
+          message: t(
+            'Nepodařilo se ověřit registrační odkaz.',
+            'Could not verify the registration link.'
+          ),
         });
       }
     };
@@ -79,7 +87,9 @@ export default function RegisterPage() {
     return () => {
       cancelled = true;
     };
-  }, []);
+    // The effect intentionally runs once per token; re-running on a language
+    // switch is harmless (token validation is a read-only request).
+  }, [t]);
 
   if (!USE_ADMIN) return null;
 
@@ -102,15 +112,20 @@ export default function RegisterPage() {
           name: 'error',
           message:
             data?.error ||
-            'Příliš mnoho požadavků. Zkuste to prosím později. / Too many requests. Please try again later.',
+            t(
+              'Příliš mnoho požadavků. Zkuste to prosím později.',
+              'Too many requests. Please try again later.'
+            ),
         });
         return;
       }
       if (!res.ok) {
         setView({
           name: 'error',
-          message:
-            'Odeslání se nezdařilo. Zkuste to prosím později. / Sending failed. Please try again later.',
+          message: t(
+            'Odeslání se nezdařilo. Zkuste to prosím později.',
+            'Sending failed. Please try again later.'
+          ),
         });
         return;
       }
@@ -118,8 +133,10 @@ export default function RegisterPage() {
     } catch {
       setView({
         name: 'error',
-        message:
-          'Odeslání se nezdařilo. Zkuste to prosím později. / Sending failed. Please try again later.',
+        message: t(
+          'Odeslání se nezdařilo. Zkuste to prosím později.',
+          'Sending failed. Please try again later.'
+        ),
       });
     } finally {
       setSending(false);
@@ -130,7 +147,7 @@ export default function RegisterPage() {
     e.preventDefault();
     setPasswordError(null);
     if (!password) {
-      setPasswordError('Zadejte prosím heslo. / Please enter a password.');
+      setPasswordError(t('Zadejte prosím heslo.', 'Please enter a password.'));
       return;
     }
     try {
@@ -144,14 +161,14 @@ export default function RegisterPage() {
       if (!res.ok) {
         setPasswordError(
           data?.error ||
-            'Ověření hesla se nezdařilo. / Password verification failed.'
+            t('Ověření hesla se nezdařilo.', 'Password verification failed.')
         );
         return;
       }
       await registerDevice();
     } catch {
       setPasswordError(
-        'Nepodařilo se ověřit heslo. / Could not verify the password.'
+        t('Nepodařilo se ověřit heslo.', 'Could not verify the password.')
       );
     }
   };
@@ -171,7 +188,10 @@ export default function RegisterPage() {
       if (!challengeRes.ok || !challengeData?.createArgs) {
         throw new Error(
           challengeData?.error ||
-            'Nepodařilo se zahájit registraci. / Could not start registration.'
+            t(
+              'Nepodařilo se zahájit registraci.',
+              'Could not start registration.'
+            )
         );
       }
 
@@ -189,7 +209,8 @@ export default function RegisterPage() {
       const verifyData = await verifyRes.json().catch(() => null);
       if (!verifyRes.ok) {
         throw new Error(
-          verifyData?.error || 'Registrace se nezdařila. / Registration failed.'
+          verifyData?.error ||
+            t('Registrace se nezdařila.', 'Registration failed.')
         );
       }
 
@@ -203,7 +224,10 @@ export default function RegisterPage() {
           'message' in e &&
           typeof (e as { message: unknown }).message === 'string'
             ? (e as { message: string }).message
-            : 'Registrace se nezdařila. Zkuste to prosím znovu. / Registration failed. Please try again.',
+            : t(
+                'Registrace se nezdařila. Zkuste to prosím znovu.',
+                'Registration failed. Please try again.'
+              ),
       });
     }
   };
@@ -215,6 +239,7 @@ export default function RegisterPage() {
 
   return (
     <main className="glass-page min-h-screen flex items-center justify-center px-4">
+      <LanguageToggle />
       {/* Request-links screen: bare input, no clues */}
       {view.name === 'request' && (
         <form
@@ -238,7 +263,7 @@ export default function RegisterPage() {
               type="submit"
               className="glass-submit"
               disabled={sending}
-              aria-label="Odeslat"
+              aria-label={t('Odeslat', 'Send')}
             >
               →
             </button>
@@ -250,8 +275,10 @@ export default function RegisterPage() {
       {view.name === 'sent' && (
         <div className="glass-card w-full max-w-sm text-center">
           <p className="glass-text">
-            Pokud účet existuje, e-mail s odkazem byl odeslán. / If the account
-            exists, the link was sent by email.
+            {t(
+              'Pokud účet existuje, e-mail s odkazem byl odeslán.',
+              'If the account exists, the link was sent by email.'
+            )}
           </p>
           <button
             type="button"
@@ -263,7 +290,7 @@ export default function RegisterPage() {
             }}
             className="glass-ghost"
           >
-            Zpět / Back
+            {t('Zpět', 'Back')}
           </button>
         </div>
       )}
@@ -277,8 +304,10 @@ export default function RegisterPage() {
       {view.name === 'registering' && (
         <div className="glass-card w-full max-w-sm text-center">
           <p className="glass-text">
-            Postupujte podle pokynů v prohlížeči. / Follow the prompts in your
-            browser.
+            {t(
+              'Postupujte podle pokynů v prohlížeči.',
+              'Follow the prompts in your browser.'
+            )}
           </p>
         </div>
       )}
@@ -289,7 +318,7 @@ export default function RegisterPage() {
           className="glass-card w-full max-w-sm"
         >
           <label className="glass-label">
-            Heslo / Password
+            {t('Heslo', 'Password')}
             <input
               type="password"
               value={password}
@@ -300,7 +329,7 @@ export default function RegisterPage() {
           </label>
           {passwordError && <p className="glass-error">{passwordError}</p>}
           <button type="submit" className="glass-submit-full">
-            Pokračovat / Continue
+            {t('Pokračovat', 'Continue')}
           </button>
         </form>
       )}
@@ -310,10 +339,10 @@ export default function RegisterPage() {
           <p className="glass-text">
             {view.name === 'invalid'
               ? view.message
-              : view.message || 'Došlo k chybě. / Something went wrong.'}
+              : view.message || t('Došlo k chybě.', 'Something went wrong.')}
           </p>
           <Link href="/" className="glass-ghost">
-            Zpět na web / Back to site
+            {t('Zpět na web', 'Back to site')}
           </Link>
         </div>
       )}
@@ -321,10 +350,10 @@ export default function RegisterPage() {
       {view.name === 'success' && (
         <div className="glass-card w-full max-w-sm text-center">
           <p className="glass-text">
-            Vaše zařízení je připraveno. / Your device is ready.
+            {t('Vaše zařízení je připraveno.', 'Your device is ready.')}
           </p>
           <a href="/admin/" className="glass-submit-full">
-            Přejít do administrace / Go to admin
+            {t('Přejít do administrace', 'Go to admin')}
           </a>
         </div>
       )}
