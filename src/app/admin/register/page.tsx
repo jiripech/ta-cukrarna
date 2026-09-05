@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { startRegistration } from '@/lib/webauthn';
 import { USE_ADMIN } from '@/lib/featureFlags';
-import { LanguageToggle, makeT, useLang } from '@/lib/i18n';
+import { LanguageToggle, makeT, pickBilingual, useLang } from '@/lib/i18n';
 
 type View =
   | { name: 'request' }
@@ -61,12 +61,12 @@ export default function RegisterPage() {
         if (!res.ok || !data?.valid) {
           setView({
             name: 'invalid',
-            message:
-              data?.error ||
-              t(
-                'Registrační odkaz je neplatný nebo vypršel.',
-                'The registration link is invalid or has expired.'
-              ),
+            message: data?.error
+              ? pickBilingual(String(data.error), lang)
+              : t(
+                  'Registrační odkaz je neplatný nebo vypršel.',
+                  'The registration link is invalid or has expired.'
+                ),
           });
           return;
         }
@@ -87,9 +87,9 @@ export default function RegisterPage() {
     return () => {
       cancelled = true;
     };
-    // The effect intentionally runs once per token; re-running on a language
-    // switch is harmless (token validation is a read-only request).
-  }, [t]);
+    // The effect intentionally re-runs on a language switch (harmless: token
+    // validation is a read-only request).
+  }, [t, lang]);
 
   if (!USE_ADMIN) return null;
 
@@ -110,12 +110,12 @@ export default function RegisterPage() {
         const data = await res.json().catch(() => null);
         setView({
           name: 'error',
-          message:
-            data?.error ||
-            t(
-              'Příliš mnoho požadavků. Zkuste to prosím později.',
-              'Too many requests. Please try again later.'
-            ),
+          message: data?.error
+            ? pickBilingual(String(data.error), lang)
+            : t(
+                'Příliš mnoho požadavků. Zkuste to prosím později.',
+                'Too many requests. Please try again later.'
+              ),
         });
         return;
       }
@@ -160,8 +160,9 @@ export default function RegisterPage() {
       const data = await res.json().catch(() => null);
       if (!res.ok) {
         setPasswordError(
-          data?.error ||
-            t('Ověření hesla se nezdařilo.', 'Password verification failed.')
+          data?.error
+            ? pickBilingual(String(data.error), lang)
+            : t('Ověření hesla se nezdařilo.', 'Password verification failed.')
         );
         return;
       }
@@ -187,11 +188,12 @@ export default function RegisterPage() {
       const challengeData = await challengeRes.json().catch(() => null);
       if (!challengeRes.ok || !challengeData?.createArgs) {
         throw new Error(
-          challengeData?.error ||
-            t(
-              'Nepodařilo se zahájit registraci.',
-              'Could not start registration.'
-            )
+          challengeData?.error
+            ? pickBilingual(String(challengeData.error), lang)
+            : t(
+                'Nepodařilo se zahájit registraci.',
+                'Could not start registration.'
+              )
         );
       }
 
@@ -209,8 +211,9 @@ export default function RegisterPage() {
       const verifyData = await verifyRes.json().catch(() => null);
       if (!verifyRes.ok) {
         throw new Error(
-          verifyData?.error ||
-            t('Registrace se nezdařila.', 'Registration failed.')
+          verifyData?.error
+            ? pickBilingual(String(verifyData.error), lang)
+            : t('Registrace se nezdařila.', 'Registration failed.')
         );
       }
 

@@ -196,6 +196,15 @@ creates at runtime must be listed in `.rsyncignore` or the next deploy wipes it:
 the workflow — the schema creation is idempotent, the data survives via the
 rsync exclusions above.
 
+### Service worker cache naming
+
+`scripts/write-version.sh` (called on every dev/build) bakes the release version
+into `public/sw.js`'s `CACHE_NAME` (`ta-cukrarna-vX.Y.Z`). Every release
+therefore changes the SW bytes: the updated service worker activates, deletes
+the previous cache and clients refetch runtime files (`/version.txt` is
+network-first since v1.2.15 for the same reason). Do not revert to a static
+cache name — runtime files would go stale across deploys.
+
 ### Environment (.env)
 
 `loadEnv()` (`public/api/db.php`) reads `apps/.env` — **one level above the
@@ -214,14 +223,19 @@ on the VPS):
 Vars already present via Apache/systemd `getenv()` take precedence; a missing
 file is logged as `env_file_missing` with a `has_maildb_host` flag so the benign
 case (vars provided by the service config) is distinguishable from a fully
-unconfigured server.
+unconfigured server. Note: the deploy's `find ... chmod 644` re-applies
+read-only file permissions to `api/DB/passkeys.sqlite` on every deploy (the file
+itself never ships, but the chmod hits whatever exists) — the
+ownership/permission fixup below must therefore run after `init.php`, and re-run
+manually if a deploy lands before the fixup step exists:
+`chmod g+w apps/website/api/DB/passkeys.sqlite*` (SQLITE_READONLY on the token
+insert is this exact failure).
 
-Note: the deploy's `find ... chmod 644` re-applies read-only file permissions to
-`api/DB/passkeys.sqlite` on every deploy (the file itself never ships, but the
-chmod hits whatever exists) — the ownership/permission fixup below must
-therefore run after `init.php`, and re-run manually if a deploy lands before the
-fixup step exists: `chmod g+w apps/website/api/DB/passkeys.sqlite*`
-(SQLITE_READONLY on the token insert is this exact failure).
+PHP file changes take effect without a service reload (opcache revalidates by
+mtime, the default `validate_timestamps=1`). If a server ever sets it to 0, a
+root-only `systemctl reload php*-fpm` step must be added to the deploy — the
+deploy user cannot run systemctl, so the workflow intentionally does not attempt
+it.
 
 ### Ownership and permissions on the VPS
 

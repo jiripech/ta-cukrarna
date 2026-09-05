@@ -5,7 +5,7 @@ import Link from 'next/link';
 import OwnerHoursForm from '@/components/OwnerHoursForm';
 import { startAuthentication } from '@/lib/webauthn';
 import { USE_ADMIN } from '@/lib/featureFlags';
-import { LanguageToggle, makeT, useLang } from '@/lib/i18n';
+import { LanguageToggle, makeT, pickBilingual, useLang } from '@/lib/i18n';
 
 type View =
   | { name: 'login' }
@@ -53,11 +53,12 @@ export default function AdminPage() {
       const challengeData = await challengeRes.json().catch(() => null);
       if (!challengeRes.ok || !challengeData || !challengeData.getArgs) {
         throw new Error(
-          challengeData?.error ||
-            t(
-              'Nepodařilo se zahájit přihlášení.',
-              'Could not start authentication.'
-            )
+          challengeData?.error
+            ? pickBilingual(String(challengeData.error), lang)
+            : t(
+                'Nepodařilo se zahájit přihlášení.',
+                'Could not start authentication.'
+              )
         );
       }
 
@@ -76,7 +77,9 @@ export default function AdminPage() {
       const verifyData = await verifyRes.json().catch(() => null);
       if (!verifyRes.ok) {
         throw new Error(
-          verifyData?.error || t('Přihlášení se nezdařilo.', 'Sign in failed.')
+          verifyData?.error
+            ? pickBilingual(String(verifyData.error), lang)
+            : t('Přihlášení se nezdařilo.', 'Sign in failed.')
         );
       }
 

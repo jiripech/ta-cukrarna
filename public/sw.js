@@ -1,4 +1,4 @@
-const CACHE_NAME = 'ta-cukrarna-v11';
+const CACHE_NAME = 'ta-cukrarna-v1.2.14';
 const urlsToCache = [
   '/',
   '/icon.ico',
@@ -28,6 +28,14 @@ self.addEventListener('fetch', event => {
 
   // Never cache /api/* or /admin/* paths — always network-only
   if (url.pathname.startsWith('/api/') || url.pathname.startsWith('/admin/')) {
+    event.respondWith(fetch(event.request));
+    return;
+  }
+
+  // Only cache GET requests. Cache.put rejects HEAD ("Request method 'HEAD'
+  // is unsupported") and POST responses must never be cached - so anything
+  // non-GET passes straight through to the network.
+  if (event.request.method !== 'GET') {
     event.respondWith(fetch(event.request));
     return;
   }
@@ -73,6 +81,25 @@ self.addEventListener('fetch', event => {
           // Fallback to cache if network fails
           return caches.match(event.request);
         })
+    );
+    return;
+  }
+
+  // Network-first for the version footer file: always reflect the deployed
+  // version, never a stale cache copy.
+  if (url.pathname === '/version.txt') {
+    event.respondWith(
+      fetch(event.request)
+        .then(response => {
+          if (response && response.status === 200) {
+            const clone = response.clone();
+            caches.open(CACHE_NAME).then(cache => {
+              cache.put(event.request, clone);
+            });
+          }
+          return response;
+        })
+        .catch(() => caches.match(event.request))
     );
     return;
   }

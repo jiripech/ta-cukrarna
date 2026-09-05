@@ -185,7 +185,7 @@ jobs:
         run: |
           ssh $VPS_USER@$VPS_HOST "php ./apps/website/api/DB/init.php"
 
-      - name: Fix runtime file permissions and reload PHP
+      - name: Fix runtime file permissions
         env:
           VPS_HOST: ${{ secrets.VPS_HOST }}
           VPS_USER: ${{ secrets.VPS_USER }}
@@ -193,11 +193,15 @@ jobs:
           # Runtime files (opening-hours.jsonc, api-debug.log) may not exist
           # on a fresh VPS and are otherwise written by PHP as www-data, so
           # every deploy: create them if missing, align the group and keep
-          # them group-writable for PHP. passkeys.sqlite is only chmod'd (it
-          # is created by init.php above).
-          ssh $VPS_USER@$VPS_HOST "touch ./apps/website/opening-hours.jsonc ./apps/website/api/DB/api-debug.log; chgrp www-data ./apps/website/opening-hours.jsonc ./apps/website/api/DB/api-debug.log ./apps/website/api/DB/passkeys.sqlite 2>/dev/null; chmod g+w ./apps/website/opening-hours.jsonc ./apps/website/api/DB/api-debug.log ./apps/website/api/DB/passkeys.sqlite 2>/dev/null; true"
-          # Pick up PHP file changes even when opcache.validate_timestamps=0.
-          ssh $VPS_USER@$VPS_HOST "systemctl reload php8.5-fpm 2>/dev/null || sudo -n systemctl reload php8.5-fpm 2>/dev/null || systemctl reload php-fpm 2>/dev/null || echo 'FPM reload skipped - no privileges; reload manually if opcache.validate_timestamps=0'"
+          # them group-writable for PHP. The docroot DIRECTORY must be
+          # group-writable too - the opening-hours atomic save creates a tmp
+          # file and renames it there (PHP runs as www-data). passkeys.sqlite
+          # is only chmod'd (it is created by init.php above).
+          # NOTE: PHP picks up file changes via opcache timestamp
+          # revalidation (default validate_timestamps=1); if a server ever
+          # sets it to 0, a root-only `systemctl reload php*-fpm` step must
+          # be added back - the deploy user cannot run systemctl.
+          ssh $VPS_USER@$VPS_HOST "touch ./apps/website/opening-hours.jsonc ./apps/website/api/DB/api-debug.log; chgrp www-data ./apps/website/opening-hours.jsonc ./apps/website/api/DB/api-debug.log ./apps/website/api/DB/passkeys.sqlite 2>/dev/null; chmod g+w ./apps/website/opening-hours.jsonc ./apps/website/api/DB/api-debug.log ./apps/website/api/DB/passkeys.sqlite 2>/dev/null; chmod g+w ./apps/website; true"
 
       - name: Cleanup SSH agent
         if: always()

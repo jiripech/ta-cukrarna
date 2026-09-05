@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { parseJsonc } from '@/lib/jsonc';
-import { makeT, useLang } from '@/lib/i18n';
+import { makeT, pickBilingual, useLang } from '@/lib/i18n';
 
 export interface ScheduleEntry {
   startDate: string; // YYYY-MM-DD
@@ -320,7 +320,8 @@ export default function OwnerHoursForm({ csrf }: { csrf?: CsrfOptions }) {
         try {
           const data = await res.json();
           if (data && data.error) {
-            message = data.error;
+            // Server errors are bilingual ("cs / en") - show one language.
+            message = pickBilingual(String(data.error), lang);
           }
         } catch {
           // ignore parse errors, keep default message
@@ -345,7 +346,7 @@ export default function OwnerHoursForm({ csrf }: { csrf?: CsrfOptions }) {
     } finally {
       setSaving(false);
     }
-  }, [t, entries, exceptions, validate, csrfToken]);
+  }, [t, lang, entries, exceptions, validate, csrfToken]);
 
   const previewText = useMemo(() => {
     if (entries.length === 0)

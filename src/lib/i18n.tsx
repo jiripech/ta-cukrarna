@@ -73,6 +73,19 @@ export function makeT(lang: Lang) {
   return t;
 }
 
+/**
+ * Picks one language out of a bilingual SERVER message ("cs text / en text").
+ * PHP API errors are bilingual by convention; this renders only the half
+ * matching the active language. Messages without the separator pass through.
+ */
+export function pickBilingual(raw: string, lang: Lang): string {
+  const separatorIndex = raw.indexOf(' / ');
+  if (separatorIndex === -1) return raw;
+  return lang === 'cs'
+    ? raw.slice(0, separatorIndex)
+    : raw.slice(separatorIndex + 3);
+}
+
 export function LanguageToggle() {
   const lang = useLang();
   const switchTo = useCallback(

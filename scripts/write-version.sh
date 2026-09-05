@@ -49,6 +49,15 @@ if [[ "$NUM" =~ $NUM_RE ]]; then
     }
   ' "$NUM"
   echo "Version: v$NUM" > public/version.txt
+  # Bake the release version into the service worker cache name: every
+  # release changes sw.js bytes, the updated SW activates and purges the
+  # previous cache (activate deletes caches named differently). Without
+  # this, runtime files cached under a static CACHE_NAME (e.g. version.txt)
+  # stay stale across deploys.
+  if [ -f public/sw.js ]; then
+    sed -i.bak "s/const CACHE_NAME = 'ta-cukrarna-[^']*'/const CACHE_NAME = 'ta-cukrarna-v$NUM'/" public/sw.js
+    rm -f public/sw.js.bak
+  fi
 else
   # No semver derivable (fresh clone without tags): stamp the footer only,
   # never touch the JSON files with a non-release version.
