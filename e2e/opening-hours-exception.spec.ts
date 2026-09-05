@@ -291,24 +291,19 @@ test('admin loads, adds and saves date exceptions round-trip', async ({
     page.getByRole('heading', { name: /Správa otevírací doby/ })
   ).toBeVisible();
 
-  // The mocked exception renders with the stored date and hours.
-  await expect(
-    page.getByLabel(`Datum výjimky / Exception date ${EXCEPTION_DATE}`)
-  ).toHaveValue(EXCEPTION_DATE);
-  await expect(
-    page.getByLabel(
-      `Hodiny pro ${EXCEPTION_DATE} / Hours for ${EXCEPTION_DATE}`
-    )
-  ).toHaveValue('9:00 - 15:00');
+  // The mocked exception renders with the stored date and hours. The
+  // aria-labels are monolingual since the i18n conversion (cs-CZ locale).
+  await expect(page.getByLabel(`Datum výjimky ${EXCEPTION_DATE}`)).toHaveValue(
+    EXCEPTION_DATE
+  );
+  await expect(page.getByLabel(`Hodiny pro ${EXCEPTION_DATE}`)).toHaveValue(
+    '9:00 - 15:00'
+  );
 
   // Add a second exception through the UI.
   await page.getByRole('button', { name: /Přidat výjimku/ }).click();
-  await page
-    .getByLabel('Datum výjimky / Exception date', { exact: true })
-    .fill('2026-12-24');
-  await page
-    .getByLabel('Hodiny pro 2026-12-24 / Hours for 2026-12-24')
-    .fill('9:00 - 12:00');
+  await page.getByLabel('Datum výjimky', { exact: true }).fill('2026-12-24');
+  await page.getByLabel('Hodiny pro 2026-12-24').fill('9:00 - 12:00');
 
   await page.getByRole('button', { name: /Uložit/ }).click();
   await expect(
