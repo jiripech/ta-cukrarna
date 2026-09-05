@@ -10,7 +10,11 @@ test.describe('Mobile version footer', () => {
 
     test.setTimeout(15000); // Allow enough time for the 7 second timeout
 
-    await page.goto('/');
+    // domcontentloaded, not the full "load" event: under parallel worker
+    // load the homepage's images can keep "load" pending long after the DOM
+    // (and the footer) are ready - which stalled goto for the full test
+    // timeout. The assertion only needs the footer element and its timer.
+    await page.goto('/', { waitUntil: 'domcontentloaded' });
 
     const footer = page.locator('.version-footer');
 
