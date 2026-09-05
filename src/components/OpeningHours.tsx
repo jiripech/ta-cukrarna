@@ -157,12 +157,14 @@ export default function OpeningHours() {
 
         if (entry) {
           const d = entry.days;
+          // The file is hand-editable - entries may lack day keys entirely.
+          // Default to '' so the renderer never sees undefined.
           setCustomDays({
-            pondeli: d.mon,
-            utery: d.tue,
-            streda: d.wed,
-            ctvrtek: d.thu,
-            patek: d.fri,
+            pondeli: d.mon ?? '',
+            utery: d.tue ?? '',
+            streda: d.wed ?? '',
+            ctvrtek: d.thu ?? '',
+            patek: d.fri ?? '',
           });
         }
       })

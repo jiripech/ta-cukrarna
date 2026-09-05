@@ -141,10 +141,11 @@ async function mockOpeningHoursJson(
 }
 
 async function mockAdminBackends(
-  page: import('@playwright/test').Page
+  page: import('@playwright/test').Page,
+  options: { hoursGetRaw?: string } = {}
 ): Promise<void> {
   await page.addInitScript(
-    ({ createArgs, getArgs, hoursGet, hoursPost }) => {
+    ({ createArgs, getArgs, hoursGet, hoursPost, hoursGetRaw }) => {
       // Stub the browser WebAuthn API (RP ID cannot match the test origin).
       const fakeResponse = { clientDataJSON: new ArrayBuffer(8) };
       Object.defineProperty(window.navigator, 'credentials', {
@@ -215,6 +216,13 @@ async function mockAdminBackends(
             // OwnerHoursForm only checks res.ok, the body is informational.
             return json(hoursPost);
           }
+          if (hoursGetRaw) {
+            // Serve raw JSONC verbatim (hand-edit simulation).
+            return new Response(hoursGetRaw, {
+              status: 200,
+              headers: { 'content-type': 'application/json' },
+            });
+          }
           return json(hoursGet);
         }
         return originalFetch(input, init);
@@ -225,6 +233,7 @@ async function mockAdminBackends(
       getArgs: GET_ARGS,
       hoursGet: HOURS_GET_RESPONSE,
       hoursPost: HOURS_POST_RESPONSE,
+      hoursGetRaw: options.hoursGetRaw,
     }
   );
 }
@@ -322,4 +331,49 @@ test('admin loads, adds and saves date exceptions round-trip', async ({
     { date: EXCEPTION_DATE, hours: '9:00 - 15:00' },
     { date: '2026-12-24', hours: '9:00 - 12:00' },
   ]);
+});
+
+test('admin form loads a hand-edited JSONC with partial day keys', async ({
+  page,
+}) => {
+  // Mirrors a real production file: comments, trailing commas, and a days
+  // object with mon-fri only (missing sat/sun keys). Before normalization
+  // this crashed the form's preview builder (.trim() on undefined).
+  const hoursGetRaw = [
+    '// hand-edited opening hours',
+    '{',
+    '  "schedule": [',
+    '    { "startDate": "2026-09-03", "endDate": "2026-09-06",',
+    '      "days": { "mon": "9:00 - 17:00", "tue": "9:00 - 16:00", "wed": "9:00 - 16:00", "thu": "9:00 - 19:00", "fri": "9:00 - 15:00", }, },',
+    '  ],',
+    '}',
+  ].join('\n');
+  await mockAdminBackends(page, { hoursGetRaw });
+
+  await page.goto('/admin/register/?token=test-token');
+  const pwInput = page.locator('input[type="password"]');
+  await expect(pwInput).toBeVisible();
+  await pwInput.fill('hunter2');
+  await page.getByRole('button', { name: /Pokračovat/ }).click();
+  await expect(page.getByText('Vaše zařízení je připraveno.')).toBeVisible();
+
+  await page.goto('/admin/');
+  await page.getByRole('button', { name: /Přihlásit se/ }).click();
+  await expect(
+    page.getByRole('heading', { name: /Správa otevírací doby/ })
+  ).toBeVisible();
+
+  // The form normalized the partial entry: all seven day inputs render, the
+  // missing keys defaulting to empty.
+  await expect(page.locator('input[placeholder="9:00 - 17:00"]')).toHaveCount(
+    7
+  );
+
+  // The preview renders the loaded range - this crashed before the fix.
+  await expect(page.getByText(/2026-09-03 → 2026-09-06/)).toBeVisible();
+
+  // No load error banner.
+  await expect(
+    page.getByText(/Nepodařilo se načíst otevírací dobu/)
+  ).toHaveCount(0);
 });

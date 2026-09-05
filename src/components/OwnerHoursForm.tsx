@@ -56,6 +56,40 @@ function emptyEntry(): ScheduleEntry {
   };
 }
 
+/** Coerces a hand-edited schedule entry to the full 7-day shape. */
+function normalizeEntry(entry: unknown): ScheduleEntry {
+  const record =
+    entry && typeof entry === 'object'
+      ? (entry as Record<string, unknown>)
+      : {};
+  const rawDays =
+    record.days && typeof record.days === 'object'
+      ? (record.days as Record<string, unknown>)
+      : {};
+  const days = {} as ScheduleEntry['days'];
+  for (const key of DAY_KEYS) {
+    days[key] =
+      typeof rawDays[key] === 'string' ? (rawDays[key] as string) : '';
+  }
+  return {
+    startDate: typeof record.startDate === 'string' ? record.startDate : '',
+    endDate: typeof record.endDate === 'string' ? record.endDate : '',
+    days,
+  };
+}
+
+/** Coerces a hand-edited exception to the {date, hours} shape. */
+function normalizeException(exception: unknown): HoursException {
+  const record =
+    exception && typeof exception === 'object'
+      ? (exception as Record<string, unknown>)
+      : {};
+  return {
+    date: typeof record.date === 'string' ? record.date : '',
+    hours: typeof record.hours === 'string' ? record.hours : '',
+  };
+}
+
 const inputClasses =
   'w-full rounded-md border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 px-3 py-2 text-sm text-zinc-900 dark:text-zinc-100 focus:border-amber-500 focus:outline-none focus:ring-1 focus:ring-amber-500';
 
@@ -89,31 +123,34 @@ export default function OwnerHoursForm({ csrf }: { csrf?: CsrfOptions }) {
       // The runtime file is JSONC (hand-edited: comments and trailing
       // commas), so strict res.json() would throw on it.
       const data = parseJsonc<{
-        schedule?: ScheduleEntry[];
-        exceptions?: HoursException[];
+        schedule?: unknown[];
+        exceptions?: unknown[];
       }>(await res.text());
-      const schedule: ScheduleEntry[] = Array.isArray(data?.schedule)
-        ? data.schedule
-        : [];
+      // The file is hand-editable, so entries can be partial (a real-world
+      // example: a days object with mon-fri only, missing sat/sun). Normalize
+      // every entry to the full shape, or the preview/renderer would crash
+      // on missing keys.
+      const schedule: ScheduleEntry[] = (
+        Array.isArray(data?.schedule) ? data.schedule : []
+      ).map(normalizeEntry);
       setExceptions(
-        Array.isArray(data?.exceptions)
-          ? data.exceptions.filter(
-              (e: { date?: unknown; hours?: unknown }) =>
-                typeof e?.date === 'string' && typeof e?.hours === 'string'
-            )
-          : []
+        (Array.isArray(data?.exceptions) ? data.exceptions : []).map(
+          normalizeException
+        )
       );
       if (schedule.length === 0) {
         setEntries([emptyEntry()]);
       } else {
         setEntries(schedule);
       }
-    } catch {
+    } catch (e) {
       setError(
         t(
           'Nepodařilo se načíst otevírací dobu.',
           'Could not load the opening hours.'
-        )
+        ) +
+          // Surface the real cause in the UI - no browser devtools needed.
+          (e instanceof Error && e.message ? ` (${e.message})` : '')
       );
     } finally {
       setLoading(false);
