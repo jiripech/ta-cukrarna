@@ -4,7 +4,11 @@ import { defineConfig, devices } from '@playwright/test';
  * See https://playwright.dev/docs/test-configuration.
  */
 export default defineConfig({
-  globalTimeout: process.env.CI ? 10 * 60000 : 20 * 60000,
+  // Generous ceiling: on CI, one project's failing tests (with retries) must
+  // not eat the global budget before the remaining projects ever start -
+  // that is exactly how a 10-minute limit hid the mobile projects in the
+  // v1.2.11 run.
+  globalTimeout: process.env.CI ? 30 * 60000 : 20 * 60000,
   timeout: 2 * 60000, // 2 minutes timeout for each test
   testDir: './e2e',
   /* Run tests in files in parallel */

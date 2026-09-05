@@ -54,9 +54,23 @@ export function useLang(): Lang {
   return useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
 }
 
-/** Bilingual string picker bound to the active language. */
+/**
+ * Bilingual string picker bound to the active language.
+ *
+ * Memoized per language: makeT() results are stable references, so `t` can
+ * be used in hook dependency arrays without re-triggering effects on every
+ * render (an unstable t caused an infinite effect/render loop once - see
+ * v1.2.11's CI history).
+ */
+const tCache = new Map<Lang, (cs: string, en: string) => string>();
+
 export function makeT(lang: Lang) {
-  return (cs: string, en: string) => (lang === 'cs' ? cs : en);
+  let t = tCache.get(lang);
+  if (!t) {
+    t = (cs: string, en: string) => (lang === 'cs' ? cs : en);
+    tCache.set(lang, t);
+  }
+  return t;
 }
 
 export function LanguageToggle() {

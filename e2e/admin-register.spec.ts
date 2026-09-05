@@ -66,7 +66,9 @@ test('shows a bare email input with no submit button initially', async ({
   const input = page.locator('input[type="email"]');
   await expect(input).toBeVisible();
   await expect(input).toHaveValue('');
-  await expect(page.locator('button')).toHaveCount(0);
+  // Scoped to the form: the language toggle legitimately adds two
+  // page-level buttons.
+  await expect(page.locator('form button')).toHaveCount(0);
 });
 
 test('keeps the submit button hidden for an invalid email', async ({
@@ -75,11 +77,11 @@ test('keeps the submit button hidden for an invalid email', async ({
   const input = page.locator('input[type="email"]');
   await input.fill('not-an-email');
   await page.waitForTimeout(100);
-  await expect(page.locator('button')).toHaveCount(0);
+  await expect(page.locator('form button')).toHaveCount(0);
 
   await input.fill('missing-tld@example');
   await page.waitForTimeout(100);
-  await expect(page.locator('button')).toHaveCount(0);
+  await expect(page.locator('form button')).toHaveCount(0);
 });
 
 test('reveals the submit button once a valid email is typed', async ({
