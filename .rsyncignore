@@ -42,4 +42,4 @@ temp/
 # Runtime state on the VPS (must survive deploys; --delete would wipe it)
 api/DB/*.sqlite
 api/DB/*.sqlite-*
-opening-hours.jsonc
+holiday.jsonc
