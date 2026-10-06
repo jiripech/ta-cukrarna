@@ -3,7 +3,7 @@ import { parseJsonc } from '@/lib/jsonc';
 
 /**
  * Unit tests for the JSONC reader (src/lib/jsonc.ts) used for the
- * hand-edited /opening-hours.jsonc file: // and block comments plus
+ * hand-edited /holiday.jsonc file: // and block comments plus
  * trailing commas must be tolerated, while string literals stay intact.
  * Runs in the Node test worker (pure function, no browser needed).
  */

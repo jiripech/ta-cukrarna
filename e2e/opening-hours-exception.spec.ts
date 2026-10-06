@@ -124,7 +124,7 @@ async function mockOpeningHoursJson(
           : input instanceof URL
             ? input.toString()
             : input.url;
-      if (urlStr.includes('/opening-hours.jsonc')) {
+      if (urlStr.includes('/holiday.jsonc')) {
         // Serve actual JSONC (comment + trailing comma) to exercise the
         // tolerant parser end to end.
         const json = JSON.stringify(dataToMock, null, 2);
