@@ -18,6 +18,10 @@ sends a PDF link via email with tri-lingual support.
 - **🇨🇿 Czech Language** - Localized content and metadata
 - **🎯 SEO Optimized** - Comprehensive meta tags
 - **🍰 Bakery Focus** - Tailored for food business
+- **⏰ Opening Hours** - Admin-configurable weekly schedule with date exceptions
+  (holidays, special days). Stored in `public/holiday.jsonc`, editable via admin
+  form at `/admin/`. Supports summer/winter schedules and exact-date exceptions
+  that override the weekly schedule.
 
 ## 🛠️ Tech Stack
 
