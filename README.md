@@ -194,7 +194,7 @@ Example issue format:
 
 ## 📱 PWA Features
 
-### Installation
+### PWA Installation
 
 - Appears in Chrome's "Install app" prompt
 - Works on iOS Safari with "Add to Home Screen"
