@@ -141,8 +141,8 @@ git push origin main --follow-tags # identical command now succeeds
 ```
 
 The first push prints
-`🔖 Version sync performed during pre-push … the in-flight push carried the OLD tag, so it was aborted.`
-— exit code 1 here is expected. Re-run the same push; it delivers `main` at the
+`🔖 Version sync pre-push; re-push delivers tag. Never bypass --no-verify.` —
+exit code 1 here is expected. Re-run the same push; it delivers `main` at the
 sync commit and the re-pointed tag. Never bypass with `--no-verify`; a guard
 rejection (outcome 1) means the tag number is wrong, not that the hook is
 misbehaving.
