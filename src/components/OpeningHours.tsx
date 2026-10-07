@@ -117,8 +117,6 @@ export default function OpeningHours() {
   const [exceptions, setExceptions] = useState<HoursException[]>([]);
 
   useEffect(() => {
-    const today = todayLocalIso();
-
     // Parse both JSONC files
     const parseHolidayJsonc = (): Promise<HoursException[]> =>
       fetch(`/holiday.jsonc?v=${Date.now()}`)
