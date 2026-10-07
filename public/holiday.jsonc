@@ -2,16 +2,16 @@
 // but override the weekly schedule when no user exception exists for the same date.
 {
   "exceptions": [
-    {"date": "2026-01-01", "hours": ""},                    // 1.1. Nový rok
-    {"date": "2026-05-01", "hours": ""},                    // 1.5. Svátek práce
-    {"date": "2026-05-08", "hours": ""},                    // 8.5. Den vítěznosti
-    {"date": "2026-07-05", "hours": ""},                    // 5.7. Cyrillo-metodějský den
-    {"date": "2026-07-06", "hours": ""},                    // 6.7. Den upálení Jana Husa
-    {"date": "2026-09-28", "hours": ""},                    // 28.9. Den svatého Václava
-    {"date": "2026-10-28", "hours": ""},                    // 28.1. Den vzniku ČSR
-    {"date": "2026-11-17", "hours": ""},                    // 17.11. Den boje za svobodu a demokracii
-    {"date": "2026-12-24", "hours": ""},                    // 24.12. Štědrý den
-    {"date": "2026-12-25", "hours": ""},                    // 25.12. Vánoční den 1.
-    {"date": "2026-12-26", "hours": ""}                     // 26.12. Štědrý den 2.
+    { "date": "2026-01-01", "hours": "" }, // 1.1. Nový rok
+    { "date": "2026-05-01", "hours": "" }, // 1.5. Svátek práce
+    { "date": "2026-05-08", "hours": "" }, // 8.5. Den vítěznosti
+    { "date": "2026-07-05", "hours": "" }, // 5.7. Cyrillo-metodějský den
+    { "date": "2026-07-06", "hours": "" }, // 6.7. Den upálení Jana Husa
+    { "date": "2026-09-28", "hours": "" }, // 28.9. Den svatého Václava
+    { "date": "2026-10-28", "hours": "" }, // 28.1. Den vzniku ČSR
+    { "date": "2026-11-17", "hours": "" }, // 17.11. Den boje za svobodu a demokracii
+    { "date": "2026-12-24", "hours": "" }, // 24.12. Štědrý den
+    { "date": "2026-12-25", "hours": "" }, // 25.12. Vánoční den 1.
+    { "date": "2026-12-26", "hours": "" } // 26.12. Štědrý den 2.
   ]
 }
