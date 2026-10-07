@@ -1,20 +1,6 @@
-// Standard Czech public holidays - these override the weekly schedule on their respective dates
+// System-defined Czech public holidays - these have lower precedence than user exceptions
+// but override the weekly schedule when no user exception exists for the same date.
 {
-  "schedule": [
-    {
-      "startDate": "2026-01-01",
-      "endDate": "2026-12-31",
-      "days": {
-        "mon": "9:00 - 17:00",
-        "tue": "9:00 - 16:00",
-        "wed": "9:00 - 16:00",
-        "thu": "9:00 - 19:00",
-        "fri": "9:00 - 17:00",
-        "sat": "",
-        "sun": ""
-      }
-    }
-  ],
   "exceptions": [
     {"date": "2026-01-01", "hours": ""},                    // 1.1. Nový rok
     {"date": "2026-05-01", "hours": ""},                    // 1.5. Svátek práce

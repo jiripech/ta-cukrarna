@@ -1,0 +1,22 @@
+// User-defined opening hours schedule - editable via admin form at /admin/
+// Contains weekly schedule ranges and any user-added exceptions.
+// System holidays from holiday.jsonc take precedence over this schedule,
+// but user exceptions (also in this file) take precedence over system holidays.
+{
+  "schedule": [
+    {
+      "startDate": "2026-01-01",
+      "endDate": "2026-12-31",
+      "days": {
+        "mon": "9:00 - 17:00",
+        "tue": "9:00 - 16:00",
+        "wed": "9:00 - 16:00",
+        "thu": "9:00 - 19:00",
+        "fri": "9:00 - 17:00",
+        "sat": "",
+        "sun": ""
+      }
+    }
+  ],
+  "exceptions": []
+}

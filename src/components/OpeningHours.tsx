@@ -118,32 +118,55 @@ export default function OpeningHours() {
 
   useEffect(() => {
     const today = todayLocalIso();
-    fetch(`/opening-hours.jsonc?v=${Date.now()}`)
-      .then(res => {
-        if (!res.ok) return null;
-        // JSONC: the file is hand-edited and may contain comments and
-        // trailing commas, which strict res.json() would reject.
-        return res.text().then(text => parseJsonc<HoursData>(text));
-      })
-      .then(data => {
-        if (Array.isArray(data?.exceptions)) {
-          setExceptions(
-            data.exceptions.filter(
+
+    // Parse both JSONC files
+    const parseHolidayJsonc = (): Promise<HoursException[]> =>
+      fetch(`/holiday.jsonc?v=${Date.now()}`)
+        .then(res =>
+          res
+            .text()
+            .then(text => parseJsonc<{ exceptions: HoursException }>(text))
+        )
+        .then(data => {
+          if (Array.isArray(data?.exceptions)) {
+            return data.exceptions.filter(
               (e: { date?: unknown; hours?: unknown }) =>
                 typeof e?.date === 'string' && typeof e?.hours === 'string'
-            )
-          );
-        }
+            );
+          }
+          return [];
+        });
 
-        if (
-          !data ||
-          !Array.isArray(data.schedule) ||
-          data.schedule.length === 0
-        ) {
-          return;
-        }
+    const parseHoursJsonc = (): Promise<{
+      exceptions: HoursException[];
+      schedule: HoursData['schedule'];
+    }> =>
+      fetch(`/opening-hours.jsonc?v=${Date.now()}`)
+        .then(res => res.text().then(text => parseJsonc<HoursData>(text)))
+        .then(data => {
+          let userExceptions: HoursException[] = [];
+          if (Array.isArray(data?.exceptions)) {
+            userExceptions = data.exceptions.filter(
+              (e: { date?: unknown; hours?: unknown }) =>
+                typeof e?.date === 'string' && typeof e?.hours === 'string'
+            );
+          }
+          const schedule = data?.schedule ?? [];
+          return { exceptions: userExceptions, schedule };
+        });
 
-        const entry = data.schedule.find(
+    Promise.all([parseHolidayJsonc(), parseHoursJsonc()]).then(
+      ([holidayExceptions, { exceptions: userExceptions, schedule }]) => {
+        // 3. MERGE exceptions: user exceptions FIRST (highest priority),
+        //    then system holidays. The existing find() logic will naturally
+        //    return user exceptions if they exist for today's date.
+        const allExceptions = [...userExceptions, ...holidayExceptions];
+        setExceptions(allExceptions);
+
+        // 4. Process schedule matching for customDays
+        const today = todayLocalIso();
+        const effectiveSchedule = schedule ?? [];
+        const entry = effectiveSchedule.find(
           (s: {
             startDate: string;
             endDate: string;
@@ -157,8 +180,6 @@ export default function OpeningHours() {
 
         if (entry) {
           const d = entry.days;
-          // The file is hand-editable - entries may lack day keys entirely.
-          // Default to '' so the renderer never sees undefined.
           setCustomDays({
             pondeli: d.mon ?? '',
             utery: d.tue ?? '',
@@ -167,10 +188,8 @@ export default function OpeningHours() {
             patek: d.fri ?? '',
           });
         }
-      })
-      .catch(() => {
-        // Silently fall back to hardcoded schedule
-      });
+      }
+    );
   }, []);
 
   const useSummer = extendedSummer || season === 'summer';
@@ -196,9 +215,14 @@ export default function OpeningHours() {
   const weekendException =
     exception && (exceptionDay === 0 || exceptionDay === 6) ? exception : null;
 
+  const hourPattern = /^[0-9]+:[0-9]+ - [0-9]+:[0-9]+$/;
+
   const dayCell = (key: WeekdayKey): { text: string; closed: boolean } => {
     if (exception && weekdayExceptionKey === key) {
-      return { text: exception.hours, closed: exception.hours === '' };
+      return {
+        text: exception.hours,
+        closed: exception.hours === '' || !hourPattern.test(exception.hours),
+      };
     }
     const text = schedule[key];
     return {

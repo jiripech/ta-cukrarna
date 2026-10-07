@@ -8,6 +8,11 @@
   (e.g. open 9:00 - 15:00 on a normally closed Friday) alongside the weekly
   schedule; exact-date exceptions win over schedule ranges, empty hours mean
   closed.
+- **Two-file opening hours structure**: `public/holiday.jsonc` contains
+  system-defined Czech public holidays with lower precedence than user
+  exceptions, while `public/opening-hours.jsonc` holds the weekly schedule and
+  admin-added exceptions with highest precedence. User exceptions override
+  system holidays and the weekly schedule.
 - **JSONC opening-hours file**: The runtime file is now `opening-hours.jsonc` —
   hand edits may use comments and trailing commas (`parseJsonc` in
   `src/lib/jsonc.ts`, `jsoncDecode()` in PHP). Admin saves normalize the file

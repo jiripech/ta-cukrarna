@@ -40,8 +40,8 @@ self.addEventListener('fetch', event => {
     return;
   }
 
-  // Stale-while-revalidate for /opening-hours.jsonc
-  if (url.pathname === '/opening-hours.jsonc') {
+  // Stale-while-revalidate for /holiday.jsonc
+  if (url.pathname === '/holiday.jsonc') {
     event.respondWith(
       caches.open(CACHE_NAME).then(cache =>
         cache.match(event.request).then(cachedResponse => {
