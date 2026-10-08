@@ -1,5 +1,9 @@
 # Changelog
 
+## v1.2.22
+
+Updated deployment verification script, so it uses `sed` instead of `node`.
+
 ## v1.2.21
 
 ### Fixed TS errors
