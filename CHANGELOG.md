@@ -1,5 +1,17 @@
 # Changelog
 
+## v1.2.21
+
+### Fixed TS errors
+
+- TS2307
+- TS2345
+- TS2769
+- TS2802
+
+By fixing the code using [Muse Glimmer 30B][museGlimmer30BLink] instead of
+[Nemotron 3.5 Lightning 30B A3B][nemotron35Lightning30BA3BLink]
+
 ## v1.2.20
 
 ### Fixed
@@ -93,3 +105,9 @@
 
 [dependabotGuide]:
   https://docs.github.com/en/code-security/tutorials/secure-your-dependencies/dependabot-quickstart
+
+---
+
+[museGlimmer30BLink]: https://huggingface.co/meta-models/Muse-Glimmer-30B
+[nemotron35Lightning30BA3BLink]:
+  https://build.nvidia.com/nvidia/nemotron-3.5-lightning-30b-a3b/modelcard
