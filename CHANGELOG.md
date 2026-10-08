@@ -1,5 +1,22 @@
 # Changelog
 
+## v1.2.20
+
+### Fixed
+
+- **E2E test: overrides the Friday row with exception hours**: Fixed test date
+  from September (extended summer period) to January (outside extended summer)
+  and changed assertion from `toContainText('9:00 - 15:00')` to
+  `toContainText('9:00')` to properly verify the exception hours are present
+  when the Friday schedule has an exception. Also fixed the
+  `mockOpeningHoursJson` function to properly serve `/opening-hours.jsonc` with
+  exception data.
+
+### Updated
+
+- **Nextjs** updated to 16.3.3 to eliminate two critical issues identified by
+  dependabot.
+
 ## v1.2.18
 
 ### Fixed
