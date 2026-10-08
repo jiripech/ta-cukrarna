@@ -1,1 +1,1 @@
-Version: v1.2.19
+Version: v1.2.20

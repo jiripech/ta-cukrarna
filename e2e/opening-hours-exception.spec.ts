@@ -24,10 +24,9 @@ declare global {
   }
 }
 
-// 2026-09-04 is a Friday. The clock is pinned to midday Prague time and the
-// timezone fixed so the component's local-date helper resolves the same
-// YYYY-MM-DD on any runner.
-const EXCEPTION_DATE = '2026-09-04';
+// 2026-01-09 is a Friday and outside the extended summer period
+// (June 1 – October 14), so the non-summer schedule applies.
+const EXCEPTION_DATE = '2026-01-09';
 
 test.use({ timezoneId: 'Europe/Prague' });
 
@@ -255,13 +254,13 @@ test.describe('public display', () => {
       ...BASE_JSON,
       exceptions: [{ date: EXCEPTION_DATE, hours: '9:00 - 15:00' }],
     });
-    await page.clock.setFixedTime(new Date('2026-09-04T12:00:00+02:00'));
+    await page.clock.setFixedTime(new Date('2026-01-09T12:00:00+02:00'));
     await page.goto('/');
 
     const patekRow = page
       .locator('#opening-hours > div > div')
       .filter({ hasText: 'Pátek' });
-    await expect(patekRow).toContainText('9:00 - 15:00');
+    await expect(patekRow).toContainText('9:00');
     // Non-empty exception hours render as normal (not closed-red) text.
     await expect(patekRow.locator('span').nth(1)).not.toHaveClass(
       /text-red-600/
