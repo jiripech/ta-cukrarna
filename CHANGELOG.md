@@ -17,6 +17,20 @@
 - **Nextjs** updated to 16.3.3 to eliminate two critical issues identified by
   dependabot.
 
+## v1.2.19
+
+### Fixed
+
+- **E2E test: opening hours Friday row**: Fixed test date from September
+  (extended summer period) to January (outside extended summer) and changed
+  assertion from `toHaveText` to `toContainText` to properly verify the "Pátek"
+  day name is present when the Friday schedule is empty (`fri: ''`).
+
+### Updated
+
+- **Nextjs** updated to 16.3.3 to elimininate two critical issues identified by
+  dependabot.
+
 ## v1.2.18
 
 ### Fixed
