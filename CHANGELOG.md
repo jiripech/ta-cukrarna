@@ -1,9 +1,24 @@
 # Changelog
 
-## [Unreleased]
+## v1.2.18
+
+### Fixed
+
+- **E2E test: opening hours Friday row**: Fixed test date from September
+  (extended summer period) to January (outside extended summer) and changed
+  assertion from `toHaveText` to `toContainText` to properly verify the "Pátek"
+  day name is present when the Friday schedule is empty (`fri: ''`).
+
+## Updated
+
+- **Nextjs** updated to 16.3.3 to elimininate two critical issues identified by
+  [dependabot][dependabotGuide].
+
+## v1.2.17
 
 ### Added
 
+- **Security updates**
 - **Per-date opening-hours exceptions**: Admins can add single-date overrides
   (e.g. open 9:00 - 15:00 on a normally closed Friday) alongside the weekly
   schedule; exact-date exceptions win over schedule ranges, empty hours mean
@@ -44,3 +59,6 @@
 - **Service worker v10**: Added stale-while-revalidate for `opening-hours.json`,
   excluded `/api/*` and `/admin/*` from caching.
 - **Deploy workflow**: Added DB directory creation step for SQLite database.
+
+[dependabotGuide]:
+  https://docs.github.com/en/code-security/tutorials/secure-your-dependencies/dependabot-quickstart
