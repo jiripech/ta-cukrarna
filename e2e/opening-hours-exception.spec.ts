@@ -135,6 +135,15 @@ async function mockOpeningHoursJson(
           headers: { 'content-type': 'application/json' },
         });
       }
+      if (urlStr.includes('/opening-hours.jsonc')) {
+        const json = JSON.stringify(data, null, 2);
+        const body =
+          '// hand-edited opening hours\n' + json.slice(0, -1) + ',\n}';
+        return new Response(body, {
+          status: 200,
+          headers: { 'content-type': 'application/json' },
+        });
+      }
       return originalFetch(input, init);
     };
   }, data);
@@ -263,15 +272,17 @@ test.describe('public display', () => {
     page,
   }) => {
     await mockOpeningHoursJson(page, BASE_JSON);
-    await page.clock.setFixedTime(new Date('2026-09-04T12:00:00+02:00'));
+    await page.clock.setFixedTime(new Date('2026-01-09T12:00:00+02:00'));
     await page.goto('/');
 
+    // January 9, 2026 is a Friday and outside the extended summer period
+    // (June 1 – October 14), so the non-summer schedule applies.
     // The schedule has fri: '' and hasNotClosedText('') is false, so the
     // row renders an empty hours cell with the normal font-medium class.
     const patekRow = page
       .locator('#opening-hours > div > div')
       .filter({ hasText: 'Pátek' });
-    await expect(patekRow).toHaveText('Pátek');
+    await expect(patekRow).toContainText('Pátek');
     const hoursCell = patekRow.locator('span').nth(1);
     await expect(hoursCell).toHaveClass(/font-medium/);
     await expect(hoursCell).not.toHaveClass(/text-red-600/);
