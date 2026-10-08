@@ -82,7 +82,7 @@ async function mockBackends(
               challenge: [...new Uint8Array(pk.challenge as ArrayBuffer)],
               userId: [
                 ...new Uint8Array(
-                  (pk.user as PublicKeyCredentialUserEntity).id
+                  (pk.user as PublicKeyCredentialUserEntity).id as ArrayBuffer
                 ),
               ],
             };
