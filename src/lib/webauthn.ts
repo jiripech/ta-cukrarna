@@ -6,7 +6,7 @@
  * that are handed back here to be mapped onto the native WebAuthn options.
  */
 
-function bufferToBase64(buffer: ArrayBuffer): string {
+function bufferToBase64(buffer: ArrayBufferLike): string {
   const bytes = new Uint8Array(buffer);
   let binary = '';
   for (let i = 0; i < bytes.byteLength; i++) {
@@ -15,7 +15,7 @@ function bufferToBase64(buffer: ArrayBuffer): string {
   return btoa(binary);
 }
 
-function bufferToBase64Url(buffer: ArrayBuffer): string {
+function bufferToBase64Url(buffer: ArrayBufferLike): string {
   return bufferToBase64(buffer)
     .replace(/\+/g, '-')
     .replace(/\//g, '_')
