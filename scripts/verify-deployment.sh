@@ -10,7 +10,7 @@ echo "====================================="
 
 # Configuration
 PRODUCTION_URL="https://tacukrarna.cz"
-LOCAL_VERSION=$(node -p "require('./package.json').version")
+LOCAL_VERSION=$(sed "s/Version: v//" public/version.txt)
 
 echo "📦 Local version: $LOCAL_VERSION"
 echo "🌐 Production URL: $PRODUCTION_URL"
