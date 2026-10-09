@@ -41,11 +41,11 @@ export default function RegisterPage() {
 
     // Without a token, we show the bare request-links screen (no clues).
     if (!token) {
-      setView({ name: 'request' });
       return;
     }
 
     let cancelled = false;
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setView({ name: 'validating' });
 
     const validate = async () => {

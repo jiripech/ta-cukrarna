@@ -158,6 +158,7 @@ export default function OwnerHoursForm({ csrf }: { csrf?: CsrfOptions }) {
   }, [t]);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     loadSchedule();
   }, [loadSchedule]);
 
