@@ -1,5 +1,23 @@
 # Changelog
 
+## v1.2.23
+
+### Updated
+
+- **Next.js** 16.3.3 → 16.3.8. Pulls eslint-config-next 16.4.0.
+- **html-validate** 10.1.2 → 10.17.0. Removes transitive deprecated
+  `glob@11.1.0` → `glob@13.0.6`.
+
+### Fixed
+
+- **Lint**: `react-hooks/set-state-in-effect` errors introduced by
+  eslint-config-next 16.4.0.
+  - `src/app/admin/register/page.tsx`: removed redundant
+    `setView({ name: 'request' })` on missing token and disabled the intentional
+    immediate `setView({ name: 'validating' })` with `eslint-disable-next-line`.
+  - `src/components/OwnerHoursForm.tsx`: disabled the rule for the intentional
+    mount `loadSchedule()` call.
+
 ## v1.2.22
 
 Updated deployment verification script, so it uses `sed` instead of `node`.
