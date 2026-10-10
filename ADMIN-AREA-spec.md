@@ -1,6 +1,7 @@
-# Admin Edit Defaults Specification
+# Admin Area Edit Defaults Specification
 
-**Author:** Muse Glimmer 30B (mostly)
+**Author:** Muse Glimmer 30B (mostly) as part of the TDD approach lecture give
+by Jirka Pech.
 
 ## Objective
 
