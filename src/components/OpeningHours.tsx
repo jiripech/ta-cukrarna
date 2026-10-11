@@ -115,6 +115,10 @@ export default function OpeningHours() {
     null
   );
   const [exceptions, setExceptions] = useState<HoursException[]>([]);
+  const [defaults, setDefaults] = useState<Record<
+    string,
+    Record<string, string>
+  > | null>(null);
 
   useEffect(() => {
     // Parse both JSONC files
@@ -138,9 +142,10 @@ export default function OpeningHours() {
     const parseHoursJsonc = (): Promise<{
       exceptions: HoursException[];
       schedule: HoursData['schedule'];
+      defaults?: Record<string, Record<string, string>>;
     }> =>
       fetch(`/opening-hours.jsonc?v=${Date.now()}`)
-        .then(res => res.text().then(text => parseJsonc<HoursData>(text)))
+        .then(res => res.text().then(text => parseJsonc<unknown>(text)))
         .then(data => {
           let userExceptions: HoursException[] = [];
           if (Array.isArray(data?.exceptions)) {
@@ -150,18 +155,18 @@ export default function OpeningHours() {
             );
           }
           const schedule = data?.schedule ?? [];
-          return { exceptions: userExceptions, schedule };
+          const defaults = data?.defaults ?? undefined;
+          return { exceptions: userExceptions, schedule, defaults };
         });
 
     Promise.all([parseHolidayJsonc(), parseHoursJsonc()]).then(
-      ([holidayExceptions, { exceptions: userExceptions, schedule }]) => {
-        // 3. MERGE exceptions: user exceptions FIRST (highest priority),
-        //    then system holidays. The existing find() logic will naturally
-        //    return user exceptions if they exist for today's date.
+      ([
+        holidayExceptions,
+        { exceptions: userExceptions, schedule, defaults },
+      ]) => {
         const allExceptions = [...userExceptions, ...holidayExceptions];
         setExceptions(allExceptions);
-
-        // 4. Process schedule matching for customDays
+        if (defaults) setDefaults(defaults);
         const today = todayLocalIso();
         const effectiveSchedule = schedule ?? [];
         const entry = effectiveSchedule.find(
@@ -175,7 +180,6 @@ export default function OpeningHours() {
             s.days &&
             typeof s.days === 'object'
         );
-
         if (entry) {
           const d = entry.days;
           setCustomDays({
@@ -191,7 +195,26 @@ export default function OpeningHours() {
   }, []);
 
   const useSummer = extendedSummer || season === 'summer';
-  const baseSchedule = useSummer ? summerSchedule : nonSummerSchedule;
+  const mapDaysToCzech = (days: Record<string, string>) => ({
+    pondeli: days.mon ?? '',
+    utery: days.tue ?? '',
+    streda: days.wed ?? '',
+    ctvrtek: days.thu ?? '',
+    patek: days.fri ?? '',
+  });
+  const summerDefault = defaults?.summer
+    ? mapDaysToCzech(defaults.summer)
+    : null;
+  const nonSummerDefault = defaults?.spring
+    ? mapDaysToCzech(defaults.spring)
+    : null; // fallback
+  const baseSchedule = defaults
+    ? useSummer
+      ? (summerDefault ?? summerSchedule)
+      : (nonSummerDefault ?? nonSummerSchedule)
+    : useSummer
+      ? summerSchedule
+      : nonSummerSchedule;
   const schedule = customDays ?? baseSchedule;
   const isCustomSchedule = customDays !== null;
 
