@@ -1,5 +1,9 @@
 # Changelog
 
+## v1.3.3
+
+- **fixed** typecheck script added to check TypeScript types in check-all
+
 ## v1.3.2
 
 ### Fixed
