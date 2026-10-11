@@ -129,7 +129,10 @@ export default function OwnerHoursGlassForm({ csrf }: { csrf?: CsrfOptions }) {
           credentials: 'include',
         });
         if (!res.ok) throw new Error('load fail');
-        const data = parseJsonc<unknown>(await res.text());
+        const data = parseJsonc<unknown>(await res.text()) as Record<
+          string,
+          unknown
+        >;
         const schedule = Array.isArray(data?.schedule)
           ? data.schedule
           : undefined;
