@@ -11,8 +11,9 @@
 
 ### Fixed
 
-- Resolved three dependabot security alerts for high-severity vulnerabilities in
-  transitive dependencies
+- **katex**: Updated transitive dependency to v0.18.10 (prototype pollution fix)
+- **smol-toml**: Updated transitive dependency to v1.9.1 (DoS vulnerability fix)
+- **compression**: Updated transitive dependency to v1.8.2 (memory leak DoS fix)
 
 ## v1.3.3
 

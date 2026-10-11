@@ -71,5 +71,10 @@
   "allowScripts": {
     "unrs-resolver@1.11.1": true,
     "fsevents@2.3.2": true
+  },
+  "overrides": {
+    "katex": "^0.18.2",
+    "smol-toml": "^1.9.1",
+    "compression": "^1.8.2"
   }
 }
