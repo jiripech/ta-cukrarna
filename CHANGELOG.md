@@ -3,6 +3,8 @@
 ## v1.3.3
 
 - **fixed** typecheck script added to check TypeScript types in check-all
+- **fixed** improved success message and added labels for exception inputs in
+  OwnerHoursGlassForm
 
 ## v1.3.2
 

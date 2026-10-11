@@ -296,7 +296,12 @@ export default function OwnerHoursGlassForm({ csrf }: { csrf?: CsrfOptions }) {
             t('Uložení selhalo.', 'Save failed.')
         );
       }
-      setSuccess(t('Otevírací doba uložena.', 'Opening hours saved.'));
+      setSuccess(
+        t(
+          'Otevírací doba byla úspěšně uložena.',
+          'Opening hours saved successfully.'
+        )
+      );
     } catch (e) {
       const msg = e instanceof Error ? e.message : '';
       setError(msg || t('Uložení selhalo.', 'Save failed.'));
@@ -389,6 +394,9 @@ export default function OwnerHoursGlassForm({ csrf }: { csrf?: CsrfOptions }) {
                     ×
                   </button>
                 </div>
+                <div className="glass-text text-xs mb-2">
+                  {e.startDate} → {e.endDate}
+                </div>
                 <div className="glass-field mb-3">
                   <input
                     className="glass-input"
@@ -444,7 +452,11 @@ export default function OwnerHoursGlassForm({ csrf }: { csrf?: CsrfOptions }) {
               </h3>
               {exceptions.map((ex, idx) => (
                 <div key={idx} className="glass-field mb-2 flex gap-2">
+                  <label htmlFor={`ex-date-${idx}`}>
+                    Datum výjimky{ex.date ? ` ${ex.date}` : ''}
+                  </label>
                   <input
+                    id={`ex-date-${idx}`}
                     className="glass-input"
                     type="date"
                     value={ex.date}
@@ -471,7 +483,11 @@ export default function OwnerHoursGlassForm({ csrf }: { csrf?: CsrfOptions }) {
                       );
                     }}
                   />
+                  <label htmlFor={`ex-hours-${idx}`}>
+                    {ex.date ? `Hodiny pro ${ex.date}` : 'Hodiny pro výjimku'}
+                  </label>
                   <input
+                    id={`ex-hours-${idx}`}
                     className="glass-input"
                     placeholder={t('Hodiny', 'Hours')}
                     value={ex.hours}
