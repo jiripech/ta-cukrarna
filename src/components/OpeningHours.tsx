@@ -147,19 +147,28 @@ export default function OpeningHours() {
       fetch(`/opening-hours.jsonc?v=${Date.now()}`)
         .then(res => res.text().then(text => parseJsonc<unknown>(text)))
         .then((data: unknown) => {
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          const d = data as any;
+          const d = data as {
+            exceptions?: unknown[];
+            schedule?: unknown;
+            defaults?: unknown;
+          };
           let userExceptions: HoursException[] = [];
           if (Array.isArray(d?.exceptions)) {
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            userExceptions = (d.exceptions as any[]).filter(
-              // eslint-disable-next-line @typescript-eslint/no-explicit-any
-              (e: any) =>
-                typeof e?.date === 'string' && typeof e?.hours === 'string'
-            ) as HoursException[];
+            userExceptions = d.exceptions.filter((e): e is HoursException => {
+              const obj = e as Record<string, unknown>;
+              return (
+                typeof obj?.date === 'string' && typeof obj?.hours === 'string'
+              );
+            }) as HoursException[];
           }
-          const schedule = d?.schedule ?? [];
-          const defaults = d?.defaults ?? undefined;
+          const schedule = (d?.schedule ?? []) as {
+            startDate: string;
+            endDate: string;
+            days: Record<string, string>;
+          }[];
+          const defaults = d?.defaults as
+            | Record<string, Record<string, string>>
+            | undefined;
           return { exceptions: userExceptions, schedule, defaults };
         });
 
