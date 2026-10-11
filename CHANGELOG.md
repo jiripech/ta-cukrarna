@@ -1,5 +1,21 @@
 # Changelog
 
+## v1.3.0
+
+### Added
+
+- Admin opening hours UI redesigned with glass aesthetic, bilingual labels,
+  season timeline with remove icon, defaults modal, duplicate exception
+  prevention with Update button, per-weekday preview with exception overlay.
+- UTC-based `addDays` and `ensureContiguous` to prevent season overlap.
+- TDD smoke tests for prototype features.
+
+### Changed
+
+- Preview now computes per-weekday date to show correct season and exception for
+  each day of week.
+- Season creation now inherits from editable defaults.
+
 ## v1.2.23
 
 ### Updated
