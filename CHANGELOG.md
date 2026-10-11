@@ -1,5 +1,12 @@
 # Changelog
 
+## v1.3.2
+
+### Fixed
+
+- Type assertion for `parseJsonc` response in `OwnerHoursGlassForm` to resolve
+  TS2339 errors during build.
+
 ## v1.3.1
 
 ### Fixed
