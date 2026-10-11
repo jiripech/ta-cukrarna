@@ -79,3 +79,11 @@ prefer them over plausible-sounding assumptions.
 - Before committing, `git status` + `git diff --cached` to keep stray files
   (scratch scripts, notes) out; pre-commit lint-staged runs secretlint, eslint
   and prettier and will rewrite staged files.
+
+## TDD policy
+
+- All new features must be developed with Test-Driven Development.
+- Write failing tests first, then implement code to make them pass.
+- Run existing E2E tests before any release; one failing test blocks release.
+- Keep prototype code in `./tmp/` only for approval, never commit it.
+- After feature approval, delete `./tmp/` before tagging release.
