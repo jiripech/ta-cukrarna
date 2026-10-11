@@ -150,10 +150,11 @@ export default function OwnerHoursGlassForm({ csrf }: { csrf?: CsrfOptions }) {
     }
   }, [t]);
 
-  // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     loadSchedule();
-  }, [loadSchedule]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   useEffect(() => {
     try {
@@ -307,17 +308,17 @@ export default function OwnerHoursGlassForm({ csrf }: { csrf?: CsrfOptions }) {
     fri: 5,
     sat: 6,
   };
-  const dateForWeekday = (
-    baseIso: string,
-    weekday: keyof ScheduleEntry['days']
-  ) => {
-    const base = new Date(baseIso + 'T00:00:00Z');
-    const baseIdx = base.getUTCDay();
-    const targetIdx = WEEKDAY_IDX[weekday as string] ?? 1;
-    const offset = (targetIdx - baseIdx + 7) % 7;
-    return addDays(baseIso, offset);
-  };
   const previewRows = useMemo(() => {
+    const dateForWeekday = (
+      baseIso: string,
+      weekday: keyof ScheduleEntry['days']
+    ) => {
+      const base = new Date(baseIso + 'T00:00:00Z');
+      const baseIdx = base.getUTCDay();
+      const targetIdx = WEEKDAY_IDX[weekday as string] ?? 1;
+      const offset = (targetIdx - baseIdx + 7) % 7;
+      return addDays(baseIso, offset);
+    };
     const closedText = t('Zavřeno', 'Closed');
     const pickupText = t('Výdej objednávek', 'Order pickup');
     return DAY_KEYS.map(k => {
@@ -340,6 +341,7 @@ export default function OwnerHoursGlassForm({ csrf }: { csrf?: CsrfOptions }) {
         targetDate,
       };
     });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [entries, exceptions, lang, t, today]);
 
   if (loading) {
