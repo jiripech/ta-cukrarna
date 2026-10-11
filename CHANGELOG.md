@@ -4,8 +4,8 @@
 
 ### Fixed
 
-- ESLint `react-hooks/set-state-in-effect` errors in `OwnerHoursGlassForm` that
-  blocked CI deployment.
+- Refactored mount effect in `OwnerHoursGlassForm` to inline async fetch with
+  cancellation guard, removing `react-hooks/set-state-in-effect` violation.
 
 ## v1.3.0
 
