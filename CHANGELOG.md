@@ -6,6 +6,8 @@
 
 - Type assertion for `parseJsonc` response in `OwnerHoursGlassForm` to resolve
   TS2339 errors during build.
+- Removed `any` usage and unused variable in `OpeningHours.tsx` to satisfy
+  ESLint.
 
 ## v1.3.1
 
