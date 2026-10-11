@@ -256,6 +256,18 @@ function handlePost(string $filePath): void
         $exceptions = $payload['exceptions'];
     }
 
+    // Defaults are optional; if present, validate basic shape and persist.
+    $defaults = null;
+    if (isset($payload['defaults'])) {
+        if (!is_array($payload['defaults'])) {
+            jsonResponse(['error' => 'Neplatná data. / Invalid data.'], 400);
+        }
+        $defaults = $payload['defaults'];
+        if (!validateDefaults($defaults)) {
+            jsonResponse(['error' => 'Neplatné výchozí otevírací doby. / Invalid default opening hours.'], 400);
+        }
+    }
+
     // Validate the whole schedule before writing anything
     if (!validateSchedule($schedule)) {
         jsonResponse(['error' => 'Neplatná data otevírací doby. / Invalid opening hours data.'], 400);
@@ -268,7 +280,11 @@ function handlePost(string $filePath): void
 
     // Write to a temp file, then atomically rename
     $tmp = $filePath . '.tmp.' . getmypid();
-    $contents = json_encode(['schedule' => $schedule, 'exceptions' => $exceptions], JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT);
+    $out = ['schedule' => $schedule, 'exceptions' => $exceptions];
+    if ($defaults !== null) {
+        $out['defaults'] = $defaults;
+    }
+    $contents = json_encode($out, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT);
 
     if (file_put_contents($tmp, $contents) === false) {
         @unlink($tmp);
@@ -398,6 +414,27 @@ function validateExceptions(array $exceptions): bool
         }
     }
 
+    return true;
+}
+
+/**
+ * Validates defaults structure: defaults[season][day] strings.
+ *
+ * @param array $defaults
+ * @return bool
+ */
+function validateDefaults(array $defaults): bool
+{
+    $dayKeys = ['mon','tue','wed','thu','fri','sat','sun'];
+    foreach ($defaults as $season => $days) {
+        if (!is_array($days)) return false;
+        foreach ($dayKeys as $k) {
+            if (!array_key_exists($k, $days)) return false;
+            $txt = (string) $days[$k];
+            if (mb_strlen($txt) > 100) return false;
+            if (!preg_match('/^[A-Za-z0-9áčďéěíňóřšťúůýžÁČĎÉĚÍŇÓŘŠŤÚŮÝŽ .,:\-]*$/u', $txt)) return false;
+        }
+    }
     return true;
 }
 

@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import OwnerHoursForm from '@/components/OwnerHoursForm';
+import OwnerHoursGlassForm from '@/components/OwnerHoursGlassForm';
 import { startAuthentication } from '@/lib/webauthn';
 import { USE_ADMIN } from '@/lib/featureFlags';
 import { LanguageToggle, makeT, pickBilingual, useLang } from '@/lib/i18n';
@@ -138,7 +138,7 @@ export default function AdminPage() {
                 {t('Odhlásit se', 'Sign out')}
               </Link>
             </div>
-            <OwnerHoursForm
+            <OwnerHoursGlassForm
               csrf={{ csrfToken: view.csrfToken || '', enabled: true }}
             />
           </div>
