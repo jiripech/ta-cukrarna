@@ -119,42 +119,46 @@ export default function OwnerHoursGlassForm({ csrf }: { csrf?: CsrfOptions }) {
   const [success, setSuccess] = useState<string | null>(null);
   const csrfToken = csrf?.enabled ? csrf.csrfToken : undefined;
 
-  const loadSchedule = useCallback(async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      const res = await fetch('/api/opening-hours.php', {
-        credentials: 'include',
-      });
-      if (!res.ok) throw new Error('load fail');
-      const data = parseJsonc<unknown>(await res.text());
-      const schedule = Array.isArray(data?.schedule)
-        ? data.schedule
-        : undefined;
-      const ex = data?.exceptions;
-      const norm = (Array.isArray(schedule) ? schedule : []).map(
-        normalizeEntry
-      );
-      setEntries(norm.length ? norm : [emptyEntry()]);
-      setExceptions((Array.isArray(ex) ? ex : []).map(normalizeException));
-    } catch (e) {
-      const msg = e instanceof Error ? e.message : '';
-      setError(
-        t(
-          'Nepodařilo se načíst otevírací dobu.',
-          'Could not load opening hours.'
-        ) + (msg ? ` (${msg})` : '')
-      );
-    } finally {
-      setLoading(false);
-    }
-  }, [t]);
-
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    loadSchedule();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+    let cancelled = false;
+    (async () => {
+      setLoading(true);
+      setError(null);
+      try {
+        const res = await fetch('/api/opening-hours.php', {
+          credentials: 'include',
+        });
+        if (!res.ok) throw new Error('load fail');
+        const data = parseJsonc<unknown>(await res.text());
+        const schedule = Array.isArray(data?.schedule)
+          ? data.schedule
+          : undefined;
+        const ex = data?.exceptions;
+        const norm = (Array.isArray(schedule) ? schedule : []).map(
+          normalizeEntry
+        );
+        if (!cancelled) {
+          setEntries(norm.length ? norm : [emptyEntry()]);
+          setExceptions((Array.isArray(ex) ? ex : []).map(normalizeException));
+        }
+      } catch (e) {
+        if (!cancelled) {
+          const msg = e instanceof Error ? e.message : '';
+          setError(
+            t(
+              'Nepodařilo se načíst otevírací dobu.',
+              'Could not load opening hours.'
+            ) + (msg ? ` (${msg})` : '')
+          );
+        }
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [t]);
 
   useEffect(() => {
     try {
