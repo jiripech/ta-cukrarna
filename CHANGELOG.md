@@ -1,5 +1,19 @@
 # Changelog
 
+## v1.3.4
+
+### Updated
+
+- **eslint-config-next** 16.1.1 → 16.4.0 (addresses dependabot alert)
+- **markdownlint-cli2** 0.23.1 → 0.23.3 (addresses dependabot alert)
+- **secretlint** 11.2.5 → 13.0.7 (addresses dependabot alert)
+- **@secretlint/secretlint-rule-preset-recommend** 11.2.5 → 13.0.7
+
+### Fixed
+
+- Resolved three dependabot security alerts for high-severity vulnerabilities in
+  transitive dependencies
+
 ## v1.3.3
 
 - **fixed** typecheck script added to check TypeScript types in check-all
