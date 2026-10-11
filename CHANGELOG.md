@@ -1,5 +1,12 @@
 # Changelog
 
+## v1.3.1
+
+### Fixed
+
+- ESLint `react-hooks/set-state-in-effect` errors in `OwnerHoursGlassForm` that
+  blocked CI deployment.
+
 ## v1.3.0
 
 ### Added
