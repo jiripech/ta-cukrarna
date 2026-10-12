@@ -43,3 +43,4 @@ temp/
 api/DB/*.sqlite
 api/DB/*.sqlite-*
 holiday.jsonc
+opening-hours.jsonc

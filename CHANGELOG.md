@@ -1,6 +1,13 @@
 # Changelog
 
-## v1.3.4
+## v1.3.6
+
+### Fixed
+
+- Avoid breaking existing settings in new deployments by adding
+  'opening-hours.jsonc' to '.rsyncignore'
+
+## v1.3.4, v1.3.5
 
 ### Updated
 
