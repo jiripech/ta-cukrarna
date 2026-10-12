@@ -6,6 +6,11 @@
 
 - Avoid breaking existing settings in new deployments by adding
   'opening-hours.jsonc' to '.rsyncignore'
+- Move Dockerfile.test into docker/ folder for better organization
+
+### Changed
+
+- Restructured Docker testing environment into dedicated docker/ directory
 
 ## v1.3.4, v1.3.5
 
