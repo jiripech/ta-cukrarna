@@ -1,0 +1,8 @@
+# The test image contains only Apache + PHP plus two small scripts - never
+# copy or build the application into it (out/ and public/api are bind-mounted
+# at run time). Keep the build context minimal: these two files only.
+*
+!docker/
+!docker/**
+!scripts/
+!scripts/docker-entrypoint.sh
