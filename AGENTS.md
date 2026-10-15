@@ -72,6 +72,50 @@ prefer them over plausible-sounding assumptions.
   update — the form submission gets canceled. Gate with `disabled={sending}`
   instead (see `src/app/admin/register/page.tsx`).
 
+## Docker test environment (VPS mirror)
+
+- The test image (`docker/Dockerfile.test`, built via
+  `scripts/docker-build.sh build`) contains **only Apache + PHP 8.5 (Sury
+  repo) + the entrypoint/seeder scripts**. The application is **never
+  `COPY . .`-ed or built into the image** — that made the image huge and the
+  build slow. Do not reintroduce it.
+- The app content is bind-mounted at run time: `out/` → `/var/www/html`
+  (docroot, writable for atomic `opening-hours.jsonc` saves), `public/api` →
+  `/var/www/html/api` (read-only), `public/api/DB` → `/var/www/html/api/DB`
+  (writable — SQLite passkey store + debug log).
+- Build `out/` on the **host** first (`npm run build`); `NEXT_PUBLIC_*` feature
+  flags come from the host `.env` at that point. The image has no build-time
+  flags.
+- At container start the entrypoint seeds SQLite (schema via
+  `public/api/DB/init.php` + one signable P-256 test passkey via
+  `docker/seed-passkeys.php`); client credentials for tests land in
+  `public/api/DB/test-credentials.json` (gitignored). The seeder also
+  pre-inserts a 24h registration token (`registerUrl` in the same file) and uses
+  the first `ADMIN_USERS` entry as the username when the container `.env`
+  defines one. Seeding resets the signature counters, and
+  `resetPasskeyCounter()` (e2e/helpers/soft-webauthn.ts) resets them before each
+  login test; sign-in tests run chromium-only.
+- Container env knobs (from the gitignored `.env.docker`, template
+  `.env.docker.example`; mount at `/var/www/.env` happens in
+  `docker-build.sh run` when the file exists): `ADMIN_USERS` (registration
+  without MariaDB/IMAP - account check + IMAP skip in `register.php`), `SMTP_*`
+  (entrypoint generates `/etc/msmtprc`; msmtp relays the registration e-mail),
+  `WEBAUTHN_RP_ID=localhost` (real browser ceremonies on localhost - browsers
+  reject the production RP ID there), `APP_BASE_URL=http://localhost` (e-mail
+  link target). **Never set ADMIN_USERS / WEBAUTHN_RP_ID on the VPS** - they
+  relax production checks. The registration round trip is covered by
+  `e2e/admin-register-docker.spec.ts` (fresh keypair, `fmt none` attestation via
+  the software authenticator, sign-in with the new passkey).
+- `.dockerignore` deliberately excludes everything except `docker/` and
+  `scripts/docker-entrypoint.sh` — keep it that way so the build context stays
+  in the KB range.
+- Real WebAuthn ceremonies are impossible on localhost even with a seeded
+  passkey (browser rejects RP ID `tacukrarna.cz`), so specs stub
+  `navigator.credentials` only — `e2e/admin-login.spec.ts` shows the pattern:
+  real challenge fetch, real ES256 signature via the seeded JWK, real
+  server-side verification. Gated on `DOCKER_E2E=1` (`npm run test:e2e:docker`)
+  so the CI static harness skips it.
+
 ## Conventions
 
 - Commits: `-s -S`, concise conventional style. Push with `--follow-tags`.
