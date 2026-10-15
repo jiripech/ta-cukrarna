@@ -20,6 +20,7 @@
 
 # temporary files
 temp_*.txt
+/tmp
 
 # next.js
 /.next/
@@ -60,6 +61,7 @@ next-env.d.ts
 public/api/DB/*.sqlite
 public/api/DB/*.sqlite-wal
 public/api/DB/*.sqlite-shm
+public/api/DB/test-credentials.json
 
 # agent artifacts
 .gemini/
