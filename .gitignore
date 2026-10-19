@@ -62,7 +62,8 @@ public/api/DB/*.sqlite
 public/api/DB/*.sqlite-wal
 public/api/DB/*.sqlite-shm
 public/api/DB/test-credentials.json
+public/api/DB/api-debug.log
 
 # agent artifacts
 .gemini/
-chrome-mac-arm64.zip
+
