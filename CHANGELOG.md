@@ -4,6 +4,9 @@
 
 ### Fixed
 
+- `src/components/OwnerHoursGlassForm.tsx`: switched sentinel end date to
+  `9999-12-31`, wired defaults to API persistence, improved modal/mobile
+  usability, and stacked exception inputs to prevent overlap.
 - `e2e/opening-hours-exception.spec.ts`: fixed TS2353 by using `headers` instead
   of invalid `extraHTTPHeaders` in API request options.
 - `src/components/OwnerHoursForm.tsx`: added stable `ex-date-*` and `ex-hours-*`
