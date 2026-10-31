@@ -24,6 +24,8 @@
 
 ### Changed
 
+- `playwright.config.ts`: Docker mode now uses localhost base URL, single worker
+  execution, and skips static webServer startup.
 - Restructured Docker testing environment into dedicated docker/ directory
 
 ## v1.3.4, v1.3.5
