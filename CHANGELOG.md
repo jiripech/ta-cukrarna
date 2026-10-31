@@ -24,6 +24,8 @@
 
 ### Changed
 
+- `AGENTS.md`: added detailed Docker mirror architecture, mount topology,
+  seeding behavior, and WebAuthn testing constraints.
 - `DEVELOPMENT_TOOLS.md`: documented that `ADMIN_USERS`, `WEBAUTHN_RP_ID`, and
   `APP_BASE_URL` are Docker-test-only overrides.
 - `README.md`: documented Docker E2E setup, run loop, `.env.docker` usage, and

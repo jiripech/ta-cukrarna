@@ -82,7 +82,10 @@ prefer them over plausible-sounding assumptions.
 - The app content is bind-mounted at run time: `out/` → `/var/www/html`
   (docroot, writable for atomic `opening-hours.jsonc` saves), `public/api` →
   `/var/www/html/api` (read-only), `public/api/DB` → `/var/www/html/api/DB`
-  (writable — SQLite passkey store + debug log).
+  (writable — SQLite passkey store + debug log). The entrypoint and seeder
+  scripts are bind-mounted too, so edits to them (and to `.env.docker` values)
+  need only a container restart — an image rebuild is required only when the
+  _packages_ in `docker/Dockerfile.test` change.
 - Build `out/` on the **host** first (`npm run build`); `NEXT_PUBLIC_*` feature
   flags come from the host `.env` at that point. The image has no build-time
   flags.
@@ -94,7 +97,8 @@ prefer them over plausible-sounding assumptions.
   the first `ADMIN_USERS` entry as the username when the container `.env`
   defines one. Seeding resets the signature counters, and
   `resetPasskeyCounter()` (e2e/helpers/soft-webauthn.ts) resets them before each
-  login test; sign-in tests run chromium-only.
+  login test; the sign-in specs run chromium-only because the server-side
+  verification they cover is browser-independent.
 - Container env knobs (from the gitignored `.env.docker`, template
   `.env.docker.example`; mount at `/var/www/.env` happens in
   `docker-build.sh run` when the file exists): `ADMIN_USERS` (registration
