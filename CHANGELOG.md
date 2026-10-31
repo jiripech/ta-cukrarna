@@ -67,6 +67,8 @@
 
 ### Added
 
+- `e2e/opening-hours-defaults.spec.ts`: added Docker-gated defaults persistence
+  and public fallback checks when no season covers today.
 - `e2e/admin-register-docker.spec.ts`: added Docker-gated Chromium
   register→login flow with fresh WebAuthn credential creation.
 - `e2e/admin-login.spec.ts`: added Docker-gated Chromium login test using seeded
