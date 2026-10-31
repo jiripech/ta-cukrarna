@@ -67,6 +67,8 @@
 
 ### Added
 
+- `src/app/admin/register/page.tsx`: registration UI now skips password
+  verification when API reports `password_required: false`.
 - `public/api/register.php`: added `ADMIN_USERS` and `APP_BASE_URL` handling
   plus `password_required` response for token validation.
 - `e2e/opening-hours-defaults.spec.ts`: added Docker-gated defaults persistence
