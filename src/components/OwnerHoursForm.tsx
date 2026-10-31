@@ -481,6 +481,7 @@ export default function OwnerHoursForm({ csrf }: { csrf?: CsrfOptions }) {
                     {t('Datum', 'Date')}
                   </span>
                   <input
+                    id={`ex-date-${index}`}
                     type="date"
                     value={exception.date}
                     onChange={e =>
@@ -495,6 +496,7 @@ export default function OwnerHoursForm({ csrf }: { csrf?: CsrfOptions }) {
                     {t('Hodiny', 'Hours')}
                   </span>
                   <input
+                    id={`ex-hours-${index}`}
                     type="text"
                     value={exception.hours}
                     onChange={e =>

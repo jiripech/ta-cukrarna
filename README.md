@@ -79,6 +79,70 @@ screen -r ta-cukrarna-dev
 The application will be available at
 [http://localhost:3000](http://localhost:3000)
 
+## 🐳 Docker E2E Testing
+
+A Docker test environment with Apache + PHP 8.5 (+ msmtp for real registration
+e-mails) mirrors production for E2E tests. The image contains no application
+code — the app is bind-mounted at run time, so build the static export on the
+host first.
+
+```bash
+# 1. Build the static export (NEXT_PUBLIC_* flags come from .env;
+#    NEXT_PUBLIC_USE_ADMIN=1 is required for the admin sign-in test)
+npm run build
+
+# 2. Build the image (tiny: Apache + PHP + msmtp + entrypoint, no app inside)
+scripts/docker-build.sh build
+
+# 3. Start the container on http://localhost:80
+scripts/docker-build.sh run
+
+# 4. Run Playwright tests against the container
+npm run test:e2e:docker
+
+# 5. Stop the container
+scripts/docker-build.sh stop
+```
+
+At container start the entrypoint seeds the SQLite database (schema + one
+signable test passkey + a pre-inserted registration token) and starts Apache.
+The client credentials land in `public/api/DB/test-credentials.json`
+(gitignored) and are used by `e2e/admin-login.spec.ts` for a real
+server-verified sign-in. The passkey's signature counter is reset on every
+container start (and before each login test).
+
+### Real registration flow in Docker
+
+Copy `.env.docker.example` to `.env.docker` (gitignored) and fill in your
+values; it is mounted at `/var/www/.env` (the path `loadEnv()` reads, same
+layout as the VPS):
+
+- `ADMIN_USERS=you@example.cz` — registration works without MariaDB/IMAP:
+  `request-token` accepts only these addresses and `verify-password` skips the
+  IMAP password proof for them.
+- `SMTP_*` — the entrypoint generates `/etc/msmtprc` from them, so the
+  registration e-mail is really delivered through your external mail server.
+- `WEBAUTHN_RP_ID=localhost` — enables **real browser ceremonies** on
+  `http://localhost` (Touch ID, Windows Hello, ...). Without it a browser cannot
+  run WebAuthn against the production RP ID on a localhost origin.
+- `APP_BASE_URL=http://localhost` — makes the e-mailed registration link point
+  at the container instead of production.
+
+Then open `http://localhost/admin/register/`, enter the address from
+`ADMIN_USERS` and walk the flow like a real user (e-mail link → passkey
+ceremony; the password step is skipped automatically when `ADMIN_USERS` covers
+the user). The seeded token path skips the e-mail: the registration URL is
+printed to the container log at start and stored as `registerUrl` in
+`public/api/DB/test-credentials.json` (valid 24 hours; older tokens of the
+seeded user are removed at container start, so a restart always yields a fresh
+URL). The automated counterpart is `e2e/admin-register-docker.spec.ts` (register
+with a fresh passkey → sign in with it).
+
+> **Security**: `ADMIN_USERS` disables the IMAP password proof and
+> `WEBAUTHN_RP_ID` changes the passkey binding. **Never set them in the VPS
+> `.env`** — production keeps the MariaDB account check, IMAP verification and
+> RP ID `tacukrarna.cz`.
+
 ## ✉️ Backend Email Configuration
 
 The chatbot backend sends catalog links by email. For production and local

@@ -1,0 +1,63 @@
+# docker/Dockerfile.test - Ta Cukrárna VPS-mirror test image
+#
+# Apache + PHP 8.5 only - the Next.js app is NEVER copied or built into this
+# image. At run time the container bind-mounts:
+#
+#   ./out           -> /var/www/html       (docroot = static export contents)
+#   ./public/api    -> /var/www/html/api   (PHP backend, read-only)
+#   ./public/api/DB -> /var/www/html/api/DB (SQLite store, writable, seeded)
+#
+# so the docroot layout matches the production VPS (site at /, API at
+# /api/, opening-hours.jsonc at the root). Build `out/` on the host first
+# (`npm run build`) - the NEXT_PUBLIC_* feature flags come from the host
+# .env at that point, not from this image.
+#
+# At container start the entrypoint seeds the SQLite database (schema +
+# one signable test passkey) and starts Apache in the foreground.
+# Playwright browsers are NOT installed - E2E tests run from the host
+# against the container (`npm run test:e2e:docker`).
+
+FROM debian:bookworm
+
+# Add Sury PHP repository for php8.5
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    lsb-release ca-certificates apt-transport-https curl \
+    && curl -sSLo /usr/share/keyrings/sury-keyring.gpg https://packages.sury.org/php/apt.gpg \
+    && echo "deb [signed-by=/usr/share/keyrings/sury-keyring.gpg] https://packages.sury.org/php/ $(lsb_release -cs) main" > /etc/apt/sources.list.d/sury-php.list \
+    && rm -rf /var/lib/apt/lists/*
+
+# Apache + PHP 8.5 + extensions + msmtp (external-MTA relay for the
+# registration e-mail; /etc/msmtprc is generated from the mounted .env)
+# NOTE: json and openssl are compiled into the PHP 8 core - no separate packages
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    apache2 \
+    libapache2-mod-php8.5 \
+    php8.5-cli \
+    php8.5-common \
+    php8.5-mbstring \
+    php8.5-curl \
+    php8.5-intl \
+    php8.5-xml \
+    php8.5-readline \
+    php8.5-sqlite3 \
+    msmtp msmtp-mta \
+    && rm -rf /var/lib/apt/lists/*
+
+# Enable Apache modules needed by the API
+RUN a2enmod rewrite headers expires
+
+# Entrypoint: seeds SQLite, then execs Apache in the foreground.
+# Baked copies serve as a fallback only - at run time both scripts are
+# bind-mounted from the repo (see docker-build.sh), so script edits need
+# just a container restart, not an image rebuild.
+COPY docker/seed-passkeys.php /usr/local/bin/seed-passkeys.php
+COPY scripts/docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
+RUN chmod +x /usr/local/bin/docker-entrypoint.sh
+
+WORKDIR /var/www/html
+
+ENV PLAYWRIGHT_TEST_MODE=true
+
+EXPOSE 80
+
+ENTRYPOINT ["docker-entrypoint.sh"]

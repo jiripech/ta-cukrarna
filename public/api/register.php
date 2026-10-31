@@ -106,20 +106,32 @@ function handleRequestToken(): void
 
     // Password-less verification of whether the account exists (this is fine: the
     // difference in behaviour leaks nothing since we respond identically either way).
+    //
+    // Test/staging fallback: when ADMIN_USERS is defined (comma-separated
+    // e-mail addresses, normally only in a Docker test container's .env),
+    // membership in that list replaces the MariaDB lookup. WARNING: when
+    // ADMIN_USERS is set, handleVerifyPassword() also skips the IMAP
+    // password proof for these users - never define ADMIN_USERS on the VPS.
     $exists = false;
-    try {
-        $mailDb = getMailDb();
-        $table = getenv('MAILDB_TABLE') ?: 'admin';
-        $stmt = $mailDb->prepare("SELECT username FROM `{$table}` WHERE username = ? AND active = 1");
-        $stmt->execute([$username]);
-        $exists = (bool) $stmt->fetch();
-        logEvent('maildb_check', ['username' => $username, 'exists' => $exists, 'table' => $table]);
-    } catch (PDOException $e) {
-        // Behave as if the account may exist; never reveal DB errors.
-        logEvent('maildb_error', [
-            'username' => $username,
-            'error' => $e->getMessage(),
-        ]);
+    $adminUsers = adminUsersList();
+    if ($adminUsers !== []) {
+        $exists = in_array(strtolower($username), $adminUsers, true);
+        logEvent('admin_users_check', ['username' => $username, 'exists' => $exists]);
+    } else {
+        try {
+            $mailDb = getMailDb();
+            $table = getenv('MAILDB_TABLE') ?: 'admin';
+            $stmt = $mailDb->prepare("SELECT username FROM `{$table}` WHERE username = ? AND active = 1");
+            $stmt->execute([$username]);
+            $exists = (bool) $stmt->fetch();
+            logEvent('maildb_check', ['username' => $username, 'exists' => $exists, 'table' => $table]);
+        } catch (PDOException $e) {
+            // Behave as if the account may exist; never reveal DB errors.
+            logEvent('maildb_error', [
+                'username' => $username,
+                'error' => $e->getMessage(),
+            ]);
+        }
     }
 
     // Regardless of existence, generate a token so behaviour is identical
@@ -138,7 +150,10 @@ function handleRequestToken(): void
     }
 
     if ($exists) {
-        $link = 'https://tacukrarna.cz/admin/register/?token=' . $token;
+        // Link base is env-driven so a test container can point it at
+        // http://localhost instead of the production domain.
+        $base = rtrim(getenv('APP_BASE_URL') ?: 'https://tacukrarna.cz', '/');
+        $link = $base . '/admin/register/?token=' . $token;
 
         $subject = 'Registrace správce otevírací doby - Ta Cukrárna';
         $message = "Dobrý den,\n\n"
@@ -217,7 +232,19 @@ function handleValidateToken(): void
     $_SESSION['reg_username'] = $row['username'];
     $_SESSION['reg_token_id'] = $row['id'];
 
-    jsonResponse(['valid' => true, 'username' => $row['username']]);
+    // Tell the UI whether a password proof is part of this flow: when
+    // ADMIN_USERS is configured (Docker test container), verify-password
+    // bypasses IMAP for these users, so the password step is skipped
+    // entirely and the WebAuthn ceremony starts right away.
+    jsonResponse([
+        'valid' => true,
+        'username' => $row['username'],
+        'password_required' => !in_array(
+            strtolower($row['username']),
+            adminUsersList(),
+            true
+        ),
+    ]);
 }
 
 /**
@@ -244,6 +271,17 @@ function handleVerifyPassword(): void
 
     if ($password === '') {
         jsonResponse(['error' => 'Zadejte prosím heslo. / Please enter a password.'], 400);
+    }
+
+    // Test/staging fallback (see adminUsersList()): when ADMIN_USERS is
+    // defined, the IMAP password proof is skipped for the listed users -
+    // the container has no MariaDB/IMAP stack. NEVER set ADMIN_USERS on
+    // the VPS; the list membership itself gates this branch.
+    if (in_array(strtolower($_SESSION['reg_username']), adminUsersList(), true)) {
+        logEvent('imap_bypass_admin_users', ['username' => $_SESSION['reg_username']]);
+        markTokenUsed();
+        $_SESSION['reg_verified'] = true;
+        jsonResponse(['verified' => true]);
     }
 
     // Verify the mailbox password over IMAP.
@@ -282,12 +320,7 @@ function handleVerifyPassword(): void
     imap_close($imap);
     logEvent('imap_ok', ['username' => $_SESSION['reg_username']]);
 
-    // Mark the token as used
-    if (!empty($_SESSION['reg_token_id'])) {
-        $pdo = getSqliteDb();
-        $stmt = $pdo->prepare('UPDATE reg_tokens SET used = 1 WHERE id = ?');
-        $stmt->execute([$_SESSION['reg_token_id']]);
-    }
+    markTokenUsed();
 
     $_SESSION['reg_verified'] = true;
 
@@ -318,4 +351,51 @@ function handleReset(): void
     );
 
     jsonResponse(['status' => 'success']);
+}
+
+/**
+ * Parses the ADMIN_USERS env var (comma-separated e-mail addresses).
+ *
+ * Empty list = feature disabled (production behaviour: MariaDB + IMAP).
+ * Used by the Docker test container to run the registration flow without
+ * MariaDB and IMAP. MUST NOT be defined on the VPS - membership skips the
+ * IMAP password proof.
+ *
+ * @return array lowercase usernames, [] when unset/empty
+ */
+function adminUsersList(): array
+{
+    // The ADMIN_USERS value normally lives in the .env file (one level above
+    // the docroot); loadEnv() is otherwise only invoked by getMailDb(), which
+    // the bypass path deliberately never calls.
+    loadEnv();
+
+    $raw = getenv('ADMIN_USERS');
+    if ($raw === false || trim($raw) === '') {
+        return [];
+    }
+
+    $users = [];
+    foreach (explode(',', $raw) as $user) {
+        $user = strtolower(trim($user));
+        if ($user !== '' && filter_var($user, FILTER_VALIDATE_EMAIL)) {
+            $users[] = $user;
+        }
+    }
+
+    return $users;
+}
+
+/**
+ * Marks the current registration token as used.
+ *
+ * @return void
+ */
+function markTokenUsed(): void
+{
+    if (!empty($_SESSION['reg_token_id'])) {
+        $pdo = getSqliteDb();
+        $stmt = $pdo->prepare('UPDATE reg_tokens SET used = 1 WHERE id = ?');
+        $stmt->execute([$_SESSION['reg_token_id']]);
+    }
 }

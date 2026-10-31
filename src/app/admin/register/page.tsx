@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { startRegistration } from '@/lib/webauthn';
 import { USE_ADMIN } from '@/lib/featureFlags';
@@ -27,6 +27,67 @@ export default function RegisterPage() {
   const [password, setPassword] = useState('');
   const [passwordError, setPasswordError] = useState<string | null>(null);
   const emailRef = useRef<HTMLInputElement>(null);
+
+  const registerDevice = useCallback(async () => {
+    setView({ name: 'registering' });
+    try {
+      const challengeRes = await fetch(
+        '/api/webauthn.php?action=challenge_register',
+        {
+          method: 'POST',
+          credentials: 'include',
+          headers: { 'Content-Type': 'application/json' },
+        }
+      );
+      const challengeData = await challengeRes.json().catch(() => null);
+      if (!challengeRes.ok || !challengeData?.createArgs) {
+        throw new Error(
+          challengeData?.error
+            ? pickBilingual(String(challengeData.error), lang)
+            : t(
+                'Nepodařilo se zahájit registraci.',
+                'Could not start registration.'
+              )
+        );
+      }
+
+      const attestation = await startRegistration(challengeData.createArgs);
+
+      const verifyRes = await fetch(
+        '/api/webauthn.php?action=verify_register',
+        {
+          method: 'POST',
+          credentials: 'include',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(attestation),
+        }
+      );
+      const verifyData = await verifyRes.json().catch(() => null);
+      if (!verifyRes.ok) {
+        throw new Error(
+          verifyData?.error
+            ? pickBilingual(String(verifyData.error), lang)
+            : t('Registrace se nezdařila.', 'Registration failed.')
+        );
+      }
+
+      setView({ name: 'success' });
+    } catch (e) {
+      setView({
+        name: 'error',
+        message:
+          e &&
+          typeof e === 'object' &&
+          'message' in e &&
+          typeof (e as { message: unknown }).message === 'string'
+            ? (e as { message: string }).message
+            : t(
+                'Registrace se nezdařila. Zkuste to prosím znovu.',
+                'Registration failed. Please try again.'
+              ),
+      });
+    }
+  }, [t, lang]);
 
   const emailValid = EMAIL_RE.test(email.trim());
 
@@ -70,6 +131,12 @@ export default function RegisterPage() {
           });
           return;
         }
+        if (data.password_required === false) {
+          // Server-verified no-password flow (e.g. ADMIN_USERS in the Docker
+          // test container): go straight to the passkey ceremony.
+          await registerDevice();
+          return;
+        }
         setView({ name: 'password' });
       } catch {
         if (cancelled) return;
@@ -89,7 +156,7 @@ export default function RegisterPage() {
     };
     // The effect intentionally re-runs on a language switch (harmless: token
     // validation is a read-only request).
-  }, [t, lang]);
+  }, [t, lang, registerDevice]);
 
   if (!USE_ADMIN) return null;
 
@@ -171,67 +238,6 @@ export default function RegisterPage() {
       setPasswordError(
         t('Nepodařilo se ověřit heslo.', 'Could not verify the password.')
       );
-    }
-  };
-
-  const registerDevice = async () => {
-    setView({ name: 'registering' });
-    try {
-      const challengeRes = await fetch(
-        '/api/webauthn.php?action=challenge_register',
-        {
-          method: 'POST',
-          credentials: 'include',
-          headers: { 'Content-Type': 'application/json' },
-        }
-      );
-      const challengeData = await challengeRes.json().catch(() => null);
-      if (!challengeRes.ok || !challengeData?.createArgs) {
-        throw new Error(
-          challengeData?.error
-            ? pickBilingual(String(challengeData.error), lang)
-            : t(
-                'Nepodařilo se zahájit registraci.',
-                'Could not start registration.'
-              )
-        );
-      }
-
-      const attestation = await startRegistration(challengeData.createArgs);
-
-      const verifyRes = await fetch(
-        '/api/webauthn.php?action=verify_register',
-        {
-          method: 'POST',
-          credentials: 'include',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(attestation),
-        }
-      );
-      const verifyData = await verifyRes.json().catch(() => null);
-      if (!verifyRes.ok) {
-        throw new Error(
-          verifyData?.error
-            ? pickBilingual(String(verifyData.error), lang)
-            : t('Registrace se nezdařila.', 'Registration failed.')
-        );
-      }
-
-      setView({ name: 'success' });
-    } catch (e) {
-      setView({
-        name: 'error',
-        message:
-          e &&
-          typeof e === 'object' &&
-          'message' in e &&
-          typeof (e as { message: unknown }).message === 'string'
-            ? (e as { message: string }).message
-            : t(
-                'Registrace se nezdařila. Zkuste to prosím znovu.',
-                'Registration failed. Please try again.'
-              ),
-      });
     }
   };
 

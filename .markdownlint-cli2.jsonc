@@ -27,7 +27,9 @@
     ".next/**",
     "out/**",
     "public/api/vendor/**",
-    ".rsyncignore"
+    ".rsyncignore",
+    "playwright-report/**",
+    "test-results/**"
   ],
   "globs": ["**/*.md"],
 
