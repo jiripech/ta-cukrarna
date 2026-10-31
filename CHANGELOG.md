@@ -80,6 +80,8 @@
 
 ### Added
 
+- `SPECIFICATION.md`: added comprehensive contract-level system specification
+  for frontend, API, data and deployment behavior.
 - `src/app/admin/register/page.tsx`: registration UI now skips password
   verification when API reports `password_required: false`.
 - `public/api/register.php`: added `ADMIN_USERS` and `APP_BASE_URL` handling
