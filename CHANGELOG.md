@@ -67,6 +67,8 @@
 
 ### Added
 
+- `docker/seed-passkeys.php`: seeds deterministic login credentials and a fresh
+  24-hour registration token for Docker E2E flows.
 - `scripts/docker-entrypoint.sh`: added startup seeding, writable path setup,
   SMTP-driven `msmtp` config, and registration URL hints.
 - `scripts/docker-build.sh`: added build/run/stop/clean workflow with
