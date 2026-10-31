@@ -67,6 +67,8 @@
 
 ### Added
 
+- `public/api/register.php`: added `ADMIN_USERS` and `APP_BASE_URL` handling
+  plus `password_required` response for token validation.
 - `e2e/opening-hours-defaults.spec.ts`: added Docker-gated defaults persistence
   and public fallback checks when no season covers today.
 - `e2e/admin-register-docker.spec.ts`: added Docker-gated Chromium
