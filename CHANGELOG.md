@@ -24,6 +24,8 @@
 
 ### Changed
 
+- `.markdownlint-cli2.jsonc`: excluded `playwright-report/**` and
+  `test-results/**` from markdown lint globs.
 - `AGENTS.md`: added detailed Docker mirror architecture, mount topology,
   seeding behavior, and WebAuthn testing constraints.
 - `DEVELOPMENT_TOOLS.md`: documented that `ADMIN_USERS`, `WEBAUTHN_RP_ID`, and
