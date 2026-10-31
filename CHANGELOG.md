@@ -1,5 +1,12 @@
 # Changelog
 
+## v1.3.8
+
+### Updated
+
+- **fast-uri** 3.1.8 → 4.2.3 via npm override in `package.json` to pull the
+  latest release across transitive `ajv` consumers.
+
 ## v1.3.7
 
 ### Fixed
