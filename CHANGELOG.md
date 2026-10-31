@@ -1,5 +1,15 @@
 # Changelog
 
+## v1.3.7
+
+### Fixed
+
+- **Playwright base URL regression** (`playwright.config.ts`): normal E2E runs
+  now target the static harness at `http://127.0.0.1:3001`, while Docker E2E
+  mode keeps `http://localhost/`. This prevents non-Docker suites from
+  accidentally hitting port 80 and failing in CI when no Docker container is
+  running.
+
 ## v1.3.6
 
 ### Fixed
