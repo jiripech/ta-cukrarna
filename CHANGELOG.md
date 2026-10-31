@@ -4,6 +4,8 @@
 
 ### Fixed
 
+- `docker/Dockerfile.test`: added Sury PHP repo, installed `php8.5-sqlite3`, and
+  removed obsolete test env copy path.
 - `public/api/webauthn.php`: convert raw P1363 ES256 signatures to DER before
   `openssl_verify()` to fix admin login verification.
 - `src/styles/glass.css`: set glass overlay to `pointer-events:none`, improved
