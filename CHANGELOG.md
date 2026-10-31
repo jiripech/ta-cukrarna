@@ -67,6 +67,8 @@
 
 ### Added
 
+- `scripts/docker-build.sh`: added build/run/stop/clean workflow with
+  VPS-mirroring mounts and optional `.env.docker` mount.
 - `e2e/admin-exception-visibility.spec.ts`: added Chromium Docker checks for
   input visibility, contrast and overlap in the admin exception form.
 - Admin opening hours UI redesigned with glass aesthetic, bilingual labels,
