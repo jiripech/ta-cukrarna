@@ -4,6 +4,9 @@
 
 ### Fixed
 
+- `src/styles/glass.css`: set glass overlay to `pointer-events:none`, improved
+  input/placeholder contrast, and adjusted stacking for native date picker
+  visibility.
 - `src/components/OwnerHoursGlassForm.tsx`: switched sentinel end date to
   `9999-12-31`, wired defaults to API persistence, improved modal/mobile
   usability, and stacked exception inputs to prevent overlap.
