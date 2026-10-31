@@ -67,6 +67,8 @@
 
 ### Added
 
+- `scripts/docker-entrypoint.sh`: added startup seeding, writable path setup,
+  SMTP-driven `msmtp` config, and registration URL hints.
 - `scripts/docker-build.sh`: added build/run/stop/clean workflow with
   VPS-mirroring mounts and optional `.env.docker` mount.
 - `e2e/admin-exception-visibility.spec.ts`: added Chromium Docker checks for
