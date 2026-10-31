@@ -4,6 +4,8 @@
 
 ### Fixed
 
+- `e2e/opening-hours-exception.spec.ts`: fixed TS2353 by using `headers` instead
+  of invalid `extraHTTPHeaders` in API request options.
 - `src/components/OwnerHoursForm.tsx`: added stable `ex-date-*` and `ex-hours-*`
   ids for language-independent admin E2E selectors.
 - Avoid breaking existing settings in new deployments by adding
