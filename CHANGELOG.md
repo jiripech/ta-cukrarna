@@ -24,6 +24,8 @@
 
 ### Changed
 
+- `package-lock.json`: updated lock entries to match pinned Next.js 16.4.3
+  dependency graph.
 - `package.json`: added `test:e2e:docker` and pinned `next` to `16.4.3`.
 - `.markdownlint-cli2.jsonc`: excluded `playwright-report/**` and
   `test-results/**` from markdown lint globs.
