@@ -4,6 +4,8 @@
 
 ### Fixed
 
+- `src/components/OwnerHoursForm.tsx`: added stable `ex-date-*` and `ex-hours-*`
+  ids for language-independent admin E2E selectors.
 - Avoid breaking existing settings in new deployments by adding
   'opening-hours.jsonc' to '.rsyncignore'
 - Move Dockerfile.test into docker/ folder for better organization
