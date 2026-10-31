@@ -1,5 +1,17 @@
 # Changelog
 
+## v1.3.7
+
+### Fixed
+
+- Fixed GitHub Actions `lint-check` startup failure by checking out the
+  repository before loading the local composite action
+
+### Changed
+
+- Documented in `AGENTS.md` that version bumps must use
+  `scripts/write-version.sh`
+
 ## v1.3.6
 
 ### Fixed

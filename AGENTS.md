@@ -75,6 +75,8 @@ prefer them over plausible-sounding assumptions.
 ## Conventions
 
 - Commits: `-s -S`, concise conventional style. Push with `--follow-tags`.
+- Bump versions only via `scripts/write-version.sh` (never by manual file
+  edits).
 - `DEV_NOTES.md` is deliberately gitignored — never stage or commit it.
 - Before committing, `git status` + `git diff --cached` to keep stray files
   (scratch scripts, notes) out; pre-commit lint-staged runs secretlint, eslint
