@@ -24,6 +24,7 @@
 
 ### Changed
 
+- `package.json`: added `test:e2e:docker` and pinned `next` to `16.4.3`.
 - `.markdownlint-cli2.jsonc`: excluded `playwright-report/**` and
   `test-results/**` from markdown lint globs.
 - `AGENTS.md`: added detailed Docker mirror architecture, mount topology,
