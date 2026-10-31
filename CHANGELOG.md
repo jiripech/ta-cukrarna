@@ -55,6 +55,8 @@
 
 ### Added
 
+- `e2e/admin-exception-visibility.spec.ts`: added Chromium Docker checks for
+  input visibility, contrast and overlap in the admin exception form.
 - Admin opening hours UI redesigned with glass aesthetic, bilingual labels,
   season timeline with remove icon, defaults modal, duplicate exception
   prevention with Update button, per-weekday preview with exception overlay.
