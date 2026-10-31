@@ -67,6 +67,8 @@
 
 ### Added
 
+- `e2e/admin-register-docker.spec.ts`: added Docker-gated Chromium
+  register→login flow with fresh WebAuthn credential creation.
 - `e2e/admin-login.spec.ts`: added Docker-gated Chromium login test using seeded
   passkey material with real server-side signature verification.
 - `docker/seed-passkeys.php`: seeds deterministic login credentials and a fresh
