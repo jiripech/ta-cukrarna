@@ -220,6 +220,11 @@ on the VPS):
   deploy)
 - optional: `MAILDB_TABLE` (default `admin`), `SMTP_FROM`
 
+Docker test container only (never on the VPS): `ADMIN_USERS`, `WEBAUTHN_RP_ID`,
+`APP_BASE_URL` — see AGENTS.md ("Docker test environment") and
+`.env.docker.example`; they relax the account check, IMAP proof and RP ID
+binding for the local test container.
+
 Vars already present via Apache/systemd `getenv()` take precedence; a missing
 file is logged as `env_file_missing` with a `has_maildb_host` flag so the benign
 case (vars provided by the service config) is distinguishable from a fully

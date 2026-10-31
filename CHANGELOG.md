@@ -24,6 +24,8 @@
 
 ### Changed
 
+- `DEVELOPMENT_TOOLS.md`: documented that `ADMIN_USERS`, `WEBAUTHN_RP_ID`, and
+  `APP_BASE_URL` are Docker-test-only overrides.
 - `README.md`: documented Docker E2E setup, run loop, `.env.docker` usage, and
   production safety notes for relaxed test-only env flags.
 - `playwright.config.ts`: Docker mode now uses localhost base URL, single worker
