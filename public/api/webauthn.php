@@ -41,11 +41,24 @@ ByteBuffer::$useBase64UrlEncoding = true;
 /**
  * Creates a WebAuthn instance with the relying party configuration.
  *
+ * The RP ID defaults to the production domain; WEBAUTHN_RP_ID may override
+ * it (e.g. "localhost" in the Docker test container so REAL browser
+ * ceremonies work on http://localhost - lbuchs _checkOrigin allows http for
+ * rpId localhost). Never set WEBAUTHN_RP_ID on the VPS.
+ *
  * @return WebAuthn
  */
 function createWebAuthn(): WebAuthn
 {
-    return new WebAuthn('Ta Cukrárna', 'tacukrarna.cz', null, true);
+    // loadEnv() must precede getenv(): WEBAUTHN_RP_ID normally lives in the
+    // .env file (one level above the docroot), and unlike getMailDb() this
+    // code path never loads it otherwise - the value would silently fall
+    // back to the production RP ID (same trap as ADMIN_USERS).
+    loadEnv();
+
+    $rpId = getenv('WEBAUTHN_RP_ID') ?: 'tacukrarna.cz';
+
+    return new WebAuthn('Ta Cukrárna', $rpId, null, true);
 }
 
 $action = isset($_GET['action']) ? trim($_GET['action']) : '';
@@ -245,13 +258,22 @@ function handleVerifyLogin(): void
         jsonResponse(['error' => 'Autentizace selhala. Zkuste to prosím znovu. / Authentication failed. Please try again.'], 401);
     }
 
+    // Real browsers deliver the ES256 assertion signature as raw r||s
+    // (IEEE P1363, 64 bytes); openssl_verify() (via lbuchs processGet)
+    // expects a DER-encoded ECDSA-Sig-Value and cannot read raw signatures.
+    // Convert at the API boundary; DER signatures pass through untouched.
+    $signatureBinary = base64_decode($data['signature']);
+    if (strlen($signatureBinary) === 64 && ord($signatureBinary[0]) !== 0x30) {
+        $signatureBinary = rawEcdsaSignatureToDer($signatureBinary);
+    }
+
     $webauthn = createWebAuthn();
 
     try {
         $valid = $webauthn->processGet(
             base64_decode($data['clientDataJSON']),
             base64_decode($data['authenticatorData']),
-            base64_decode($data['signature']),
+            $signatureBinary,
             $stored['public_key'],
             $_SESSION['login_challenge'],
             $stored['counter'],
@@ -299,4 +321,35 @@ function loadCredentialIds(string $username): array
     }
 
     return $ids;
+}
+
+/**
+ * Converts a raw ES256 signature (r||s, 64 bytes as delivered by browsers
+ * and WebCrypto) into a DER-encoded ECDSA-Sig-Value as required by
+ * openssl_verify(). Raw signatures shorter/longer than 64 bytes (other
+ * curves) are not handled here.
+ *
+ * @param string $raw 64-byte raw signature (r and s, big-endian, 32 bytes each)
+ * @return string DER-encoded ECDSA-Sig-Value
+ */
+function rawEcdsaSignatureToDer(string $raw): string
+{
+    $toDerInteger = static function (string $half): string {
+        // strip leading zero padding, keep at least one byte
+        $value = ltrim($half, "\x00");
+        if ($value === '') {
+            $value = "\x00";
+        }
+        // negative integers would misparse; prepend an (un)sign byte
+        if (ord($value[0]) > 0x7f) {
+            $value = "\x00" . $value;
+        }
+        return "\x02" . chr(strlen($value)) . $value;
+    };
+
+    $r = $toDerInteger(substr($raw, 0, 32));
+    $s = $toDerInteger(substr($raw, 32, 32));
+    $body = $r . $s;
+
+    return "\x30" . chr(strlen($body)) . $body;
 }

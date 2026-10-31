@@ -4,6 +4,8 @@
 
 ### Fixed
 
+- `public/api/webauthn.php`: convert raw P1363 ES256 signatures to DER before
+  `openssl_verify()` to fix admin login verification.
 - `src/styles/glass.css`: set glass overlay to `pointer-events:none`, improved
   input/placeholder contrast, and adjusted stacking for native date picker
   visibility.
