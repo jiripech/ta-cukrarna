@@ -67,6 +67,8 @@
 
 ### Added
 
+- `e2e/admin-login.spec.ts`: added Docker-gated Chromium login test using seeded
+  passkey material with real server-side signature verification.
 - `docker/seed-passkeys.php`: seeds deterministic login credentials and a fresh
   24-hour registration token for Docker E2E flows.
 - `scripts/docker-entrypoint.sh`: added startup seeding, writable path setup,
