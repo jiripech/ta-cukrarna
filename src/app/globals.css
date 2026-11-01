@@ -36,9 +36,10 @@ body {
   transform: translateX(-50%) translateY(10px);
   padding: 2px 8px;
   border-radius: 4px;
-  background: rgba(255, 255, 255, 0.8);
+  background: #0f172a;
+  border: 1px solid rgba(255, 255, 255, 0.14);
   backdrop-filter: blur(4px);
-  color: #171717;
+  color: #f8fafc;
   font-size: 10px;
   font-weight: 500;
   opacity: 0;
@@ -52,9 +53,9 @@ body {
 
 @media (prefers-color-scheme: dark) {
   .version-footer {
-    background: rgba(0, 0, 0, 0.7);
-    color: #ededed;
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    background: #0f172a;
+    color: #f8fafc;
+    border: 1px solid rgba(255, 255, 255, 0.14);
   }
 }
 
