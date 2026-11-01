@@ -1,5 +1,20 @@
 # Changelog
 
+## v1.3.9
+
+### Fixed
+
+- **Admin accessibility**: added the WCAG admin smoke checks for sign-in and
+  registration at `e2e/admin-wcag.spec.ts`, then fixed the real blockers found
+  by Axe: low-contrast admin CTA, viewport zoom locking, and a contrast issue in
+  the fixed version footer.
+- **Docker rebuild safety**: documented the macOS/ACL bind-mount cleanup trap in
+  `DEVELOPMENT_TOOLS.md` so host-side `out/` cleanup is not attempted while the
+  `ta-cukrarna-test` container is still using the bind-mounted directory.
+- **Repo quality gate**: captured the requirement to run `npm run check-all`
+  before finishing any task and kept the release process aligned with the
+  repository’s lint/typecheck/format gate.
+
 ## v1.3.8
 
 ### Updated
