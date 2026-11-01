@@ -196,6 +196,41 @@ creates at runtime must be listed in `.rsyncignore` or the next deploy wipes it:
 the workflow — the schema creation is idempotent, the data survives via the
 rsync exclusions above.
 
+### Required quality gate before finishing work
+
+Before closing any task, run the full repository gate:
+
+```bash
+npm run check-all
+```
+
+This includes lint, typecheck, secret scan, HTML validation, markdown linting,
+and format checks. Do not stop after a targeted test passes — a release-ready
+change must pass the full project gate or it is not considered finished.
+
+### Docker bind-mount cleanup gotcha (macOS)
+
+When the Docker test container is running with `out/` bind-mounted into
+`/var/www/html`, trying to delete the host directory with `rm -rf out` can fail
+with `EACCES` and a macOS ACL/provenance lock (`com.apple.provenance` /
+`user:<you> deny delete`). This is not a project bug; it is the OS refusing to
+remove a directory that is still live as a Docker bind mount.
+
+Safe pattern:
+
+```bash
+# stop the container first
+docker stop ta-cukrarna-test
+# clear the file ACL if macOS left a delete lock behind
+chmod -N out out/api 2>/dev/null || true
+rm -rf out
+npm run build
+```
+
+Do not attempt host-side cleanup while the container is running, and do not
+trust a stale `out/` tree to be removable after a hot rebuild. If the build
+fails with `rmdir .../out/api: Permission denied`, this is the usual root cause.
+
 ### Service worker cache naming
 
 `scripts/write-version.sh` (called on every dev/build) bakes the release version
