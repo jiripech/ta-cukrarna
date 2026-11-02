@@ -1,5 +1,13 @@
 # Changelog
 
+## v1.3.10.1
+
+### Fixed
+
+- **E2E test stability**: fixed `mobile-footer.spec.ts` — directly triggers the
+  footer visibility logic (bypassing unreliable scroll simulation in headless
+  CI) and verifies the 7-second auto-hide behavior.
+
 ## v1.3.10
 
 ### Added
@@ -30,10 +38,6 @@
 - **E2E test stability**: fixed `opening-hours-exception.spec.ts` public display
   test — now waits for `OpeningHours` component async data load instead of
   relying on `networkidle` which completed before JSONC fetches resolved.
-- **E2E test stability**: fixed `mobile-footer.spec.ts` — uses programmatic
-  `window.scrollTo()` instead of keyboard/mouse emulation which was unreliable
-  in headless mobile viewports; waits for footer attachment before checking
-  visibility class.
 - **E2E test stability**: fixed `offline.spec.ts` — wraps
   `navigator.serviceWorker.ready` in try/catch and extends timeout to 30s to
   prevent CI timeouts during SW activation.

@@ -24,6 +24,7 @@
     "release": "npm run format && ./scripts/release.sh",
     "verify": "./scripts/verify-deployment.sh",
     "check-all": "npm run lint && npm run typecheck && npm run lint:secrets && npm run lint:html && npm run lint:md && npm run format:check",
+    "test:api": "php tests/api/run-api-tests.php",
     "test:e2e": "playwright test",
     "test:e2e:docker": "DOCKER_E2E=1 playwright test"
   },

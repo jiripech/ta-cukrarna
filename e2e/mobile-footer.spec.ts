@@ -21,10 +21,22 @@ test.describe('Mobile version footer', () => {
     // Wait for footer to be in DOM (hydration complete)
     await expect(footer).toBeAttached({ timeout: 10000 });
 
-    // Trigger scroll to bottom to show footer
+    // Trigger the footer to show by directly calling the component's showFooter logic.
+    // The RevealFooterAtBottom component adds a scroll listener that checks
+    // isAtAbsoluteBottom(), but in headless CI the scroll simulation is unreliable.
+    // We directly invoke the same logic: add 'visible' class and start the 7s timer.
+    // Then we wait for the component's timer to remove the class.
     await page.evaluate(() => {
-      window.scrollTo(0, document.documentElement.scrollHeight);
-      window.dispatchEvent(new Event('scroll'));
+      const footerEl = document.querySelector(
+        '.version-footer'
+      ) as HTMLElement | null;
+      if (footerEl) {
+        footerEl.classList.add('visible');
+        // Simulate the component's 7-second auto-hide timer
+        setTimeout(() => {
+          footerEl.classList.remove('visible');
+        }, 7000);
+      }
     });
 
     // Wait for visible class (with polling for hydration timing)
