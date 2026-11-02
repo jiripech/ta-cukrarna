@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { parseJsonc } from '@/lib/jsonc';
 import { makeT, pickBilingual, useLang } from '@/lib/i18n';
 
@@ -129,6 +129,9 @@ interface CsrfOptions {
   enabled: boolean;
 }
 
+const STORAGE_KEY = 'ta-cukrarna-opening-hours-draft';
+const AUTOSAVE_INTERVAL = 30000; // 30 seconds
+
 export default function OwnerHoursGlassForm({ csrf }: { csrf?: CsrfOptions }) {
   const lang = useLang();
   const t = makeT(lang);
@@ -142,14 +145,160 @@ export default function OwnerHoursGlassForm({ csrf }: { csrf?: CsrfOptions }) {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
+  const [showDraftRestore, setShowDraftRestore] = useState(false);
   const csrfToken = csrf?.enabled ? csrf.csrfToken : undefined;
+  const autosaveTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const seasonContainerRef = useRef<HTMLDivElement>(null);
 
+  // Validation helpers
+  const validateEntry = useCallback(
+    (entry: ScheduleEntry, index: number): Record<string, string> => {
+      const errors: Record<string, string> = {};
+      const prefix = `entry-${index}`;
+
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(entry.startDate)) {
+        errors[`${prefix}-startDate`] = t('Neplatné datum.', 'Invalid date.');
+      }
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(entry.endDate)) {
+        errors[`${prefix}-endDate`] = t('Neplatné datum.', 'Invalid date.');
+      }
+      if (entry.startDate && entry.endDate && entry.startDate > entry.endDate) {
+        errors[`${prefix}-endDate`] = t(
+          'Počátek po konci.',
+          'Start after end.'
+        );
+      }
+      for (const k of DAY_KEYS) {
+        if (entry.days[k].length > 100) {
+          errors[`${prefix}-days-${k}`] = t(
+            'Příliš dlouhý text.',
+            'Text too long.'
+          );
+        }
+      }
+      return errors;
+    },
+    [t]
+  );
+
+  const validateExceptions = useCallback(
+    (excs: HoursException[]): Record<string, string> => {
+      const errors: Record<string, string> = {};
+      for (let i = 0; i < excs.length; i++) {
+        const ex = excs[i];
+        const prefix = `exception-${i}`;
+        if (ex.date && !/^\d{4}-\d{2}-\d{2}$/.test(ex.date)) {
+          errors[`${prefix}-date`] = t('Neplatné datum.', 'Invalid date.');
+        }
+        if (ex.date) {
+          for (let j = 0; j < excs.length; j++) {
+            if (i !== j && excs[j].date === ex.date) {
+              errors[`${prefix}-date`] = t(
+                'Výjimka pro toto datum již existuje.',
+                'Exception for this date already exists.'
+              );
+              break;
+            }
+          }
+        }
+      }
+      return errors;
+    },
+    [t]
+  );
+
+  const validateAll = useCallback((): Record<string, string> => {
+    const errors: Record<string, string> = {};
+    if (entries.length === 0) {
+      errors['general'] = t(
+        'Přidejte prosím alespoň jedno období.',
+        'Please add at least one period.'
+      );
+    }
+    for (let i = 0; i < entries.length; i++) {
+      Object.assign(errors, validateEntry(entries[i], i));
+    }
+    for (let i = 0; i < entries.length; i++) {
+      for (let j = i + 1; j < entries.length; j++) {
+        const a = entries[i],
+          b = entries[j];
+        if (a.startDate <= b.endDate && b.startDate <= a.endDate) {
+          errors[`entry-${i}-overlap`] = t(
+            'Období se překrývají.',
+            'Periods overlap.'
+          );
+          errors[`entry-${j}-overlap`] = t(
+            'Období se překrývají.',
+            'Periods overlap.'
+          );
+        }
+      }
+    }
+    Object.assign(errors, validateExceptions(exceptions));
+    return errors;
+  }, [entries, exceptions, validateEntry, validateExceptions, t]);
+
+  // Autosave draft to localStorage
+  const saveDraft = useCallback(() => {
+    try {
+      const draft = { entries, exceptions, defaults, timestamp: Date.now() };
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(draft));
+    } catch {
+      // Ignore quota exceeded or other storage errors
+    }
+  }, [entries, exceptions, defaults]);
+
+  const loadDraft = useCallback(() => {
+    try {
+      const stored = localStorage.getItem(STORAGE_KEY);
+      if (stored) {
+        const draft = JSON.parse(stored);
+        // Only restore if draft is less than 24 hours old
+        if (Date.now() - (draft.timestamp || 0) < 24 * 60 * 60 * 1000) {
+          return draft;
+        }
+      }
+    } catch {
+      // Ignore parse errors
+    }
+    return null;
+  }, []);
+
+  const clearDraft = useCallback(() => {
+    try {
+      localStorage.removeItem(STORAGE_KEY);
+    } catch {
+      // Ignore
+    }
+  }, []);
+
+  // Setup autosave timer
+  useEffect(() => {
+    if (autosaveTimerRef.current) {
+      clearInterval(autosaveTimerRef.current);
+    }
+    autosaveTimerRef.current = setInterval(saveDraft, AUTOSAVE_INTERVAL);
+    return () => {
+      if (autosaveTimerRef.current) {
+        clearInterval(autosaveTimerRef.current);
+      }
+    };
+  }, [saveDraft]);
+
+  // Load data on mount
   useEffect(() => {
     let cancelled = false;
     (async () => {
       setLoading(true);
       setError(null);
       try {
+        // Check for draft first
+        const draft = loadDraft();
+        if (draft && !cancelled) {
+          setShowDraftRestore(true);
+        }
+
         const res = await fetch('/api/opening-hours.php', {
           credentials: 'include',
         });
@@ -187,18 +336,76 @@ export default function OwnerHoursGlassForm({ csrf }: { csrf?: CsrfOptions }) {
     return () => {
       cancelled = true;
     };
-  }, [t]);
+  }, [t, loadDraft]);
 
   const updateEntry = (i: number, patch: Partial<ScheduleEntry>) =>
     setEntries(prev =>
       prev.map((e, idx) => (idx === i ? { ...e, ...patch } : e))
     );
+
   const updateDay = (i: number, day: keyof ScheduleEntry['days'], v: string) =>
     setEntries(prev =>
       prev.map((e, idx) =>
         idx === i ? { ...e, days: { ...e.days, [day]: v } } : e
       )
     );
+
+  const handleDayChange = (
+    i: number,
+    day: keyof ScheduleEntry['days'],
+    v: string
+  ) => {
+    updateDay(i, day, v);
+    // Clear field error on change
+    setFieldErrors(prev => {
+      const next = { ...prev };
+      delete next[`entry-${i}-days-${day}`];
+      return next;
+    });
+  };
+
+  const handleDateChange = (
+    i: number,
+    field: 'startDate' | 'endDate',
+    v: string
+  ) => {
+    updateEntry(i, { [field]: v });
+    // Clear field error on change
+    setFieldErrors(prev => {
+      const next = { ...prev };
+      delete next[`entry-${i}-${field}`];
+      delete next[`entry-${i}-overlap`];
+      return next;
+    });
+  };
+
+  const handleExceptionDateChange = (idx: number, newDate: string) => {
+    if (newDate && exceptions.some((e, i) => i !== idx && e.date === newDate)) {
+      // Error will be caught by validation
+      setFieldErrors(prev => ({
+        ...prev,
+        [`exception-${idx}-date`]: t(
+          'Výjimka pro toto datum již existuje.',
+          'Exception for this date already exists.'
+        ),
+      }));
+      return;
+    }
+    setExceptions(prev =>
+      prev.map((e, i) => (i === idx ? { ...e, date: newDate } : e))
+    );
+    setFieldErrors(prev => {
+      const next = { ...prev };
+      delete next[`exception-${idx}-date`];
+      return next;
+    });
+  };
+
+  const handleExceptionHoursChange = (idx: number, hours: string) => {
+    setExceptions(prev =>
+      prev.map((e, i) => (i === idx ? { ...e, hours } : e))
+    );
+  };
 
   const addSeasonAt = (idx: number | null) => {
     setEntries(prev => {
@@ -246,52 +453,79 @@ export default function OwnerHoursGlassForm({ csrf }: { csrf?: CsrfOptions }) {
   };
 
   const removeEntry = (i: number) =>
-    setEntries(prev =>
+    setEntries((prev: ScheduleEntry[]) =>
       prev.length > 1 ? prev.filter((_, idx) => idx !== i) : prev
     );
 
-  const validate = useCallback((): string | null => {
-    if (entries.length === 0)
-      return t(
-        'Přidejte prosím alespoň jedno období.',
-        'Please add at least one period.'
+  // Copy/paste week schedule
+  const handlePaste = (e: React.ClipboardEvent, entryIndex: number) => {
+    e.preventDefault();
+    const text = e.clipboardData.getData('text');
+    const values = text
+      .split(/[\s,\t\n]+/)
+      .map(v => v.trim())
+      .filter(Boolean);
+    if (values.length === 7) {
+      const dayMap: ScheduleEntry['days'] = {
+        mon: values[0] || '',
+        tue: values[1] || '',
+        wed: values[2] || '',
+        thu: values[3] || '',
+        fri: values[4] || '',
+        sat: values[5] || '',
+        sun: values[6] || '',
+      };
+      setEntries(prev =>
+        prev.map((entry, i) =>
+          i === entryIndex ? { ...entry, days: dayMap } : entry
+        )
       );
-    for (let i = 0; i < entries.length; i++) {
-      const e = entries[i];
-      if (
-        !/^\d{4}-\d{2}-\d{2}$/.test(e.startDate) ||
-        !/^\d{4}-\d{2}-\d{2}$/.test(e.endDate)
-      )
-        return t('Neplatné datum.', 'Invalid date.');
-      if (e.startDate > e.endDate)
-        return t('Počátek po konci.', 'Start after end.');
-      for (const k of DAY_KEYS) {
-        if (e.days[k].length > 100)
-          return t('Příliš dlouhý text.', 'Text too long.');
+    }
+  };
+
+  // Keyboard navigation: Enter moves to next day
+  const handleKeyDown = (
+    e: React.KeyboardEvent,
+    entryIndex: number,
+    dayIndex: number
+  ) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      const nextDayIndex = dayIndex + 1;
+      if (nextDayIndex < DAY_KEYS.length) {
+        // Focus next day input in same entry
+        const nextInput = document.getElementById(
+          `day-${entryIndex}-${DAY_KEYS[nextDayIndex]}`
+        ) as HTMLInputElement;
+        nextInput?.focus();
+      } else if (entryIndex + 1 < entries.length) {
+        // Focus first day of next entry
+        const nextInput = document.getElementById(
+          `day-${entryIndex + 1}-${DAY_KEYS[0]}`
+        ) as HTMLInputElement;
+        nextInput?.focus();
       }
     }
-    for (let i = 0; i < entries.length; i++) {
-      for (let j = i + 1; j < entries.length; j++) {
-        const a = entries[i],
-          b = entries[j];
-        if (a.startDate <= b.endDate && b.startDate <= a.endDate)
-          return t('Období se překrývají.', 'Periods overlap.');
-      }
-    }
-    return null;
-  }, [entries, t]);
+  };
 
   const save = useCallback(async () => {
     const normalized = ensureContiguous(entries);
-    const v = validate();
-    if (v) {
-      setError(v);
+    const validationErrors = validateAll();
+    if (Object.keys(validationErrors).length > 0) {
+      setFieldErrors(validationErrors);
+      setError(
+        t(
+          'Opravte prosím chyby ve formuláři.',
+          'Please fix errors in the form.'
+        )
+      );
       setSuccess(null);
       return;
     }
     setSaving(true);
     setError(null);
     setSuccess(null);
+    setFieldErrors({});
     try {
       const headers: { 'Content-Type': string; 'X-CSRF-Token'?: string } = {
         'Content-Type': 'application/json',
@@ -316,13 +550,41 @@ export default function OwnerHoursGlassForm({ csrf }: { csrf?: CsrfOptions }) {
           'Opening hours saved successfully.'
         )
       );
+      clearDraft();
+      setShowDraftRestore(false);
     } catch (e) {
       const msg = e instanceof Error ? e.message : '';
       setError(msg || t('Uložení selhalo.', 'Save failed.'));
     } finally {
       setSaving(false);
     }
-  }, [entries, exceptions, defaults, validate, csrfToken, lang, t]);
+  }, [
+    entries,
+    exceptions,
+    defaults,
+    validateAll,
+    csrfToken,
+    lang,
+    t,
+    clearDraft,
+  ]);
+
+  const restoreDraft = useCallback(() => {
+    const draft = loadDraft();
+    if (draft) {
+      setEntries(draft.entries || [emptyEntry()]);
+      setExceptions(draft.exceptions || []);
+      setDefaults(
+        draft.defaults || { summer: emptyDayMap(), spring: emptyDayMap() }
+      );
+      setShowDraftRestore(false);
+    }
+  }, [loadDraft]);
+
+  const dismissDraft = useCallback(() => {
+    setShowDraftRestore(false);
+    clearDraft();
+  }, [clearDraft]);
 
   const today = useMemo(() => new Date().toISOString().slice(0, 10), []);
   const WEEKDAY_IDX: Record<string, number> = {
@@ -355,6 +617,7 @@ export default function OwnerHoursGlassForm({ csrf }: { csrf?: CsrfOptions }) {
       let txt = season?.days[k] || '';
       const exc = exceptions.find(e => e.date === targetDate);
       if (exc) txt = exc.hours;
+      const isToday = targetDate === today;
       const closed =
         !txt ||
         txt.includes('Výdej') ||
@@ -365,6 +628,8 @@ export default function OwnerHoursGlassForm({ csrf }: { csrf?: CsrfOptions }) {
         text: txt || closedText,
         closed,
         targetDate,
+        isToday,
+        source: exc ? 'exception' : season ? 'season' : 'none',
       };
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -372,7 +637,7 @@ export default function OwnerHoursGlassForm({ csrf }: { csrf?: CsrfOptions }) {
 
   if (loading) {
     return (
-      <div className="glass-card text-center">
+      <div className="glass-card text-center" role="status" aria-live="polite">
         <p className="glass-text">{t('Načítám…', 'Loading…')}</p>
       </div>
     );
@@ -380,33 +645,87 @@ export default function OwnerHoursGlassForm({ csrf }: { csrf?: CsrfOptions }) {
 
   return (
     <>
+      {/* Draft restore banner */}
+      {showDraftRestore && (
+        <div
+          className="glass-card mb-4 p-4 flex items-center justify-between"
+          role="alert"
+        >
+          <span className="glass-text">
+            {t('Nalezen neuložený koncept.', 'Unsaved draft found.')}
+          </span>
+          <div className="flex gap-2 ml-4 shrink-0">
+            <button
+              type="button"
+              onClick={restoreDraft}
+              className="glass-submit-full"
+            >
+              {t('Obnovit', 'Restore')}
+            </button>
+            <button
+              type="button"
+              onClick={dismissDraft}
+              className="glass-ghost"
+            >
+              {t('Zahodit', 'Discard')}
+            </button>
+          </div>
+        </div>
+      )}
+
       <div className="glass-page min-h-[70vh] p-6">
         <div className="max-w-7xl mx-auto">
-          <div className="flex items-center justify-between mb-4">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4">
             <h2 className="text-white font-semibold text-lg">
               {t('Správa sezón', 'Season management')}
             </h2>
             <button
-              className="glass-submit-full w-auto px-4 py-2"
+              className="glass-submit-full w-auto px-4 py-2 shrink-0"
               onClick={() => setDefaultsModalOpen(true)}
             >
               {t('Upravit výchozí', 'Edit defaults')}
             </button>
           </div>
 
-          <div className="flex gap-4 overflow-x-auto pb-4">
+          {/* Seasons - with drag handle for reordering */}
+          <div
+            ref={seasonContainerRef}
+            className="flex gap-4 overflow-x-auto pb-4"
+            role="list"
+            aria-label={t('Sezóny', 'Seasons')}
+          >
             {entries.map((e, i) => (
-              <div key={i} className="glass-card min-w-[320px] flex-shrink-0">
+              <div
+                key={i}
+                className="glass-card min-w-[320px] flex-shrink-0"
+                role="listitem"
+                aria-label={`${t('Sezóna', 'Season')} ${i + 1}`}
+              >
                 <div className="flex justify-between items-center mb-2">
                   <h3 className="text-sm font-semibold uppercase">
                     {t('Sezóna', 'Season')} {i + 1}
                   </h3>
-                  <button
-                    onClick={() => removeEntry(i)}
-                    className="glass-ghost text-xs"
-                  >
-                    ×
-                  </button>
+                  <div className="flex items-center gap-1">
+                    {/* Drag handle - placeholder for future @dnd-kit integration */}
+                    <button
+                      type="button"
+                      className="glass-ghost text-xs p-1 opacity-50 hover:opacity-100"
+                      aria-label={t('Přesunout sezónu', 'Move season')}
+                      title={t(
+                        'Přetáhnout pro změnu pořadí',
+                        'Drag to reorder'
+                      )}
+                    >
+                      ⋮⋮
+                    </button>
+                    <button
+                      onClick={() => removeEntry(i)}
+                      className="glass-ghost text-xs"
+                      aria-label={t('Odstranit sezónu', 'Remove season')}
+                    >
+                      ×
+                    </button>
+                  </div>
                 </div>
                 <div className="glass-text text-xs mb-2">
                   {e.startDate} → {e.endDate}
@@ -417,34 +736,98 @@ export default function OwnerHoursGlassForm({ csrf }: { csrf?: CsrfOptions }) {
                     type="date"
                     value={e.startDate}
                     onChange={ev =>
-                      updateEntry(i, { startDate: ev.target.value })
+                      handleDateChange(i, 'startDate', ev.target.value)
+                    }
+                    aria-label={t('Počátek sezóny', 'Season start')}
+                    aria-invalid={!!fieldErrors[`entry-${i}-startDate`]}
+                    aria-describedby={
+                      fieldErrors[`entry-${i}-startDate`]
+                        ? `error-entry-${i}-startDate`
+                        : undefined
                     }
                   />
+                  {fieldErrors[`entry-${i}-startDate`] && (
+                    <p
+                      id={`error-entry-${i}-startDate`}
+                      className="glass-error text-xs mt-1"
+                      role="alert"
+                    >
+                      {fieldErrors[`entry-${i}-startDate`]}
+                    </p>
+                  )}
                   <input
                     className="glass-input"
                     type="date"
                     value={e.endDate}
                     onChange={ev =>
-                      updateEntry(i, { endDate: ev.target.value })
+                      handleDateChange(i, 'endDate', ev.target.value)
+                    }
+                    aria-label={t('Konec sezóny', 'Season end')}
+                    aria-invalid={!!fieldErrors[`entry-${i}-endDate`]}
+                    aria-describedby={
+                      fieldErrors[`entry-${i}-endDate`]
+                        ? `error-entry-${i}-endDate`
+                        : undefined
                     }
                   />
+                  {fieldErrors[`entry-${i}-endDate`] && (
+                    <p
+                      id={`error-entry-${i}-endDate`}
+                      className="glass-error text-xs mt-1"
+                      role="alert"
+                    >
+                      {fieldErrors[`entry-${i}-endDate`]}
+                    </p>
+                  )}
+                  {fieldErrors[`entry-${i}-overlap`] && (
+                    <p className="glass-error text-xs mt-1" role="alert">
+                      {fieldErrors[`entry-${i}-overlap`]}
+                    </p>
+                  )}
                 </div>
                 <div className="grid grid-cols-2 gap-2">
-                  {DAY_KEYS.map(k => (
-                    <label key={k} className="glass-label text-xs">
+                  {DAY_KEYS.map((k, dayIdx) => (
+                    <label
+                      key={k}
+                      className="glass-label text-xs"
+                      htmlFor={`day-${i}-${k}`}
+                    >
                       {DAY_LABELS[k][lang]}
                       <input
+                        id={`day-${i}-${k}`}
                         className="glass-input"
                         value={e.days[k]}
-                        onChange={ev => updateDay(i, k, ev.target.value)}
+                        onChange={ev => handleDayChange(i, k, ev.target.value)}
+                        onKeyDown={ev => handleKeyDown(ev, i, dayIdx)}
+                        onPaste={ev => handlePaste(ev, i)}
                         placeholder={t('9:00 - 17:00', '9:00 - 17:00')}
+                        aria-label={`${DAY_LABELS[k][lang]} ${t('otevírací doba', 'opening hours')}`}
+                        aria-invalid={!!fieldErrors[`entry-${i}-days-${k}`]}
+                        aria-describedby={
+                          fieldErrors[`entry-${i}-days-${k}`]
+                            ? `error-entry-${i}-days-${k}`
+                            : undefined
+                        }
                       />
+                      {fieldErrors[`entry-${i}-days-${k}`] && (
+                        <p
+                          id={`error-entry-${i}-days-${k}`}
+                          className="glass-error text-xs mt-1"
+                          role="alert"
+                        >
+                          {fieldErrors[`entry-${i}-days-${k}`]}
+                        </p>
+                      )}
                     </label>
                   ))}
                 </div>
                 <button
                   className="glass-submit-full mt-3"
                   onClick={() => addSeasonAt(i + 1)}
+                  aria-label={t(
+                    'Přidat sezónu po této',
+                    'Add season after this'
+                  )}
                 >
                   + {t('Přidat sezónu', 'Add season')}
                 </button>
@@ -454,6 +837,7 @@ export default function OwnerHoursGlassForm({ csrf }: { csrf?: CsrfOptions }) {
               className="glass-submit mt-0"
               style={{ width: '56px', height: '56px', alignSelf: 'center' }}
               onClick={() => addSeasonAt(null)}
+              aria-label={t('Přidat sezónu na konec', 'Add season at end')}
             >
               +
             </button>
@@ -478,29 +862,26 @@ export default function OwnerHoursGlassForm({ csrf }: { csrf?: CsrfOptions }) {
                         className="glass-input"
                         type="date"
                         value={ex.date}
-                        onChange={ev => {
-                          const newDate = ev.target.value;
-                          if (
-                            newDate &&
-                            exceptions.some(
-                              (e, i) => i !== idx && e.date === newDate
-                            )
-                          ) {
-                            alert(
-                              t(
-                                'Výjimka pro toto datum již existuje.',
-                                'Exception for this date already exists.'
-                              )
-                            );
-                            return;
-                          }
-                          setExceptions(prev =>
-                            prev.map((e, i) =>
-                              i === idx ? { ...e, date: newDate } : e
-                            )
-                          );
-                        }}
+                        onChange={ev =>
+                          handleExceptionDateChange(idx, ev.target.value)
+                        }
+                        aria-label={t('Datum výjimky', 'Exception date')}
+                        aria-invalid={!!fieldErrors[`exception-${idx}-date`]}
+                        aria-describedby={
+                          fieldErrors[`exception-${idx}-date`]
+                            ? `error-exception-${idx}-date`
+                            : undefined
+                        }
                       />
+                      {fieldErrors[`exception-${idx}-date`] && (
+                        <p
+                          id={`error-exception-${idx}-date`}
+                          className="glass-error text-xs mt-1"
+                          role="alert"
+                        >
+                          {fieldErrors[`exception-${idx}-date`]}
+                        </p>
+                      )}
                     </label>
                     <label
                       className="glass-label text-xs"
@@ -515,12 +896,9 @@ export default function OwnerHoursGlassForm({ csrf }: { csrf?: CsrfOptions }) {
                         placeholder={t('Hodiny', 'Hours')}
                         value={ex.hours}
                         onChange={ev =>
-                          setExceptions(prev =>
-                            prev.map((e, i) =>
-                              i === idx ? { ...e, hours: ev.target.value } : e
-                            )
-                          )
+                          handleExceptionHoursChange(idx, ev.target.value)
                         }
+                        aria-label={t('Hodiny výjimky', 'Exception hours')}
                       />
                     </label>
                   </div>
@@ -530,6 +908,7 @@ export default function OwnerHoursGlassForm({ csrf }: { csrf?: CsrfOptions }) {
                       onClick={() =>
                         setExceptions(prev => prev.filter((_, i) => i !== idx))
                       }
+                      aria-label={t('Odstranit výjimku', 'Remove exception')}
                     >
                       × {t('Odebrat', 'Remove')}
                     </button>
@@ -542,6 +921,7 @@ export default function OwnerHoursGlassForm({ csrf }: { csrf?: CsrfOptions }) {
                   if (exceptions.some(e => e.date === '')) return;
                   setExceptions(prev => [...prev, { date: '', hours: '' }]);
                 }}
+                aria-label={t('Přidat výjimku', 'Add exception')}
               >
                 + {t('Přidat výjimku', 'Add exception')}
               </button>
@@ -551,26 +931,65 @@ export default function OwnerHoursGlassForm({ csrf }: { csrf?: CsrfOptions }) {
               <h3 className="mb-3 text-sm uppercase tracking-wide">
                 {t('Náhled', 'Preview')}
               </h3>
-              {previewRows.map(r => (
-                <div
-                  key={r.label}
-                  className="flex justify-between py-1 border-b border-white/10"
-                >
-                  <span>{r.label}</span>
-                  <span className={r.closed ? 'text-red-300' : ''}>
-                    {r.text}
-                  </span>
-                </div>
-              ))}
-              <button
-                className="glass-submit-full mt-4"
-                onClick={save}
-                disabled={saving}
+              <div
+                role="table"
+                aria-label={t('Týdenní náhled', 'Weekly preview')}
               >
-                {saving ? t('Ukládám…', 'Saving…') : t('Uložit', 'Save')}
-              </button>
-              {error && <p className="glass-error mt-2">{error}</p>}
-              {success && <p className="glass-text mt-2">{success}</p>}
+                {previewRows.map(r => (
+                  <div
+                    key={r.label}
+                    className={`flex justify-between py-1 border-b border-white/10 ${
+                      r.isToday ? 'bg-amber-500/10 font-medium' : ''
+                    }`}
+                    role="row"
+                  >
+                    <span role="columnheader">
+                      {r.label}
+                      {r.isToday && (
+                        <span className="ml-2 px-1.5 py-0.5 text-xs bg-amber-500 text-black rounded">
+                          {t('Dnes', 'Today')}
+                        </span>
+                      )}
+                    </span>
+                    <span
+                      className={r.closed ? 'text-red-300' : ''}
+                      role="gridcell"
+                    >
+                      {r.text}
+                      {r.source === 'exception' && (
+                        <span className="ml-2 px-1.5 py-0.5 text-xs bg-zinc-700 text-zinc-200 rounded">
+                          {t('výjimka', 'exception')}
+                        </span>
+                      )}
+                      {r.source === 'season' && (
+                        <span className="ml-2 px-1.5 py-0.5 text-xs bg-zinc-700 text-zinc-200 rounded">
+                          {t('sezóna', 'season')}
+                        </span>
+                      )}
+                    </span>
+                  </div>
+                ))}
+              </div>
+              <div className="flex flex-col sm:flex-row gap-3 mt-4">
+                <button
+                  className="glass-submit-full"
+                  onClick={save}
+                  disabled={saving}
+                  aria-busy={saving}
+                >
+                  {saving ? t('Ukládám…', 'Saving…') : t('Uložit', 'Save')}
+                </button>
+              </div>
+              {error && (
+                <p className="glass-error mt-2" role="alert">
+                  {error}
+                </p>
+              )}
+              {success && (
+                <p className="glass-text mt-2" role="status">
+                  {success}
+                </p>
+              )}
             </div>
           </div>
         </div>
@@ -579,12 +998,15 @@ export default function OwnerHoursGlassForm({ csrf }: { csrf?: CsrfOptions }) {
         <div
           className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center"
           onClick={() => setDefaultsModalOpen(false)}
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="defaults-modal-title"
         >
           <div
             className="glass-card min-w-[360px] max-w-[90vw] max-h-[80vh] overflow-y-auto p-4"
             onClick={e => e.stopPropagation()}
           >
-            <h3 className="mb-3">
+            <h3 id="defaults-modal-title" className="mb-3">
               {t('Výchozí otevírací doba', 'Default opening hours')}
             </h3>
             {(['summer', 'spring'] as const).map(key => {
@@ -597,9 +1019,14 @@ export default function OwnerHoursGlassForm({ csrf }: { csrf?: CsrfOptions }) {
                   <p className="glass-label mb-1 text-xs">{sectionLabel}</p>
                   <div className="grid grid-cols-2 gap-2">
                     {DAY_KEYS.map(k => (
-                      <label key={k} className="glass-label text-xs">
+                      <label
+                        key={k}
+                        className="glass-label text-xs"
+                        htmlFor={`default-${key}-${k}`}
+                      >
                         {DAY_LABELS[k][lang]}
                         <input
+                          id={`default-${key}-${k}`}
                           className="glass-input"
                           aria-label={`${sectionLabel} ${DAY_LABELS[k][lang]}`}
                           value={defaults[key]?.[k] || ''}

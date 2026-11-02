@@ -16,10 +16,18 @@ test.describe('Offline Progressive Web App Capabilities', () => {
     await page.goto('/');
 
     // 2. Wait for the Service Worker to register and become active
-    await page.waitForFunction(async () => {
-      const registration = await navigator.serviceWorker.ready;
-      return registration.active?.state === 'activated';
-    });
+    // Use a longer timeout and more robust check
+    await page.waitForFunction(
+      async () => {
+        try {
+          const registration = await navigator.serviceWorker.ready;
+          return registration.active?.state === 'activated';
+        } catch {
+          return false;
+        }
+      },
+      { timeout: 30000 }
+    );
 
     // Let the Service Worker lazily cache assets in the background
     await page.waitForTimeout(3000);

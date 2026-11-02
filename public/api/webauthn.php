@@ -7,10 +7,12 @@
  * lbuchs/WebAuthn library and the SQLite passkeys store.
  *
  * Actions (all POST):
- *   ?action=challenge_register  - generate a registration challenge
- *   ?action=verify_register     - verify a registration response and store the passkey
- *   ?action=challenge_login     - generate an authentication challenge
- *   ?action=verify_login        - verify an authentication response and open a session
+ *   ?action=challenge_register    - generate a registration challenge
+ *   ?action=verify_register       - verify a registration response and store the passkey
+ *   ?action=challenge_login       - generate an authentication challenge
+ *   ?action=verify_login          - verify an authentication response and open a session
+ *   ?action=list_credentials      - list all passkeys for the authenticated admin (admin session + CSRF)
+ *   ?action=revoke_credential     - revoke a passkey (admin session + CSRF)
  */
 
 require_once __DIR__ . '/db.php';
@@ -24,7 +26,22 @@ use lbuchs\WebAuthn\Binary\ByteBuffer;
 // Set header for JSON response
 header('Content-Type: application/json; charset=utf-8');
 
-// Only allow same-origin requests (no cross-origin CORS headers needed)
+// Allow same-origin requests
+$allowed_origins = [
+    'https://tacukrarna.cz',
+    'https://www.tacukrarna.cz',
+    'http://localhost:3000',
+    'http://localhost:3001',
+    'http://localhost:8080'
+];
+
+$origin = isset($_SERVER['HTTP_ORIGIN']) ? $_SERVER['HTTP_ORIGIN'] : '';
+if (in_array($origin, $allowed_origins)) {
+    header("Access-Control-Allow-Origin: " . $origin);
+    header("Access-Control-Allow-Headers: Content-Type, X-CSRF-Token");
+    header("Access-Control-Allow-Methods: POST, OPTIONS");
+}
+
 // Handle OPTIONS preflight
 if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     exit(0);
@@ -79,6 +96,14 @@ try {
 
         case 'verify_login':
             handleVerifyLogin();
+            break;
+
+        case 'list_credentials':
+            handleListCredentials();
+            break;
+
+        case 'revoke_credential':
+            handleRevokeCredential();
             break;
 
         default:
@@ -169,14 +194,23 @@ function handleVerifyRegister(): void
 
     $pdo = getSqliteDb();
 
+    // Capture device info from the request
+    $userAgent = $_SERVER['HTTP_USER_AGENT'] ?? '';
+    $deviceInfo = json_encode([
+        'transports' => $data['transports'] ?? [],
+        'platform' => $data['platform'] ?? '',
+    ]);
+
     $stmt = $pdo->prepare(
-        'INSERT INTO passkeys (credential_id, public_key, counter, username) VALUES (?, ?, ?, ?)'
+        'INSERT INTO passkeys (credential_id, public_key, counter, username, user_agent, device_info) VALUES (?, ?, ?, ?, ?, ?)'
     );
     $stmt->execute([
         $result->credentialId,
         $result->credentialPublicKey,
         $result->signatureCounter ?? 0,
         $username,
+        $userAgent,
+        $deviceInfo,
     ]);
 
     // Clear registration session data
@@ -352,4 +386,162 @@ function rawEcdsaSignatureToDer(string $raw): string
     $body = $r . $s;
 
     return "\x30" . chr(strlen($body)) . $body;
+}
+
+/**
+ * Rate limiting helper: checks and records requests per IP.
+ * Used for admin actions that modify passkeys.
+ *
+ * @param string $prefix Prefix for the temp file (e.g., 'passkey_list', 'passkey_revoke')
+ * @param int $limit Max requests per hour
+ * @return bool True if allowed, false if rate limited
+ */
+function checkRateLimit(string $prefix, int $limit = 10): bool
+{
+    $ip = getClientIp();
+    $tmp_dir = sys_get_temp_dir();
+    $limit_file = $tmp_dir . DIRECTORY_SEPARATOR . 'tacukrarna_' . $prefix . '_' . md5($ip) . '.json';
+
+    $now = time();
+    $timestamps = [];
+    if (file_exists($limit_file)) {
+        $data = json_decode(file_get_contents($limit_file), true);
+        if (is_array($data)) {
+            foreach ($data as $ts) {
+                if ($now - $ts < 3600) {
+                    $timestamps[] = $ts;
+                }
+            }
+        }
+    }
+
+    if (count($timestamps) >= $limit) {
+        return false;
+    }
+    $timestamps[] = $now;
+    file_put_contents($limit_file, json_encode($timestamps));
+    return true;
+}
+
+/**
+ * Validates CSRF token from POST body or X-CSRF-Token header.
+ *
+ * @return bool
+ */
+function validateAdminCsrf(): bool
+{
+    $csrf_token = '';
+    if (isset($_POST['csrf_token'])) {
+        $csrf_token = (string) $_POST['csrf_token'];
+    } elseif (isset($_SERVER['HTTP_X_CSRF_TOKEN'])) {
+        $csrf_token = $_SERVER['HTTP_X_CSRF_TOKEN'];
+    }
+    return validateCsrfToken($csrf_token);
+}
+
+/**
+ * Lists all passkeys for the authenticated admin user.
+ * Requires admin session + CSRF token.
+ *
+ * @return void
+ */
+function handleListCredentials(): void
+{
+    startSession();
+    requireAdmin();
+
+    // Rate limit: max 10 requests per hour per IP
+    if (!checkRateLimit('passkey_list')) {
+        jsonResponse(['error' => 'Příliš mnoho požadavků. Zkuste to prosím později. / Too many requests. Please try again later.'], 429);
+    }
+
+    // Validate CSRF token
+    if (!validateAdminCsrf()) {
+        jsonResponse(['error' => 'Neplatný bezpečnostní token. Obnovte prosím stránku. / Invalid security token. Please reload the page.'], 403);
+    }
+
+    $username = getAdminUsername();
+    $pdo = getSqliteDb();
+
+    $stmt = $pdo->prepare('
+        SELECT id, credential_id, counter, created_at, last_used_at, user_agent, device_info
+        FROM passkeys
+        WHERE username = ?
+        ORDER BY created_at DESC
+    ');
+    $stmt->execute([$username]);
+    $rows = $stmt->fetchAll();
+
+    $credentials = [];
+    foreach ($rows as $row) {
+        $credentials[] = [
+            'id' => (int) $row['id'],
+            'credential_id' => base64_encode($row['credential_id']),
+            'counter' => (int) $row['counter'],
+            'created_at' => $row['created_at'],
+            'last_used_at' => $row['last_used_at'],
+            'user_agent' => $row['user_agent'],
+            'device_info' => $row['device_info'] ? json_decode($row['device_info'], true) : null,
+        ];
+    }
+
+    jsonResponse(['credentials' => $credentials]);
+}
+
+/**
+ * Revokes a passkey for the authenticated admin user.
+ * Requires admin session + CSRF token.
+ *
+ * @return void
+ */
+function handleRevokeCredential(): void
+{
+    startSession();
+    requireAdmin();
+
+    // Rate limit: max 10 requests per hour per IP
+    if (!checkRateLimit('passkey_revoke')) {
+        jsonResponse(['error' => 'Příliš mnoho požadavků. Zkuste to prosím později. / Too many requests. Please try again later.'], 429);
+    }
+
+    // Validate CSRF token
+    if (!validateAdminCsrf()) {
+        jsonResponse(['error' => 'Neplatný bezpečnostní token. Obnovte prosím stránku. / Invalid security token. Please reload the page.'], 403);
+    }
+
+    $input = file_get_contents('php://input');
+    $data = json_decode($input, true);
+
+    if (!$data || empty($data['credential_id'])) {
+        jsonResponse(['error' => 'Neplatná data. / Invalid data.'], 400);
+    }
+
+    // Decode base64url credential ID
+    $credentialId = base64_decode(strtr($data['credential_id'], '-_', '+/') . str_repeat('=', (4 - strlen($data['credential_id']) % 4) % 4));
+
+    $username = getAdminUsername();
+    $pdo = getSqliteDb();
+
+    // Verify the credential belongs to this user before deleting
+    $stmt = $pdo->prepare('SELECT id FROM passkeys WHERE credential_id = ? AND username = ?');
+    $stmt->execute([$credentialId, $username]);
+    $stored = $stmt->fetch();
+
+    if (!$stored) {
+        // Don't reveal whether the credential exists or belongs to another user
+        jsonResponse(['error' => 'Přístupový klíč nebyl nalezen. / Passkey not found.'], 404);
+    }
+
+    // Prevent revoking the last passkey if it's the only one (optional safety)
+    // Commented out to allow full revocation - user can re-register via /admin/register/
+    // $countStmt = $pdo->prepare('SELECT COUNT(*) FROM passkeys WHERE username = ?');
+    // $countStmt->execute([$username]);
+    // if ((int)$countStmt->fetchColumn() <= 1) {
+    //     jsonResponse(['error' => 'Nelze odvolat poslední přístupový klíč. / Cannot revoke the last passkey.'], 400);
+    // }
+
+    $deleteStmt = $pdo->prepare('DELETE FROM passkeys WHERE id = ?');
+    $deleteStmt->execute([$stored['id']]);
+
+    jsonResponse(['status' => 'success']);
 }

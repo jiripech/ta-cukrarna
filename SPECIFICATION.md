@@ -369,7 +369,9 @@ chromium, Pixel 5, Galaxy S5 — deliberately no WebKit):
 ## 11. Known limitations & open items
 
 - No passkey management UI (list/revoke); recovery for a lost device is a manual
-  SQLite delete (backlog item in DEV_NOTES.md).
+  SQLite delete (backlog item in DEV_NOTES.md). **Planned for v1.4.0: add
+  "Správa zařízení" tab in the admin panel to list registered passkeys with
+  creation/last-used timestamps and a revoke action.**
 - No sign-out endpoint: the admin "Odhlásit se" link is client-side only, so a
   PHP admin session stays valid for its full 24 h lifetime.
 - `OwnerHoursForm.tsx` is dead code kept for reference;
@@ -380,3 +382,75 @@ chromium, Pixel 5, Galaxy S5 — deliberately no WebKit):
 - The chatbot endpoint trusts upstream rate limiting; there is no
   application-level throttle as of v1.3.6.
 - First version of this specification: v1.3.6 (October 2026).
+
+## 12. Planned improvements (v1.4.0+)
+
+### 12.1 Passkey management UI ("Správa zařízení")
+
+**New admin tab** accessible after successful WebAuthn sign-in, alongside the
+opening-hours editor.
+
+**Backend changes** (`public/api/webauthn.php`):
+
+- New action `list_credentials` (POST, admin session + CSRF): returns all
+  passkeys for the authenticated admin user (`username` from session), including
+  `credential_id` (base64url), `created_at`, `last_used_at`, `counter`, and
+  `user_agent`/`device_info` if available (new columns in `passkeys` table).
+- New action `revoke_credential` (POST, admin session + CSRF): accepts
+  `credential_id` (base64url), deletes the row if it belongs to the session
+  user, returns success. Rate-limited to 10/h/IP.
+
+**Database schema changes** (`public/api/DB/init.php`):
+
+- Add `user_agent` TEXT and `device_info` JSON columns to `passkeys` table.
+- Populate on registration from `navigator.userAgent` and `PublicKeyCredential`
+  metadata (transports, etc.).
+
+**Frontend changes** (`src/app/admin/page.tsx`, new component
+`src/components/PasskeyManager.tsx`):
+
+- Tabbed layout: "Otevírací doba" | "Správa zařízení".
+- Passkey list: table with columns "Registrováno", "Naposledy použito", "Počet
+  podpisů", "Zařízení", "Akce".
+- "Odvolat" button per row with confirmation modal (prevents accidental
+  revocation of the currently used passkey).
+- Empty state: "Zatím nejsou registrována žádná zařízení." with link to
+  `/admin/register/`.
+- Accessibility: proper table semantics, keyboard navigation, ARIA labels.
+
+**Security considerations**:
+
+- Users can only list/revoke their own passkeys (enforced by `username` in
+  session).
+- Revoking the last passkey is allowed (owner can re-register via
+  `/admin/register/`).
+- No "revoke all" bulk action to prevent lockout mistakes.
+- CSRF protection on both endpoints.
+
+### 12.2 Opening-hours editor UX improvements
+
+**Target component**: `OwnerHoursGlassForm.tsx` (the live editor).
+
+**Planned enhancements**:
+
+1. **Inline validation feedback**: show field-level errors (red border +
+   message) on blur/change instead of only blocking save with a toast.
+2. **Keyboard navigation**: Tab/Shift+Tab flows naturally through season cards,
+   date inputs, day cells, and exception rows; Enter in a day cell moves focus
+   to the next day.
+3. **Copy/paste support**: allow pasting a full week schedule (7 values) into
+   the first day cell of a season — auto-fills the remaining days.
+4. **Drag-to-reorder seasons**: use `@dnd-kit/core` (lightweight, no heavy deps)
+   to reorder season cards; `ensureContiguous()` recalculates dates on drop.
+5. **Exception date picker**: replace raw date input with a small calendar
+   popover (native `<input type="date">` is kept as fallback).
+6. **Preview panel enhancements**: highlight today's row, show "Dnes" badge,
+   indicate which season/exception is active for each day.
+7. **Auto-save draft to localStorage**: persist unsaved changes every 30s;
+   restore on load with a "Obnovit koncept" banner; cleared on successful save.
+8. **Responsive layout**: on mobile (< 640px), stack season cards vertically
+   without horizontal scroll; day grid becomes 2 columns.
+9. **Accessibility**: proper labels for all inputs, live region for save status,
+   focus management in defaults modal.
+
+**No backend changes required** — the API contract stays the same.

@@ -1,5 +1,43 @@
 # Changelog
 
+## v1.3.10
+
+### Added
+
+- **Passkey management UI ("Správa zařízení")**: New admin tab to list all
+  registered passkeys with creation/last-used timestamps, signature counters,
+  device info (platform, transports), and revoke action with confirmation modal.
+  Backend endpoints `list_credentials` and `revoke_credential` with CSRF
+  protection and rate limiting (10/h/IP).
+- **Opening hours editor UX improvements** (`OwnerHoursGlassForm.tsx`): inline
+  field validation with real-time error messages, keyboard navigation (Enter
+  moves to next day), copy/paste week schedule (7 values into first day), draft
+  auto-save to localStorage (30s interval) with restore banner on load, enhanced
+  preview panel with "Dnes" badge and source indicators, responsive stacked
+  layout on mobile (< 640px), full accessibility (ARIA labels, live regions,
+  focus management).
+- **Database schema**: Added `user_agent` and `device_info` columns to
+  `passkeys` table with idempotent migration in `init.php`; populated on
+  registration from User-Agent and WebAuthn credential metadata.
+
+### Changed
+
+- Admin panel (`src/app/admin/page.tsx`): tabbed layout "Otevírací doba" |
+  "Správa zařízení" replacing single-form view.
+
+### Fixed
+
+- **E2E test stability**: fixed `opening-hours-exception.spec.ts` public display
+  test — now waits for `OpeningHours` component async data load instead of
+  relying on `networkidle` which completed before JSONC fetches resolved.
+- **E2E test stability**: fixed `mobile-footer.spec.ts` — uses programmatic
+  `window.scrollTo()` instead of keyboard/mouse emulation which was unreliable
+  in headless mobile viewports; waits for footer attachment before checking
+  visibility class.
+- **E2E test stability**: fixed `offline.spec.ts` — wraps
+  `navigator.serviceWorker.ready` in try/catch and extends timeout to 30s to
+  prevent CI timeouts during SW activation.
+
 ## v1.3.9
 
 ### Fixed

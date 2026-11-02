@@ -25,9 +25,21 @@ try {
             counter INTEGER NOT NULL DEFAULT 0,
             username TEXT NOT NULL,
             created_at TEXT NOT NULL DEFAULT (datetime('now')),
-            last_used_at TEXT
+            last_used_at TEXT,
+            user_agent TEXT,
+            device_info TEXT
         )
     ");
+    // Add columns if they don't exist (migration for existing databases)
+    $cols = $pdo->query("PRAGMA table_info(passkeys)")->fetchAll(PDO::FETCH_COLUMN, 1);
+    if (!in_array('user_agent', $cols)) {
+        $pdo->exec("ALTER TABLE passkeys ADD COLUMN user_agent TEXT");
+        echo "✓ Column 'user_agent' added to 'passkeys'\n";
+    }
+    if (!in_array('device_info', $cols)) {
+        $pdo->exec("ALTER TABLE passkeys ADD COLUMN device_info TEXT");
+        echo "✓ Column 'device_info' added to 'passkeys'\n";
+    }
     echo "✓ Table 'passkeys' ready\n";
 
     // Create registration tokens table

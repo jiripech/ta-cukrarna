@@ -37,6 +37,23 @@ test.describe('public display', () => {
     await page.goto('/');
     await page.waitForLoadState('networkidle');
 
+    // Wait for the OpeningHours component to load its data (async fetch)
+    // The component fetches /opening-hours.jsonc and /holiday.jsonc in a useEffect
+    // so we wait for the first day name to appear in the DOM
+    await page.waitForFunction(
+      () => {
+        const openingHours = document.getElementById('opening-hours');
+        if (!openingHours) return false;
+        const text = openingHours.textContent || '';
+        return (
+          text.includes('Pátek') ||
+          text.includes('Patek') ||
+          text.includes('Friday')
+        );
+      },
+      { timeout: 30000 }
+    );
+
     const patekRow = page
       .locator('#opening-hours > div > div')
       .filter({ hasText: 'Pátek' });

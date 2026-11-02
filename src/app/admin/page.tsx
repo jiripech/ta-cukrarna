@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import OwnerHoursGlassForm from '@/components/OwnerHoursGlassForm';
+import PasskeyManager from '@/components/PasskeyManager';
 import { startAuthentication } from '@/lib/webauthn';
 import { USE_ADMIN } from '@/lib/featureFlags';
 import { LanguageToggle, makeT, pickBilingual, useLang } from '@/lib/i18n';
@@ -13,10 +14,13 @@ type View =
   | { name: 'error'; message: string }
   | { name: 'form'; csrfToken?: string };
 
+type Tab = 'hours' | 'passkeys';
+
 export default function AdminPage() {
   const lang = useLang();
   const t = makeT(lang);
   const [view, setView] = useState<View>({ name: 'login' });
+  const [activeTab, setActiveTab] = useState<Tab>('hours');
 
   if (!USE_ADMIN) {
     return (
@@ -116,32 +120,91 @@ export default function AdminPage() {
     }
   };
 
+  const renderAdminContent = () => {
+    if (view.name !== 'form' || !view.csrfToken) return null;
+
+    const csrf = { csrfToken: view.csrfToken, enabled: true };
+
+    return (
+      <div className="rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 shadow-sm overflow-hidden">
+        {/* Tab navigation */}
+        <div className="flex border-b border-zinc-200 dark:border-zinc-800">
+          <button
+            type="button"
+            onClick={() => setActiveTab('hours')}
+            className={`flex-1 py-3 px-4 text-sm font-medium transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-500 ${
+              activeTab === 'hours'
+                ? 'text-amber-600 dark:text-amber-400 border-b-2 border-amber-500'
+                : 'text-zinc-500 dark:text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200'
+            }`}
+            role="tab"
+            aria-selected={activeTab === 'hours'}
+            aria-controls="hours-panel"
+          >
+            {t('Otevírací doba', 'Opening hours')}
+          </button>
+          <button
+            type="button"
+            onClick={() => setActiveTab('passkeys')}
+            className={`flex-1 py-3 px-4 text-sm font-medium transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-500 ${
+              activeTab === 'passkeys'
+                ? 'text-amber-600 dark:text-amber-400 border-b-2 border-amber-500'
+                : 'text-zinc-500 dark:text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200'
+            }`}
+            role="tab"
+            aria-selected={activeTab === 'passkeys'}
+            aria-controls="passkeys-panel"
+          >
+            {t('Správa zařízení', 'Device management')}
+          </button>
+        </div>
+
+        {/* Tab panels */}
+        <div
+          className="p-6 md:p-8"
+          role="tabpanel"
+          id="hours-panel"
+          aria-labelledby="hours-tab"
+          hidden={activeTab !== 'hours'}
+        >
+          <div className="mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+            <div>
+              <h1 className="text-xl font-bold text-zinc-900 dark:text-zinc-100">
+                {t('Správa otevírací doby', 'Opening hours management')}
+              </h1>
+              <p className="text-sm text-zinc-600 dark:text-zinc-400">
+                {t('Úprava otevírací doby', 'Edit opening hours')}
+              </p>
+            </div>
+            <Link
+              href="/"
+              className="text-sm text-zinc-500 hover:text-amber-600 dark:text-zinc-400 dark:hover:text-amber-400 transition-colors shrink-0"
+            >
+              {t('Odhlásit se', 'Sign out')}
+            </Link>
+          </div>
+          <OwnerHoursGlassForm csrf={csrf} />
+        </div>
+
+        <div
+          className="p-6 md:p-8"
+          role="tabpanel"
+          id="passkeys-panel"
+          aria-labelledby="passkeys-tab"
+          hidden={activeTab !== 'passkeys'}
+        >
+          <PasskeyManager csrf={csrf} />
+        </div>
+      </div>
+    );
+  };
+
   return (
     <main className="relative min-h-screen flex items-center justify-center bg-zinc-50 dark:bg-black p-4 py-10">
       <LanguageToggle />
       <div className="w-full max-w-3xl">
         {view.name === 'form' ? (
-          <div className="rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 shadow-sm p-6 md:p-8">
-            <div className="mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-              <div>
-                <h1 className="text-xl font-bold text-zinc-900 dark:text-zinc-100">
-                  {t('Správa otevírací doby', 'Opening hours management')}
-                </h1>
-                <p className="text-sm text-zinc-600 dark:text-zinc-400">
-                  {t('Úprava otevírací doby', 'Edit opening hours')}
-                </p>
-              </div>
-              <Link
-                href="/"
-                className="text-sm text-zinc-500 hover:text-amber-600 dark:text-zinc-400 dark:hover:text-amber-400 transition-colors"
-              >
-                {t('Odhlásit se', 'Sign out')}
-              </Link>
-            </div>
-            <OwnerHoursGlassForm
-              csrf={{ csrfToken: view.csrfToken || '', enabled: true }}
-            />
-          </div>
+          renderAdminContent()
         ) : (
           <div className="mx-auto w-full max-w-md rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-8 shadow-sm text-center">
             {view.name === 'loading' ? (
