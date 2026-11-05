@@ -39,8 +39,11 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 }
 
 // 1. IP + User-Agent Combined Rate Limiting
-$ip = isset($_SERVER['HTTP_X_FORWARDED_FOR']) ? $_SERVER['HTTP_X_FORWARDED_FOR'] : $_SERVER['REMOTE_ADDR'];
-$ip = trim(explode(',', $ip)[0]);
+//
+// Keyed on REMOTE_ADDR only: X-Forwarded-For is client-controlled here
+// (Apache is the edge), so honoring it made the limit bypassable by
+// rotating the header. Mirrors getClientIp() in db.php.
+$ip = isset($_SERVER['REMOTE_ADDR']) ? (string) $_SERVER['REMOTE_ADDR'] : '';
 $ua = isset($_SERVER['HTTP_USER_AGENT']) ? $_SERVER['HTTP_USER_AGENT'] : '';
 
 $client_hash = md5($ip . '|' . $ua);
@@ -132,12 +135,21 @@ if (!in_array($lang, ['cs', 'sk', 'en'])) {
     $lang = 'cs';
 }
 
-// 3. Dynamic Base URL Detection for Catalog PDF
-$proto = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on') ||
-          (isset($_SERVER['HTTP_X_FORWARDED_PROTO']) && $_SERVER['HTTP_X_FORWARDED_PROTO'] === 'https') ? 'https' : 'http';
-$host = isset($_SERVER['HTTP_HOST']) ? $_SERVER['HTTP_HOST'] : 'tacukrarna.cz';
+// 3. Catalog PDF URL
+//
+// The URL is embedded verbatim in an email sent from the official
+// info@tacukrarna.cz address, so the host must never follow the
+// client-controlled Host header (a spoofed Host used to turn the official
+// email into a phishing message linking to the attacker's site). Only the
+// allowlisted production hosts are used; anything else falls back to the
+// canonical domain. Always https: production is TLS-only and the catalog
+// is public there.
+$host = isset($_SERVER['HTTP_HOST']) ? strtolower((string) $_SERVER['HTTP_HOST']) : '';
+if (!in_array($host, ['tacukrarna.cz', 'www.tacukrarna.cz'], true)) {
+    $host = 'tacukrarna.cz';
+}
 
-$pdf_url = $proto . '://' . $host . '/AtJstePysnaNaKazdyOkamzik.pdf';
+$pdf_url = 'https://' . $host . '/AtJstePysnaNaKazdyOkamzik.pdf';
 
 // 4. Localized Subjects & Bodies
 $subjects = [
@@ -156,7 +168,13 @@ $subject = $subjects[$lang];
 $message = $messages[$lang];
 
 // 5. Send Email (Mocking for local development/testing)
-$is_dev = (strpos($host, 'localhost') !== false || strpos($host, '127.0.0.1') !== false) || getenv('PLAYWRIGHT_TEST_MODE') === 'true';
+//
+// Dev detection uses only server-side signals: the PLAYWRIGHT_TEST_MODE env
+// var or a loopback client address. The old Host-header-based check let a
+// remote attacker flip the endpoint into "dev" mode by sending
+// "Host: localhost".
+$is_dev = getenv('PLAYWRIGHT_TEST_MODE') === 'true'
+    || in_array($_SERVER['REMOTE_ADDR'] ?? '', ['127.0.0.1', '::1'], true);
 
 if ($is_dev) {
     // Log email to a local dev file for developer inspection and E2E testing validation

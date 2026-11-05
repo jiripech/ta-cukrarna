@@ -147,18 +147,19 @@ function logEvent(string $event, array $context = []): void
 }
 
 /**
- * Returns the client IP address, honoring X-Forwarded-For.
+ * Returns the client IP address.
+ *
+ * Apache is the network edge for this deployment (no reverse proxy — proxy
+ * modules are disabled on the VPS), so X-Forwarded-For comes straight from
+ * the client. Trusting it let an attacker rotate the header per request and
+ * defeat every file-based rate limit (chatbot mail relay, registration
+ * tokens, admin actions). REMOTE_ADDR is kernel-provided and cannot be
+ * forged; if a trusted proxy is ever introduced, it must be an explicit
+ * allowlist of proxy IPs that are allowed to set the header.
  *
  * @return string
  */
 function getClientIp(): string
 {
-    $ip = isset($_SERVER['HTTP_X_FORWARDED_FOR'])
-        ? $_SERVER['HTTP_X_FORWARDED_FOR']
-        : $_SERVER['REMOTE_ADDR'];
-
-    // Take first IP if multiple are listed
-    $ip = trim(explode(',', $ip)[0]);
-
-    return $ip;
+    return isset($_SERVER['REMOTE_ADDR']) ? (string) $_SERVER['REMOTE_ADDR'] : '';
 }

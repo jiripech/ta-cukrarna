@@ -19,16 +19,15 @@ function startSession(): void
         return;
     }
 
-    $is_localhost = isset($_SERVER['HTTP_HOST']) &&
-        (strpos($_SERVER['HTTP_HOST'], 'localhost') !== false ||
-         strpos($_SERVER['HTTP_HOST'], '127.0.0.1') !== false);
-
+    // The Secure flag must follow the TLS state of the actual connection
+    // (kernel-provided), never the client-controlled Host header: a spoofed
+    // "Host: localhost" used to strip the flag on the production HTTPS vhost.
     session_set_cookie_params([
         'lifetime' => 86400,
         'path' => '/',
         'httponly' => true,
         'samesite' => 'Lax',
-        'secure' => !$is_localhost,
+        'secure' => (($_SERVER['HTTPS'] ?? '') === 'on'),
     ]);
 
     session_start();
@@ -81,6 +80,12 @@ function validateCsrfToken(string $token): bool
  */
 function setAdminSession(string $username): void
 {
+    // Fresh session ID at the privilege change: a session ID fixed before
+    // login (fixation) must never survive the escalation to admin.
+    if (session_status() === PHP_SESSION_ACTIVE) {
+        session_regenerate_id(true);
+    }
+
     $_SESSION['admin'] = true;
     $_SESSION['admin_user'] = $username;
     $_SESSION['admin_login_time'] = time();

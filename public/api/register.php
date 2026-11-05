@@ -229,21 +229,30 @@ function handleValidateToken(): void
         jsonResponse(['error' => 'Token neplatný nebo vypršel. / Token invalid or expired.'], 400);
     }
 
+    // Fresh session ID before any registration state is attached: a session
+    // ID fixed before this point (fixation) must not gain the reg_username
+    // binding.
+    session_regenerate_id(true);
+
     $_SESSION['reg_username'] = $row['username'];
     $_SESSION['reg_token_id'] = $row['id'];
 
     // Tell the UI whether a password proof is part of this flow: when
     // ADMIN_USERS is configured (Docker test container), verify-password
     // bypasses IMAP for these users, so the password step is skipped
-    // entirely and the WebAuthn ceremony starts right away.
+    // entirely and the WebAuthn ceremony starts right away. The server
+    // decides this (not the UI) and pre-marks the flow as verified, because
+    // challenge_register refuses to run without the proof — otherwise the
+    // no-password test flow would be locked out.
+    $passwordRequired = !in_array(strtolower($row['username']), adminUsersList(), true);
+    if (!$passwordRequired) {
+        $_SESSION['reg_verified'] = true;
+    }
+
     jsonResponse([
         'valid' => true,
         'username' => $row['username'],
-        'password_required' => !in_array(
-            strtolower($row['username']),
-            adminUsersList(),
-            true
-        ),
+        'password_required' => $passwordRequired,
     ]);
 }
 

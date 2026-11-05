@@ -1,5 +1,47 @@
 # Changelog
 
+## v1.3.11
+
+### Security
+
+- **Registration password proof enforced server-side**
+  (`public/api/webauthn.php`, `public/api/register.php`): `challenge_register`
+  and `verify_register` now require the verified registration state
+  (`reg_verified`), which only the successful mailbox-password check (or the
+  server-verified ADMIN_USERS no-password test flow) sets. Previously a valid
+  one-hour registration token alone was enough to register an admin passkey,
+  skipping the password proof entirely; the token is also marked pre-verified by
+  `validate-token` when the configured flow needs no password, so the Docker
+  test flow keeps working.
+- **Rate limits keyed on `REMOTE_ADDR`** (`public/api/db.php`,
+  `public/api/chatbot.php`): the client-controlled `X-Forwarded-For` header is
+  no longer honored (Apache is the network edge — proxy modules are disabled).
+  Rotating the header no longer defeats the chatbot mail-relay limit (5/minute),
+  the registration-token limit (3/hour), or the opening-hours / passkey admin
+  action limits.
+- **Chatbot email link injection closed** (`public/api/chatbot.php`): the
+  catalog PDF URL is now built from an allowlist (`tacukrarna.cz`,
+  `www.tacukrarna.cz`, always https) instead of the spoofable `Host` header,
+  which previously let one request put an attacker-chosen link into an email
+  sent from the official `info@tacukrarna.cz` address (phishing). Dev-mode
+  detection now uses server-side signals only (env var or loopback client), not
+  the `Host` header.
+- **Session hardening** (`public/api/session.php`, `public/api/register.php`):
+  the session ID is regenerated when a registration token is validated and when
+  an admin session is opened (session-fixation protection), and the session
+  cookie `Secure` flag follows the TLS state of the connection instead of the
+  spoofable `Host` header.
+
+### Added
+
+- **PHP API security test suite** (`tests/api/run-api-tests.php`,
+  `npm run test:api`, CI step "Run PHP API security tests"): boots the PHP
+  built-in server against a throwaway copy of `public/` with a fresh SQLite
+  database and drives the real endpoints over HTTP — 18 assertions covering all
+  four fixes above plus a guard for the legitimate no-password registration
+  flow. Verified red (10 failures) on the pre-fix code and green after the
+  fixes; no Docker or Apache required, only php-cli.
+
 ## v1.3.10.1
 
 ### Fixed

@@ -126,7 +126,11 @@ function handleChallengeRegister(): void
     startSession();
 
     // Registration flow must be initiated by register.php (validated token)
-    if (empty($_SESSION['reg_username'])) {
+    // AND the mailbox password must have been proven (verify-password sets
+    // reg_verified; the ADMIN_USERS test flow is pre-verified by
+    // validate-token). Without this check a valid token alone was enough to
+    // register a passkey, skipping the password proof entirely.
+    if (empty($_SESSION['reg_username']) || empty($_SESSION['reg_verified'])) {
         jsonResponse(['error' => 'Registrace nebyla zahájena. / Registration has not been started.'], 403);
     }
 
@@ -162,7 +166,9 @@ function handleVerifyRegister(): void
 {
     startSession();
 
-    if (empty($_SESSION['reg_username']) || empty($_SESSION['reg_challenge'])) {
+    // Same gate as challenge_register: the password proof is mandatory
+    // (defense in depth — the challenge step alone is not trusted).
+    if (empty($_SESSION['reg_username']) || empty($_SESSION['reg_challenge']) || empty($_SESSION['reg_verified'])) {
         jsonResponse(['error' => 'Registrace nebyla zahájena. / Registration has not been started.'], 403);
     }
 

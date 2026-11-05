@@ -76,6 +76,14 @@ jobs:
       - name: Install Playwright browsers
         run: npx playwright install --with-deps
 
+      - name: Run PHP API security tests
+        run: |
+          if ! command -v php >/dev/null 2>&1; then
+            echo "❌ php-cli is required on the runner (npm run test:api)"
+            exit 1
+          fi
+          npm run test:api
+
       - name: Run E2E Tests
         run: npm run test:e2e
 
