@@ -9,6 +9,19 @@
   labeled **security**) and notes that dependency vulnerabilities are usually
   caught by Dependabot or `npm audit`.
 
+### Fixed
+
+- **Exception inputs announce the exception date**
+  (`src/components/OwnerHoursGlassForm.tsx`): the date and hours inputs in the
+  opening-hours exception editor carried generic `aria-label`s ("Datum výjimky"
+  / "Hodiny výjimky") that overrode their date-specific visible labels as the
+  accessible name, so `getByLabel('Hodiny pro 2026-01-09')` could never match.
+  The accessible names now mirror the visible labels ("Datum výjimky <date>" /
+  "Hodiny pro <date>"). The Docker e2e suite caught this:
+  `opening-hours-exception.spec.ts` failed on all three browser projects since
+  the v1.3.10 ARIA pass added the generic labels; with the fix the full suite
+  passes again (93 passed, 12 skipped).
+
 ## v1.3.11
 
 ### Security

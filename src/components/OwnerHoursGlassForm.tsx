@@ -865,7 +865,11 @@ export default function OwnerHoursGlassForm({ csrf }: { csrf?: CsrfOptions }) {
                         onChange={ev =>
                           handleExceptionDateChange(idx, ev.target.value)
                         }
-                        aria-label={t('Datum výjimky', 'Exception date')}
+                        aria-label={
+                          ex.date
+                            ? `${t('Datum výjimky', 'Exception date')} ${ex.date}`
+                            : t('Datum výjimky', 'Exception date')
+                        }
                         aria-invalid={!!fieldErrors[`exception-${idx}-date`]}
                         aria-describedby={
                           fieldErrors[`exception-${idx}-date`]
@@ -898,7 +902,11 @@ export default function OwnerHoursGlassForm({ csrf }: { csrf?: CsrfOptions }) {
                         onChange={ev =>
                           handleExceptionHoursChange(idx, ev.target.value)
                         }
-                        aria-label={t('Hodiny výjimky', 'Exception hours')}
+                        aria-label={
+                          ex.date
+                            ? `${t('Hodiny pro', 'Hours for')} ${ex.date}`
+                            : t('Hodiny pro výjimku', 'Hours for exception')
+                        }
                       />
                     </label>
                   </div>
