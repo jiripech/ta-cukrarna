@@ -29,6 +29,15 @@
   oversized constrained collections). zod is a transitive dev dependency of
   `eslint-plugin-react-hooks`; updated within the existing `^4` range, so the
   manifest is unchanged.
+- **markdownlint-cli2 bumped 0.23.3 → 0.24.0, re2js overridden to ^2.9.1**
+  (`package.json`, `package-lock.json`): the bump moves markdown-it 15.0.1 →
+  15.0.3 and resolves three high-severity quadratic-complexity DoS advisories in
+  it (GHSA-r7fv-28h4-cvq7, GHSA-vfgh-jcmw-g37q, GHSA-gfr2-rv44-r23c) plus the
+  low-severity markdownlint-cli2 finding. markdownlint@0.42.0 pins re2js exactly
+  at 2.8.6 (GHSA-gg6h-894w-4m9c, high — quadratic-time DoS in lookbehind
+  matching, fixed in 2.8.7), so a scoped `markdownlint → re2js ^2.9.1` override
+  was added. `npm run lint:md` verified against the existing
+  `.markdownlint-cli2.jsonc` config.
 
 ## v1.3.11
 

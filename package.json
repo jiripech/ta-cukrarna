@@ -48,7 +48,7 @@
     "html-validate": "^10.17.0",
     "husky": "^9.1.7",
     "lint-staged": "^16.2.5",
-    "markdownlint-cli2": "^0.23.3",
+    "markdownlint-cli2": "^0.24.0",
     "prettier": "^3.6.2",
     "secretlint": "^13.0.7",
     "serve": "^14.2.6",
@@ -79,6 +79,9 @@
     "katex": "^0.18.2",
     "smol-toml": "^1.9.1",
     "compression": "^1.8.2",
-    "fast-uri": "4.2.3"
+    "fast-uri": "4.2.3",
+    "markdownlint": {
+      "re2js": "^2.9.1"
+    }
   }
 }
