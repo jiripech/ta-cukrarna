@@ -45,7 +45,7 @@
     "babel-plugin-react-compiler": "1.0.0",
     "eslint": "^9",
     "eslint-config-next": "^16.4.0",
-    "html-validate": "^10.17.0",
+    "html-validate": "^11.19.0",
     "husky": "^9.1.7",
     "lint-staged": "^16.2.5",
     "markdownlint-cli2": "^0.24.0",

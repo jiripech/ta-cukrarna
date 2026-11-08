@@ -46,6 +46,12 @@
   typescript-estree — the minimatch 3.1.5 copies used by eslint and friends stay
   untouched (outside the vulnerable range). `npm run lint` verified
   compatibility of typescript-estree with minimatch 11.
+- **html-validate bumped 10.17.0 → 11.19.0** (`package.json`,
+  `package-lock.json`): the major upgrade drops the vulnerable glob dependency
+  (GHSA-3g3m-2fjr-6pw4, moderate — AbortSignal cancellation bypass allows
+  post-timeout filesystem traversal) and with it the nested minimatch 10.2.6
+  copy (same GHSA-g3hv-75wg-m249 advisory as above). The `.htmlvalidate.json`
+  config is unchanged and `npm run lint:html` passes.
 
 ## v1.3.11
 
