@@ -22,6 +22,14 @@
   the v1.3.10 ARIA pass added the generic labels; with the fix the full suite
   passes again (93 passed, 12 skipped).
 
+### Security
+
+- **zod bumped 4.6.5 → 4.6.7** (`package-lock.json`): resolves the high-severity
+  advisory GHSA-mrhx-c7xc-m3w5 (Zod can exhaust memory while validating
+  oversized constrained collections). zod is a transitive dev dependency of
+  `eslint-plugin-react-hooks`; updated within the existing `^4` range, so the
+  manifest is unchanged.
+
 ## v1.3.11
 
 ### Security
