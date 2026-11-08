@@ -38,6 +38,14 @@
   matching, fixed in 2.8.7), so a scoped `markdownlint → re2js ^2.9.1` override
   was added. `npm run lint:md` verified against the existing
   `.markdownlint-cli2.jsonc` config.
+- **minimatch overridden to ^11.0.1 under @typescript-eslint/typescript-estree**
+  (`package.json`, `package-lock.json`): resolves the moderate advisory
+  GHSA-g3hv-75wg-m249 (potential DoS via globparts amplification), which is
+  fixed only in minimatch 11.0.1+, while the latest typescript-estree still pins
+  `^10.2.2`. The parent-scoped override replaces minimatch only inside
+  typescript-estree — the minimatch 3.1.5 copies used by eslint and friends stay
+  untouched (outside the vulnerable range). `npm run lint` verified
+  compatibility of typescript-estree with minimatch 11.
 
 ## v1.3.11
 
