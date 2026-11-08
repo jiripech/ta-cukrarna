@@ -1,5 +1,14 @@
 # Changelog
 
+## Unreleased
+
+### Added
+
+- **Security policy and vulnerability reporting guidelines** (`SECURITY.md`):
+  documents how to report vulnerabilities (a GitHub issue or pull request
+  labeled **security**) and notes that dependency vulnerabilities are usually
+  caught by Dependabot or `npm audit`.
+
 ## v1.3.11
 
 ### Security
