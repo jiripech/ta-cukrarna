@@ -7,11 +7,13 @@
 - **Rate limiting temp files moved from system /tmp to local ./tmp and disabled
   in test mode** (`public/api/opening-hours.php`, `public/api/chatbot.php`,
   `public/api/register.php`, `public/api/webauthn.php`): rate-limit state files
-  now live in `__DIR__/../tmp` instead of `sys_get_temp_dir()` to avoid Docker
-  container /tmp persistence issues and to honor the Use local ./tmp instead of
-  /tmp policy. Rate limiting is bypassed when `PLAYWRIGHT_TEST_MODE` is set,
-  preventing accumulation of rate-limit counters across E2E runs. The Docker E2E
-  suite now passes consistently (93 passed, 12 skipped).
+  now live in `__DIR__/DB/rate_limit` instead of `sys_get_temp_dir()` to avoid
+  Docker container /tmp persistence issues and to honor the Use local ./tmp
+  instead of /tmp policy, while keeping files under `api/DB` which is writable
+  and excluded from rsync deletion. Rate limiting is bypassed when
+  `PLAYWRIGHT_TEST_MODE` is set, preventing accumulation of rate-limit counters
+  across E2E runs. The Docker E2E suite now passes consistently (93 passed, 12
+  skipped).
 
 ## v1.3.12
 

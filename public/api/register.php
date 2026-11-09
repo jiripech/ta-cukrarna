@@ -68,7 +68,7 @@ function handleRequestToken(): void
     // Rate limit: max 3 requests per hour per IP
     if (!getenv('PLAYWRIGHT_TEST_MODE')) {
         $ip = getClientIp();
-        $tmp_dir = __DIR__ . '/../tmp';
+        $tmp_dir = __DIR__ . '/DB/rate_limit';
         if (!is_dir($tmp_dir)) {
             @mkdir($tmp_dir, 0755, true);
         }

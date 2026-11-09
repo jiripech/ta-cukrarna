@@ -408,7 +408,7 @@ function checkRateLimit(string $prefix, int $limit = 10): bool
         return true;
     }
     $ip = getClientIp();
-    $tmp_dir = __DIR__ . '/../tmp';
+    $tmp_dir = __DIR__ . '/DB/rate_limit';
     if (!is_dir($tmp_dir)) {
         @mkdir($tmp_dir, 0755, true);
     }
