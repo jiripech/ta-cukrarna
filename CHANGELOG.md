@@ -15,6 +15,13 @@
   across E2E runs. The Docker E2E suite now passes consistently (93 passed, 12
   skipped).
 
+- **Refactor rate-limit directory resolution to shared helper**
+  (`public/api/db.php`, `public/api/opening-hours.php`,
+  `public/api/chatbot.php`, `public/api/register.php`,
+  `public/api/webauthn.php`): introduced `getRateLimitDir()` in `db.php` and
+  updated all rate-limit code paths to use the shared helper, removing
+  duplicated `__DIR__/DB/rate_limit` literals.
+
 ## v1.3.12
 
 ### Added

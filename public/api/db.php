@@ -163,3 +163,21 @@ function getClientIp(): string
 {
     return isset($_SERVER['REMOTE_ADDR']) ? (string) $_SERVER['REMOTE_ADDR'] : '';
 }
+
+/**
+ * Returns the directory used for file-based rate limiting.
+ *
+ * The directory lives under api/DB/rate_limit, which is writable by the web
+ * server and is excluded from rsync deletion via the DB exclusions. The
+ * directory is created on demand.
+ *
+ * @return string
+ */
+function getRateLimitDir(): string
+{
+    $dir = __DIR__ . '/DB/rate_limit';
+    if (!is_dir($dir)) {
+        @mkdir($dir, 0755, true);
+    }
+    return $dir;
+}

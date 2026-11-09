@@ -204,10 +204,7 @@ function handlePost(string $filePath): void
     // Rate limit: max 10 requests per hour per IP
     if (!getenv('PLAYWRIGHT_TEST_MODE')) {
         $ip = getClientIp();
-        $tmp_dir = __DIR__ . '/DB/rate_limit';
-        if (!is_dir($tmp_dir)) {
-            @mkdir($tmp_dir, 0755, true);
-        }
+        $tmp_dir = getRateLimitDir();
         $limit_file = $tmp_dir . DIRECTORY_SEPARATOR . 'tacukrarna_openhours_' . md5($ip) . '.json';
 
         $now = time();

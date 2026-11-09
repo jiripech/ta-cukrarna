@@ -7,6 +7,8 @@
  * in local development environments.
  */
 
+require_once __DIR__ . '/db.php';
+
 // Set header for JSON response
 header('Content-Type: application/json; charset=utf-8');
 
@@ -48,10 +50,7 @@ $ua = isset($_SERVER['HTTP_USER_AGENT']) ? $_SERVER['HTTP_USER_AGENT'] : '';
 
 if (!getenv('PLAYWRIGHT_TEST_MODE')) {
     $client_hash = md5($ip . '|' . $ua);
-    $tmp_dir = __DIR__ . '/DB/rate_limit';
-    if (!is_dir($tmp_dir)) {
-        @mkdir($tmp_dir, 0755, true);
-    }
+    $tmp_dir = getRateLimitDir();
     $rate_limit_file = $tmp_dir . DIRECTORY_SEPARATOR . 'tacukrarna_limit_' . $client_hash . '.json';
 
     $now = time();
