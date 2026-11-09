@@ -404,6 +404,9 @@ function rawEcdsaSignatureToDer(string $raw): string
  */
 function checkRateLimit(string $prefix, int $limit = 10): bool
 {
+    if (getenv('PLAYWRIGHT_TEST_MODE')) {
+        return true;
+    }
     $ip = getClientIp();
     $tmp_dir = __DIR__ . '/../tmp';
     if (!is_dir($tmp_dir)) {

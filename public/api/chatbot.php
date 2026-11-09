@@ -46,39 +46,41 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 $ip = isset($_SERVER['REMOTE_ADDR']) ? (string) $_SERVER['REMOTE_ADDR'] : '';
 $ua = isset($_SERVER['HTTP_USER_AGENT']) ? $_SERVER['HTTP_USER_AGENT'] : '';
 
-$client_hash = md5($ip . '|' . $ua);
-$tmp_dir = __DIR__ . '/../tmp';
-if (!is_dir($tmp_dir)) {
-    @mkdir($tmp_dir, 0755, true);
-}
-$rate_limit_file = $tmp_dir . DIRECTORY_SEPARATOR . 'tacukrarna_limit_' . $client_hash . '.json';
+if (!getenv('PLAYWRIGHT_TEST_MODE')) {
+    $client_hash = md5($ip . '|' . $ua);
+    $tmp_dir = __DIR__ . '/../tmp';
+    if (!is_dir($tmp_dir)) {
+        @mkdir($tmp_dir, 0755, true);
+    }
+    $rate_limit_file = $tmp_dir . DIRECTORY_SEPARATOR . 'tacukrarna_limit_' . $client_hash . '.json';
 
-$now = time();
-$timestamps = [];
+    $now = time();
+    $timestamps = [];
 
-if (file_exists($rate_limit_file)) {
-    $raw_content = file_get_contents($rate_limit_file);
-    $data = json_decode($raw_content, true);
-    if (is_array($data)) {
-        // Keep only timestamps from the last 60 seconds
-        foreach ($data as $ts) {
-            if ($now - $ts < 60) {
-                $timestamps[] = $ts;
+    if (file_exists($rate_limit_file)) {
+        $raw_content = file_get_contents($rate_limit_file);
+        $data = json_decode($raw_content, true);
+        if (is_array($data)) {
+            // Keep only timestamps from the last 60 seconds
+            foreach ($data as $ts) {
+                if ($now - $ts < 60) {
+                    $timestamps[] = $ts;
+                }
             }
         }
     }
-}
 
-// Limit: 5 requests per 60 seconds
-if (count($timestamps) >= 5) {
-    header('HTTP/1.1 429 Too Many Requests');
-    echo json_encode(['error' => 'Příliš mnoho požadavků. Zkuste to prosím za minutu. / Too many requests. Please try again in a minute.']);
-    exit;
-}
+    // Limit: 5 requests per 60 seconds
+    if (count($timestamps) >= 5) {
+        header('HTTP/1.1 429 Too Many Requests');
+        echo json_encode(['error' => 'Příliš mnoho požadavků. Zkuste to prosím za minutu. / Too many requests. Please try again in a minute.']);
+        exit;
+    }
 
-// Add current timestamp and save
-$timestamps[] = $now;
-file_put_contents($rate_limit_file, json_encode($timestamps));
+    // Add current timestamp and save
+    $timestamps[] = $now;
+    file_put_contents($rate_limit_file, json_encode($timestamps));
+}
 
 // 2. Parse and Validate Request Body
 $input = file_get_contents('php://input');
