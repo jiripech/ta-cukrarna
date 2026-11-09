@@ -67,7 +67,10 @@ function handleRequestToken(): void
 
     // Rate limit: max 3 requests per hour per IP
     $ip = getClientIp();
-    $tmp_dir = sys_get_temp_dir();
+    $tmp_dir = __DIR__ . '/../tmp';
+    if (!is_dir($tmp_dir)) {
+        @mkdir($tmp_dir, 0755, true);
+    }
     $limit_file = $tmp_dir . DIRECTORY_SEPARATOR . 'tacukrarna_reqtoken_' . md5($ip) . '.json';
 
     $now = time();
