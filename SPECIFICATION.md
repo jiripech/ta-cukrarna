@@ -261,10 +261,12 @@ spinner → error card with a retry button → editor card.
   the current week — the season covering each date, overridden by an exception
   for that exact date — with empty values and "Výdej objednávek" / "Order
   pickup" shown as closed (red).
-- "Upravit výchozí" opens the defaults modal with `summer` ("Léto") and `spring`
-  ("Mimo léto") day grids. Cancel only closes it; "Uložit" closes the modal
-  **and** runs the same save, so the modal has no separate persistence path —
-  values load from and save to the server file (no localStorage).
+- "Upravit výchozí" opens the defaults modal with a `summer` ("Léto") / `spring`
+  ("Mimo léto") tab switcher and a single seven-day grid for the active season
+  (one form at a time). Cancel — and the Escape key, which is bound to the same
+  dismiss action — only closes it; "Uložit" closes the modal **and** runs the
+  same save, so the modal has no separate persistence path — values load from
+  and save to the server file (no localStorage).
 - Saving POSTs `{ schedule, exceptions, defaults }` as JSON with the
   `X-CSRF-Token` header (omitted when the `csrf` prop is disabled). The server
   re-validates everything (§4.3) and answers 401 without an admin session, 403

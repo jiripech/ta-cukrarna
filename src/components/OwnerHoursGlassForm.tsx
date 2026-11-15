@@ -37,6 +37,11 @@ const DAY_LABELS: Record<
   sun: { cs: 'Neděle', en: 'Sunday' },
 };
 
+const DEFAULT_SEASON_TABS = [
+  { key: 'summer', cs: 'Léto', en: 'Summer' },
+  { key: 'spring', cs: 'Mimo léto', en: 'Outside summer' },
+] as const;
+
 function addDays(iso: string, days: number) {
   const [y, m, day] = iso.split('-').map(Number);
   const dt = new Date(Date.UTC(y, m - 1, day + days));
@@ -141,6 +146,14 @@ export default function OwnerHoursGlassForm({ csrf }: { csrf?: CsrfOptions }) {
     Record<string, Record<string, string>>
   >(() => ({ summer: emptyDayMap(), spring: emptyDayMap() }));
   const [defaultsModalOpen, setDefaultsModalOpen] = useState(false);
+  const [activeDefaultSeason, setActiveDefaultSeason] = useState<
+    (typeof DEFAULT_SEASON_TABS)[number]['key']
+  >(() => {
+    // Start on the season implied by today's month (July/August = summer),
+    // mirroring how a new schedule entry picks its defaults template.
+    const month = new Date().getMonth() + 1;
+    return month >= 7 && month <= 8 ? 'summer' : 'spring';
+  });
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -285,6 +298,20 @@ export default function OwnerHoursGlassForm({ csrf }: { csrf?: CsrfOptions }) {
       }
     };
   }, [saveDraft]);
+
+  // Escape dismisses the defaults modal exactly like the Cancel button: it only
+  // closes the overlay and never triggers a save.
+  useEffect(() => {
+    if (!defaultsModalOpen) return;
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        setDefaultsModalOpen(false);
+      }
+    };
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [defaultsModalOpen]);
 
   // Load data on mount
   useEffect(() => {
@@ -1017,31 +1044,60 @@ export default function OwnerHoursGlassForm({ csrf }: { csrf?: CsrfOptions }) {
             <h3 id="defaults-modal-title" className="mb-3">
               {t('Výchozí otevírací doba', 'Default opening hours')}
             </h3>
-            {(['summer', 'spring'] as const).map(key => {
-              const sectionLabel =
-                key === 'summer'
-                  ? t('Léto', 'Summer')
-                  : t('Mimo léto', 'Outside summer');
+            <div
+              className="flex gap-2 mb-3"
+              role="tablist"
+              aria-label={t('Období', 'Season')}
+            >
+              {DEFAULT_SEASON_TABS.map(tab => {
+                const selected = activeDefaultSeason === tab.key;
+                return (
+                  <button
+                    key={tab.key}
+                    type="button"
+                    role="tab"
+                    id={`defaults-tab-${tab.key}`}
+                    aria-selected={selected}
+                    aria-controls={`defaults-panel-${tab.key}`}
+                    className="glass-tab"
+                    onClick={() => setActiveDefaultSeason(tab.key)}
+                  >
+                    {t(tab.cs, tab.en)}
+                  </button>
+                );
+              })}
+            </div>
+            {DEFAULT_SEASON_TABS.map(tab => {
+              if (activeDefaultSeason !== tab.key) return null;
+              const sectionLabel = t(tab.cs, tab.en);
               return (
-                <div key={key} className="mb-3">
-                  <p className="glass-label mb-1 text-xs">{sectionLabel}</p>
+                <div
+                  key={tab.key}
+                  id={`defaults-panel-${tab.key}`}
+                  className="mb-3"
+                  role="tabpanel"
+                  aria-labelledby={`defaults-tab-${tab.key}`}
+                >
                   <div className="grid grid-cols-2 gap-2">
                     {DAY_KEYS.map(k => (
                       <label
                         key={k}
                         className="glass-label text-xs"
-                        htmlFor={`default-${key}-${k}`}
+                        htmlFor={`default-${tab.key}-${k}`}
                       >
                         {DAY_LABELS[k][lang]}
                         <input
-                          id={`default-${key}-${k}`}
+                          id={`default-${tab.key}-${k}`}
                           className="glass-input"
                           aria-label={`${sectionLabel} ${DAY_LABELS[k][lang]}`}
-                          value={defaults[key]?.[k] || ''}
+                          value={defaults[tab.key]?.[k] || ''}
                           onChange={e =>
                             setDefaults(d => ({
                               ...d,
-                              [key]: { ...d[key], [k]: e.target.value },
+                              [tab.key]: {
+                                ...d[tab.key],
+                                [k]: e.target.value,
+                              },
                             }))
                           }
                         />
@@ -1051,15 +1107,17 @@ export default function OwnerHoursGlassForm({ csrf }: { csrf?: CsrfOptions }) {
                 </div>
               );
             })}
-            <div className="flex justify-end gap-2 mt-4">
+            <div className="flex items-center justify-end gap-3 mt-4">
               <button
-                className="glass-ghost"
+                type="button"
+                className="glass-ghost glass-inline"
                 onClick={() => setDefaultsModalOpen(false)}
               >
                 {t('Zrušit', 'Cancel')}
               </button>
               <button
-                className="glass-submit-full"
+                type="button"
+                className="glass-submit-full glass-inline"
                 onClick={() => {
                   setDefaultsModalOpen(false);
                   void save();

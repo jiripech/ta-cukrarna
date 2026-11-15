@@ -158,8 +158,11 @@ test('opens a single defaults form with one season visible at a time', async ({
   await expect(dialog.locator('input[id^="default-"]:visible')).toHaveCount(7);
 
   // The season switcher is present and functional.
-  const summerTab = dialog.getByRole('tab', { name: 'Léto' });
-  const outsideTab = dialog.getByRole('tab', { name: 'Mimo léto' });
+  const summerTab = dialog.getByRole('tab', { name: 'Léto', exact: true });
+  const outsideTab = dialog.getByRole('tab', {
+    name: 'Mimo léto',
+    exact: true,
+  });
   await expect(summerTab).toBeVisible();
   await expect(outsideTab).toBeVisible();
   // Exactly one season is selected (which one depends on the current month).

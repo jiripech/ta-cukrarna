@@ -216,3 +216,42 @@
 .glass-lang-toggle button.is-active {
   opacity: 1;
 }
+
+/* Modifier for glass buttons placed in a horizontal button row: drop the
+   standalone top margin and, for `.glass-submit-full`, shrink to the content.
+   `.glass-submit-full` defaults to `width: 100%`, which otherwise overflows a
+   `justify-end` row and pushes a sibling button outside the card. These rules
+   must stay unlayered (glass.css has no @layer) so they beat Tailwind's
+   `@layer utilities` equivalents. */
+.glass-inline {
+  margin-top: 0;
+}
+.glass-submit-full.glass-inline {
+  width: auto;
+  flex: 0 0 auto;
+}
+
+/* Segmented season tabs in the defaults modal. */
+.glass-tab {
+  flex: 1 1 0;
+  padding: 0.4rem 0.75rem;
+  border: 0;
+  border-radius: 1.5rem;
+  background: none;
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-shadow: 0 0 3px rgba(0, 0, 0, 0.2);
+  cursor: pointer;
+}
+.glass-tab:hover {
+  text-decoration: underline;
+}
+.glass-tab[aria-selected='true'] {
+  color: #fff;
+  text-decoration: none;
+  background: rgba(255, 255, 255, 0.18);
+  box-shadow:
+    inset 1px 1px 0 rgba(255, 255, 255, 0.6),
+    0 4px 8px rgba(0, 0, 0, 0.15);
+}

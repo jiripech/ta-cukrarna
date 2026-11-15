@@ -1,5 +1,19 @@
 # Changelog
 
+## v1.3.14
+
+### Fixed
+
+- **Admin defaults modal** (`src/components/OwnerHoursGlassForm.tsx`): "Upravit
+  výchozí" stacked the `summer` and `spring` day grids, so the overlay looked
+  like two forms (14 day inputs at once), and the full-width Save button pushed
+  the Cancel button ~20px outside the modal card. The modal now shows a single
+  season tab (`Léto` / `Mimo léto`) with one seven-day form at a time, keeps
+  Cancel inside the card to the left of Save, and closes on Escape (without
+  saving) exactly like Cancel. Regression coverage:
+  `e2e/admin-defaults-modal.spec.ts` (static) plus the season-tab updates in
+  `e2e/opening-hours-defaults.spec.ts` (Docker, real PHP).
+
 ## v1.3.13
 
 ### Fixed

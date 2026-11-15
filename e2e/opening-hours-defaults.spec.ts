@@ -50,7 +50,10 @@ test('admin edits defaults and saves them into the docroot file', async ({
 
   await page.getByRole('button', { name: 'Upravit výchozí' }).click();
 
+  // The modal shows one season at a time behind a tab switcher.
+  await page.getByRole('tab', { name: 'Léto', exact: true }).click();
   await page.getByLabel('Léto Pondělí', { exact: true }).fill(SUMMER_MON);
+  await page.getByRole('tab', { name: 'Mimo léto', exact: true }).click();
   await page.getByLabel('Mimo léto Pátek', { exact: true }).fill(SPRING_FRI);
 
   // The modal's Save persists through the regular opening-hours endpoint.
@@ -71,9 +74,11 @@ test('admin edits defaults and saves them into the docroot file', async ({
 
   // Round trip: reopening the modal shows the persisted values.
   await page.getByRole('button', { name: 'Upravit výchozí' }).click();
+  await page.getByRole('tab', { name: 'Léto', exact: true }).click();
   await expect(page.getByLabel('Léto Pondělí', { exact: true })).toHaveValue(
     SUMMER_MON
   );
+  await page.getByRole('tab', { name: 'Mimo léto', exact: true }).click();
   await expect(page.getByLabel('Mimo léto Pátek', { exact: true })).toHaveValue(
     SPRING_FRI
   );
