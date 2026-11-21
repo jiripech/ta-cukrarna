@@ -1,5 +1,19 @@
 # Changelog
 
+## v1.3.15
+
+### Security
+
+- **Next.js 16.4.3 → 16.4.6** (`package.json`, `package-lock.json`): resolves
+  seven moderate-severity advisories (GHSA-rhh4-g77r-r9qj, GHSA-vvgp-ww4w-46vf,
+  GHSA-pc58-hwjq-p385, GHSA-f3mh-rxg3-f5g2, GHSA-7qx7-33qx-rqx2,
+  GHSA-vc7v-qv4w-wrv8, GHSA-mfr8-8qww-v76h) covering cross-user cache
+  disclosure/poisoning, cross-client response injection, SVG rejection bypass,
+  HttpOnly cookie exposure on Edge runtime, cache leaks in nested `use cache`,
+  and information disclosure via `unstable_cache()`. Also updates
+  `eslint-config-next` to 16.4.6 for parity. `npm run check-all` and full E2E
+  suite (81 passed, 33 skipped) verify compatibility.
+
 ## v1.3.14
 
 ### Improved
