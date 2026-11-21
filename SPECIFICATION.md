@@ -132,7 +132,7 @@ Credentials come from the `.env` keys `MAILDB_HOST`, `MAILDB_NAME`,
 - Writes go to a temp file + atomic rename, so the docroot directory itself must
   be writable by PHP (see the group-write fixup in DEVELOPMENT_TOOLS.md).
 
-## 5. Admin area
+## 5. Administration
 
 Both admin routes are client components gated by `NEXT_PUBLIC_USE_ADMIN`
 (`src/lib/featureFlags.ts`): `/admin/` renders a "disabled" card when the flag
@@ -140,140 +140,122 @@ is not `1`, `/admin/register/` renders nothing. `src/app/admin/layout.tsx`
 contributes only the page title/description. Every admin request uses
 `credentials: 'include'` so the PHP session cookie travels with it.
 
+The admin panel (`/admin/`) is a **tabbed interface** with two panels:
+
+- **Otevírací doba** (Opening hours) — season/exception editor
+- **Správa zařízení** (Device management) — passkey list/revoke UI
+
 ### 5.1 Registration (`/admin/register/`, `register.php`)
 
-The page is a single `view` state machine with these screens:
+A single-page state machine with these screens:
 
-- **Request** — a bare e-mail input; the `→` submit button only appears once the
-  address matches `/^[^\s@]+@[^\s@]+\.[^\s@]+$/`. Submitting POSTs
-  `{ "username": "<email>" }`.
-- **Sent** — the neutral "Pokud účet existuje, e-mail s odkazem byl odeslán."
-  card with a Back button; identical for existing and unknown accounts.
-- **Validating / Registering** — spinners ("…", "Postupujte podle pokynů v
-  prohlížeči.").
-- **Password** — rendered only when `validate-token` reports
-  `password_required: true`.
-- **Success** — "Vaše zařízení je připraveno." with a link to `/admin/`.
-- **Invalid / error** — one shared card; `invalid` is the expired-link case,
-  `error` everything else.
+| View                | Trigger                                         | Notes                                                        |
+| ------------------- | ----------------------------------------------- | ------------------------------------------------------------ |
+| **Request**         | Initial load (no `?token=`)                     | Bare e-mail input; `→` button appears only on valid format   |
+| **Sent**            | `request-token` returns 200                     | Neutral "Pokud účet existuje…" — no account-existence oracle |
+| **Validating**      | Page load with `?token=`                        | Spinner while `validate-token` runs                          |
+| **Password**        | `validate-token` → `password_required: true`    | IMAP password proof (production)                             |
+| **Registering**     | Password verified or `password_required: false` | WebAuthn registration ceremony                               |
+| **Success**         | `verify_register` returns 200                   | Link to `/admin/`                                            |
+| **Invalid / Error** | Expired token or any failure                    | Shared card; `invalid` = expired, `error` = other            |
 
-Server contract:
+**Server actions** (`register.php`):
 
-- `request-token` (POST, rate limit 3/h/IP, counters in `sys_get_temp_dir()`
-  files): 400 when the address fails `FILTER_VALIDATE_EMAIL`, 429 when rate
-  limited, 500 when the token insert fails. Existence is `ADMIN_USERS`
-  membership when that env is set, else the MariaDB lookup of §4.2
-  (`MAILDB_TABLE`, `active = 1`); a `PDOException` is logged and treated as "may
-  exist". A 32-byte `bin2hex(random_bytes(32))` token is inserted into
-  `reg_tokens` (`expires_at = now + 1 hour`) **before** any mail is attempted,
-  so both branches cost the same. When the account exists the link is
-  `{APP_BASE_URL}/admin/register/?token=…` (`APP_BASE_URL` defaults to
-  `https://tacukrarna.cz`), sent with `mb_send_mail()` and a `-f<from>` envelope
-  sender from `SMTP_FROM` (default `Ta Cukrárna <info@tacukrarna.cz>`) for
-  SPF/DMARC alignment; a missing `mb_send_mail` is logged, not reported. The
-  response is always `{ "status": "success", … }` — only 429 and 5xx are
-  unconditional and are shown verbatim by the UI.
-- `validate-token` (GET `?token=…`): requires `used = 0 AND expires_at > now`
-  (400 "Token neplatný nebo vypršel" otherwise). On success it stores
-  `reg_username` + `reg_token_id` in the session and returns
-  `{ valid, username, password_required }`; `password_required` is `false`
-  exactly when `ADMIN_USERS` covers the session user, in which case the UI skips
-  the password form and starts the ceremony immediately.
-- `verify-password` (POST `{ "password": … }`): 405 for non-POST, 403 without a
-  registration session, 400 for an empty password. The `ADMIN_USERS` branch
-  (test mode only) logs `imap_bypass_admin_users`, marks the token used and sets
-  `reg_verified`. The production branch calls `imap_open()` with the whole
-  mailbox string from `IMAP_SERVER` (default
-  `127.0.0.1:993/imap/ssl/novalidate-cert`; port 143 is deliberately not a
-  fallback). A TLS/certificate transport error answers 503 "not currently
-  available", anything else 401 "Nesprávné heslo" — a wrong password must not
-  look like an outage.
-- **Token single-use**: `markTokenUsed()` fires at the password step, not at
-  `verify_register`. A ceremony that fails after a successful password proof
-  therefore needs a fresh link.
-- Ceremony (`challenge_register` / `verify_register`, details in §6):
-  `challenge_register` needs `reg_username` in the session (403) and refuses a
-  second challenge in the same session (400 "Výzva byla již vygenerována"); the
-  user handle is a fresh random 16-byte value (`reg_user_id`), not derived from
-  the e-mail. Both steps enforce the 120 s challenge TTL (400 "Výzva vypršela").
-  `verify_register` needs `clientDataJSON` + `attestationObject` (400
-  otherwise), inserts the passkey (counter = attested counter or 0) and clears
-  the whole registration session state. It does **not** touch `reg_tokens` —
-  that row is already `used = 1`.
-- `?action=reset` (POST) unsets the same registration keys explicitly; no UI
-  screen calls it today (manual/debug cleanup).
+- `request-token` (POST, 3/h/IP): validates e-mail, checks account existence via
+  `ADMIN_USERS` env (test) or MariaDB `MAILDB_TABLE` (prod; `active=1`), inserts
+  32-byte token into `reg_tokens` (1 h TTL) **before** mail attempt, sends link
+  via `mb_send_mail()` with `-f` envelope sender. Always returns 200
+  `{status:"success"}`; only 429/5xx are unconditional.
+- `validate-token` (GET): requires `used=0 AND expires_at>now`. Sets
+  `reg_username` + `reg_token_id` in session. Returns
+  `{valid, username, password_required}`; `password_required=false` when
+  `ADMIN_USERS` covers the user.
+- `verify-password` (POST): `ADMIN_USERS` branch marks token used, sets
+  `reg_verified`. Prod branch calls `imap_open()` with `IMAP_SERVER` (default
+  `127.0.0.1:993/imap/ssl/novalidate-cert`). TLS error → 503; auth failure → 401
+  (never looks like outage).
+- Token single-use: `markTokenUsed()` fires at password step, not at
+  `verify_register`.
+- Ceremony: `challenge_register`/`verify_register` (§6) need `reg_username` +
+  `reg_verified` in session, enforce 120 s TTL, user handle = random 16 bytes.
+  `verify_register` inserts passkey (counter = attested or 0), clears
+  registration session.
+- `reset` (POST): debug cleanup, no UI entry.
 
 ### 5.2 Sign-in (`/admin/`, `webauthn.php`)
 
-1. `challenge_login` (POST, no auth): 400 "Nejsou registrovány žádné přístupové
-   klíče" when the `passkeys` table is empty — the sign-in button is useless
-   before any device is registered. Otherwise it issues discoverable-credential
-   `getArgs` and stores `login_challenge` (+ `login_challenge_time`, 120 s TTL)
-   in the session.
-2. `verify_login` (POST): 403 without a session challenge, 400 on an expired
-   challenge or a payload missing `id` / `clientDataJSON` / `authenticatorData`
-   / `signature`. The credential id is base64url and is looked up in SQLite; an
-   unknown id, a failed `processGet()` and an invalid result all answer the same
-   generic 401 (§10). On success the signature counter and `last_used_at` are
-   updated and `setAdminSession()` opens the session.
-3. The page then obtains the CSRF token: it prefers a `csrfToken` field in the
-   `verify_login` response (the server does not send one today) and otherwise
-   calls `GET /api/csrf.php`, which creates the token on first use.
+1. **challenge_login** (POST, no auth): if `passkeys` empty → 400; else issues
+   discoverable-credential `getArgs`, stores `login_challenge` + timestamp (120
+   s TTL).
+2. **verify_login** (POST): 403 without session challenge, 400 on expired/bad
+   payload. Credential ID (base64url) looked up in SQLite; unknown/invalid →
+   generic bilingual 401. On success: updates `counter` + `last_used_at`, calls
+   `setAdminSession()`.
+3. **CSRF token**: prefers `csrfToken` in `verify_login` response (not sent
+   today), falls back to `GET /api/csrf.php`.
 
-**Session model** (`session.php`): cookie `lifetime = 86400`, `path = /`,
-`httponly`, `samesite = Lax`, `secure` except on localhost/127.0.0.1 hosts;
-`isAdmin()` additionally rejects an admin session whose `admin_login_time` is
-older than 24 h; `requireAdmin()` answers 401 `{ "error": "Unauthorized" }` —
-note this one message is not bilingual, so the editor shows it verbatim.
+**Session model** (`session.php`): cookie `lifetime=86400`, `path=/`,
+`httponly`, `samesite=Lax`, `secure` except localhost; `isAdmin()` rejects
+sessions older than 24 h; `requireAdmin()` returns 401 `{error:"Unauthorized"}`
+(non-bilingual).
 
-**There is no sign-out endpoint.** The "Odhlásit se" link on the editor screen
-is a plain client-side `<Link href="/">`; the PHP session stays valid until its
-24 h expiry, so an admin session ends only by cookie clear or timeout (same gap
-as the missing passkey-revocation UI, §11).
-
-UI: sign-in card → "Připravuji přihlášení…" / "Čekám na přístupový klíč…"
-spinner → error card with a retry button → editor card.
+**No sign-out endpoint.** "Odhlásit se" is a client-side `<Link href="/">`; PHP
+session lives until 24 h expiry or cookie clear.
 
 ### 5.3 Opening-hours editor (`/admin/`, `OwnerHoursGlassForm.tsx`)
 
-- On mount it GETs `/api/opening-hours.php` (`credentials: 'include'`) and
-  parses the raw JSONC body with the client-side `parseJsonc()`; a load failure
-  keeps the card in its error state and the save button never renders.
-  `OwnerHoursForm.tsx` is a superseded copy (not imported by any page) — the
-  live editor is the Glass form.
-- Seasons: one card per entry with two date inputs and seven free-text day
-  cells; `+ Přidat sezónu` inserts after a card (or appends), `×` removes one.
-  The last remaining season cannot be removed and saving with zero seasons is
-  rejected client-side. New seasons prefill their day cells from the `defaults`
-  template matching their start month (July/August → `summer`, otherwise
-  `spring`); unknown season keys contribute nothing.
-- Dates are editable in the form, but `ensureContiguous()` rewrites them on
-  save: every start becomes the previous end + 1 day and the last `endDate`
-  becomes the `9999-12-31` sentinel (§4.3). Because that sentinel is always the
-  last end date, appending one more season after it produces a malformed start
-  date which the client-side date check rejects ("Neplatné datum") — the save is
-  blocked rather than writing garbage.
-- Client-side validation mirrors the server: ISO `YYYY-MM-DD` dates, start ≤
-  end, per-day text ≤ 100 chars, no overlapping ranges, at least one season.
-- Exceptions: date + free-text hours per row; `+ Přidat výjimku` is disabled
-  while a row still has an empty date, and a duplicate date is blocked with an
-  `alert()` client-side (the server rejects it too). The "Náhled" panel renders
-  the current week — the season covering each date, overridden by an exception
-  for that exact date — with empty values and "Výdej objednávek" / "Order
-  pickup" shown as closed (red).
-- "Upravit výchozí" opens the defaults modal with a `summer` ("Léto") / `spring`
-  ("Mimo léto") tab switcher and a single seven-day grid for the active season
-  (one form at a time). Cancel — and the Escape key, which is bound to the same
-  dismiss action — only closes it; "Uložit" closes the modal **and** runs the
-  same save, so the modal has no separate persistence path — values load from
-  and save to the server file (no localStorage).
-- Saving POSTs `{ schedule, exceptions, defaults }` as JSON with the
-  `X-CSRF-Token` header (omitted when the `csrf` prop is disabled). The server
-  re-validates everything (§4.3) and answers 401 without an admin session, 403
-  on a stale token, 429 above 10 saves/h/IP and 400 on invalid data; the server
-  error text is shown verbatim via `pickBilingual()`, falling back to "Uložení
-  selhalo." only when empty. Success shows "Otevírací doba byla úspěšně
-  uložena."
+**Data model** (mirrors `opening-hours.jsonc` §4.3):
+
+- **Schedule**: array of seasons — `startDate`, `endDate`, `days.{mon..sun}`
+- **Exceptions**: array of `{date, hours}` (override schedule for exact date)
+- **Defaults**: nested by season key (`summer`/`spring` + unknown preserved)
+
+**UI features**:
+
+- **Seasons**: horizontal scroll cards; `+ Přidat sezónu` inserts after/appends;
+  `×` removes (min 1). New seasons prefill from `defaults` by start month
+  (Jul/Aug → `summer`, else `spring`).
+- **Date contiguity**: on save, `ensureContiguous()` rewrites — each `startDate`
+  = previous `endDate`+1; last `endDate` = `9999-12-31`. Appending after
+  sentinel is blocked client-side.
+- **Validation** (client + server): ISO dates, start ≤ end, day text ≤ 100
+  chars, no overlap, ≥1 season.
+- **Exceptions**: date+hours rows; add disabled while any row has empty date;
+  duplicate dates blocked client-side + server.
+- **Preview panel**: current week, shows season/exception source, "Výdej
+  objednávek"/"Order pickup" = closed (red), today highlighted.
+- **Defaults modal**: tabbed `summer`/`spring` (Escape/Cancel dismisses, Save
+  closes + triggers same save).
+- **Autosave draft**: localStorage (`ta-cukrarna-opening-hours-draft`), 30 s
+  interval, 24 h TTL, restore banner on load.
+- **Copy/paste**: paste 7 values into first day cell → auto-fills week.
+- **Keyboard nav**: Enter in day cell → next day; end of week → next season
+  first day.
+- **Save**: POST `{schedule, exceptions, defaults}` with `X-CSRF-Token`; server
+  re-validates (§4.3), 401/403/429/400 errors shown verbatim via
+  `pickBilingual()`.
+
+### 5.4 Device management (`/admin/`, `PasskeyManager.tsx`)
+
+**Backend** (`webauthn.php`):
+
+- `list_credentials` (POST, admin session + CSRF, 10/h/IP): returns all passkeys
+  for session `username` — `id`, `credential_id` (base64url), `counter`,
+  `created_at`, `last_used_at`, `user_agent`, `device_info` (transports[],
+  platform).
+- `revoke_credential` (POST, admin session + CSRF, 10/h/IP): accepts
+  `credential_id` (base64url), verifies ownership, deletes row. Last passkey
+  revocation allowed (re-register via `/admin/register/`).
+
+**Frontend**:
+
+- Table: Registrováno, Naposledy použito, Počet podpisů, Zařízení (platform +
+  transports), Akce.
+- Two-step revoke: click "Odvolat" → confirm buttons (Potvrdit/Zrušit) → API
+  call → auto-reload list.
+- Empty state: "Zatím nejsou registrována žádná zařízení." + link to
+  registration.
+- Warning text: revocation is irreversible; device must be re-registered.
 
 ## 6. WebAuthn details
 
@@ -370,10 +352,6 @@ chromium, Pixel 5, Galaxy S5 — deliberately no WebKit):
 
 ## 11. Known limitations & open items
 
-- No passkey management UI (list/revoke); recovery for a lost device is a manual
-  SQLite delete (backlog item in DEV_NOTES.md). **Planned for v1.4.0: add
-  "Správa zařízení" tab in the admin panel to list registered passkeys with
-  creation/last-used timestamps and a revoke action.**
 - No sign-out endpoint: the admin "Odhlásit se" link is client-side only, so a
   PHP admin session stays valid for its full 24 h lifetime.
 - `OwnerHoursForm.tsx` is dead code kept for reference;
@@ -387,47 +365,29 @@ chromium, Pixel 5, Galaxy S5 — deliberately no WebKit):
 
 ## 12. Planned improvements (v1.4.0+)
 
-### 12.1 Passkey management UI ("Správa zařízení")
+### 12.1 Passkey management UI ("Správa zařízení") — **Implemented in v1.3.x**
 
-**New admin tab** accessible after successful WebAuthn sign-in, alongside the
-opening-hours editor.
+The passkey management tab is already live in the admin panel. Implementation
+matches the plan below; remaining open items are tracked in DEV_NOTES.md.
 
-**Backend changes** (`public/api/webauthn.php`):
+**Backend** (`public/api/webauthn.php`): `list_credentials` +
+`revoke_credential` actions (admin session + CSRF, 10/h/IP rate limit). Returns
+`credential_id` (base64url), `created_at`, `last_used_at`, `counter`,
+`user_agent`, `device_info` (transports[], platform).
 
-- New action `list_credentials` (POST, admin session + CSRF): returns all
-  passkeys for the authenticated admin user (`username` from session), including
-  `credential_id` (base64url), `created_at`, `last_used_at`, `counter`, and
-  `user_agent`/`device_info` if available (new columns in `passkeys` table).
-- New action `revoke_credential` (POST, admin session + CSRF): accepts
-  `credential_id` (base64url), deletes the row if it belongs to the session
-  user, returns success. Rate-limited to 10/h/IP.
+**Database** (`public/api/DB/init.php`): `user_agent` TEXT + `device_info` JSON
+columns added to `passkeys`; populated on registration from
+`navigator.userAgent` and `PublicKeyCredential` metadata.
 
-**Database schema changes** (`public/api/DB/init.php`):
+**Frontend** (`src/app/admin/page.tsx`, `src/components/PasskeyManager.tsx`):
+Tabbed layout "Otevírací doba" | "Správa zařízení"; table with columns
+Registrováno, Naposledy použito, Počet podpisů, Zařízení, Akce; two-step revoke
+confirmation; empty state with registration link; full accessibility (table
+semantics, ARIA labels).
 
-- Add `user_agent` TEXT and `device_info` JSON columns to `passkeys` table.
-- Populate on registration from `navigator.userAgent` and `PublicKeyCredential`
-  metadata (transports, etc.).
-
-**Frontend changes** (`src/app/admin/page.tsx`, new component
-`src/components/PasskeyManager.tsx`):
-
-- Tabbed layout: "Otevírací doba" | "Správa zařízení".
-- Passkey list: table with columns "Registrováno", "Naposledy použito", "Počet
-  podpisů", "Zařízení", "Akce".
-- "Odvolat" button per row with confirmation modal (prevents accidental
-  revocation of the currently used passkey).
-- Empty state: "Zatím nejsou registrována žádná zařízení." with link to
-  `/admin/register/`.
-- Accessibility: proper table semantics, keyboard navigation, ARIA labels.
-
-**Security considerations**:
-
-- Users can only list/revoke their own passkeys (enforced by `username` in
-  session).
-- Revoking the last passkey is allowed (owner can re-register via
-  `/admin/register/`).
-- No "revoke all" bulk action to prevent lockout mistakes.
-- CSRF protection on both endpoints.
+**Security**: users list/revoke only their own passkeys (session `username`);
+last passkey revocation allowed (re-register via `/admin/register/`); no bulk
+revoke; CSRF on both endpoints.
 
 ### 12.2 Opening-hours editor UX improvements
 

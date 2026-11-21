@@ -2,6 +2,11 @@
 
 ## v1.3.14
 
+### Improved
+
+- User management documentation in [README](README.md).
+- Administration area in [SPECIFICATION](SPECIFICATION.md).
+
 ### Fixed
 
 - **Admin defaults modal** (`src/components/OwnerHoursGlassForm.tsx`): "Upravit

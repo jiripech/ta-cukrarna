@@ -159,6 +159,84 @@ backend configuration, define these SMTP variables in `.env`:
 > Note: `scripts/manual-deploy.sh` intentionally excludes `SMTP_*` variables
 > from export to keep email credentials private during deployment.
 
+## 👤 Admin User Management
+
+The admin panel (`/admin/`) is protected by **WebAuthn passkeys** (no
+passwords). Admin accounts are managed differently in production vs. the Docker
+test container.
+
+### Production (VPS)
+
+Admin accounts live in **MariaDB** (table `MAILDB_TABLE`, default `admin`) with
+columns:
+
+| Column     | Type         | Description                   |
+| ---------- | ------------ | ----------------------------- |
+| `username` | VARCHAR(255) | Email address (unique)        |
+| `active`   | TINYINT(1)   | `1` = enabled, `0` = disabled |
+
+If you use [PostfixAdmin](https://github.com/postfixadmin/postfixadmin), this
+table already exists in your the database used by
+[Postfix "Postifx homepage"](https://www.postfix.org) and possibly
+[Dovecot "Dovecot documentation"](https://doc.dovecot.org/).
+
+**Required environment variables** (set via Apache/systemd on VPS):
+
+- `MAILDB_HOST`, `MAILDB_NAME`, `MAILDB_USER`, `MAILDB_PASSWORD` — MariaDB
+  connection
+- `IMAP_SERVER` — Full mailbox spec for `imap_open()`, e.g.
+  `127.0.0.1:993/imap/ssl/novalidate-cert`
+- `MAILDB_TABLE` (optional, default `admin`)
+
+**To add a new admin:**
+
+1. **Create the MariaDB account**
+
+   ```sql
+   INSERT INTO admin (username, active) VALUES ('new-admin@example.cz', 1);
+   ```
+
+2. **Ensure IMAP access** — The user must be able to log in to the mailbox
+   specified in `IMAP_SERVER` with their email password.
+
+3. **User completes registration** — They visit `/admin/register/`, enter their
+   email, receive a magic link, click it, enter their IMAP password, then
+   complete the WebAuthn ceremony (Touch ID, Windows Hello, YubiKey, etc.).
+
+**To remove an admin:**
+
+1. **Disable in MariaDB**
+
+   ```sql
+   UPDATE admin SET active = 0 WHERE username = 'admin@example.cz';
+   ```
+
+2. **Revoke their passkeys** (optional but recommended) — Sign in as another
+   admin, open the **Správa zařízení** tab, and click **Odvolat** next to their
+   device(s). This prevents the old passkey from working even if the MariaDB row
+   is later re-enabled.
+
+### Docker Test Container
+
+No MariaDB/IMAP stack is present. Admin accounts are defined via the
+`ADMIN_USERS` environment variable (comma-separated emails) in `.env.docker`:
+
+```bash
+ADMIN_USERS=admin1@example.cz,admin2@example.cz
+```
+
+- The registration flow skips the IMAP password step for these users.
+- The seeded registration URL is printed to the container log at start and
+  stored in `public/api/DB/test-credentials.json`.
+- **Never set `ADMIN_USERS` on the VPS** — it bypasses the IMAP password proof.
+
+### First Admin Bootstrap
+
+On a fresh VPS, the `admin` table is empty. You must manually insert the first
+admin row via SQL (step 1 above), then complete the registration flow yourself.
+The SQLite passkey database (`api/DB/passkeys.sqlite`) is created automatically
+by `public/api/DB/init.php` on deploy.
+
 ## 🏗️ Project Structure
 
 ```text
