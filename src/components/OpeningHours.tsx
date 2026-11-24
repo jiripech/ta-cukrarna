@@ -280,11 +280,12 @@ export default function OpeningHours() {
   ): { text: string; closed: boolean; hasException: boolean } => {
     const exception = weekdayExceptions[key];
     if (exception) {
-      const isClosed =
-        exception.hours === '' || !hourPattern.test(exception.hours);
+      // Empty string = closed; non-standard format = show as-is but in red
+      const isClosed = exception.hours === '';
+      const isStandard = hourPattern.test(exception.hours);
       return {
         text: isClosed ? 'Zavřeno' : exception.hours,
-        closed: isClosed,
+        closed: isClosed || !isStandard,
         hasException: true,
       };
     }
@@ -314,55 +315,30 @@ export default function OpeningHours() {
             <span className={pondeli.closed ? redClosedClasses : 'font-medium'}>
               {pondeli.text}
             </span>
-            {pondeli.hasException && (
-              <span className="ml-2 text-xs text-amber-600 dark:text-amber-400">
-                (výjimka)
-              </span>
-            )}
           </div>
           <div className="flex justify-between">
             <span>Úterý</span>
             <span className={utery.closed ? redClosedClasses : 'font-medium'}>
               {utery.text}
             </span>
-            {utery.hasException && (
-              <span className="ml-2 text-xs text-amber-600 dark:text-amber-400">
-                (výjimka)
-              </span>
-            )}
           </div>
           <div className="flex justify-between">
             <span>Středa</span>
             <span className={streda.closed ? redClosedClasses : 'font-medium'}>
               {streda.text}
             </span>
-            {streda.hasException && (
-              <span className="ml-2 text-xs text-amber-600 dark:text-amber-400">
-                (výjimka)
-              </span>
-            )}
           </div>
           <div className="flex justify-between">
             <span>Čtvrtek</span>
             <span className={ctvrtek.closed ? redClosedClasses : 'font-medium'}>
               {ctvrtek.text}
             </span>
-            {ctvrtek.hasException && (
-              <span className="ml-2 text-xs text-amber-600 dark:text-amber-400">
-                (výjimka)
-              </span>
-            )}
           </div>
           <div className="flex justify-between">
             <span>Pátek</span>
             <span className={patek.closed ? redClosedClasses : 'font-medium'}>
               {patek.text}
             </span>
-            {patek.hasException && (
-              <span className="ml-2 text-xs text-amber-600 dark:text-amber-400">
-                (výjimka)
-              </span>
-            )}
           </div>
           <div className="flex justify-between">
             <span>Sobota - Neděle, svátky</span>

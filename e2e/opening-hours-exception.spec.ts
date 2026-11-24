@@ -136,27 +136,21 @@ test.describe('public display', () => {
         { timeout: 30000 }
       );
 
-      // Verify Wednesday row shows the exception hours with "(výjimka)" label
+      // Verify Wednesday row shows the exception hours
       const wednesdayRow = page
         .locator('#opening-hours > div > div')
         .filter({ hasText: 'Středa' });
       await expect(wednesdayRow).toContainText('Středa');
       const wednesdayHoursCell = wednesdayRow.locator('span').nth(1);
       await expect(wednesdayHoursCell).toContainText('10:00 - 14:00');
-      await expect(wednesdayRow.locator('span').nth(2)).toContainText(
-        '(výjimka)'
-      );
 
-      // Verify Thursday row shows "Zavřeno" with "(výjimka)" label (closed)
+      // Verify Thursday row shows "Zavřeno" (closed)
       const thursdayRow = page
         .locator('#opening-hours > div > div')
         .filter({ hasText: 'Čtvrtek' });
       await expect(thursdayRow).toContainText('Čtvrtek');
       const thursdayHoursCell = thursdayRow.locator('span').nth(1);
       await expect(thursdayHoursCell).toContainText('Zavřeno');
-      await expect(thursdayRow.locator('span').nth(2)).toContainText(
-        '(výjimka)'
-      );
     } finally {
       // Restore the original file
       writeFileSync(docrootJsonc, originalContent);
