@@ -63,6 +63,22 @@ export function todayLocalIso(date: Date = new Date()): string {
   return `${year}-${month}-${day}`;
 }
 
+/**
+ * Returns a local YYYY-MM-DD string for a given offset from today (in days).
+ * Does not shift into UTC, matching todayLocalIso().
+ */
+export function localIsoOffset(
+  daysOffset: number,
+  baseDate: Date = new Date()
+): string {
+  const date = new Date(baseDate);
+  date.setDate(date.getDate() + daysOffset);
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+
 type WeekdayKey = 'pondeli' | 'utery' | 'streda' | 'ctvrtek' | 'patek';
 
 // Maps JS getDay() (0 = Sunday … 6 = Saturday) to the Mon–Fri row keys.
@@ -271,6 +287,13 @@ export default function OpeningHours() {
   const ctvrtek = dayCell('ctvrtek');
   const patek = dayCell('patek');
 
+  // Find exceptions for tomorrow and day after tomorrow
+  const tomorrow = localIsoOffset(1);
+  const dayAfterTomorrow = localIsoOffset(2);
+  const upcomingExceptions = exceptions.filter(
+    ex => ex.date === tomorrow || ex.date === dayAfterTomorrow
+  );
+
   return (
     <div id="openinghours">
       <div id="opening-hours">
@@ -325,6 +348,29 @@ export default function OpeningHours() {
             )}
           </div>
         </div>
+        {upcomingExceptions.length > 0 && (
+          <div className="mt-6 space-y-2">
+            <h4 className="text-sm font-semibold text-amber-600 dark:text-amber-400 md:text-amber-400!">
+              Nadcházející výjimky
+            </h4>
+            <div className="space-y-1 text-zinc-600 dark:text-zinc-300 md:text-zinc-300!">
+              {upcomingExceptions.map(ex => (
+                <div key={ex.date} className="flex justify-between gap-4">
+                  <span className="font-medium">{ex.date}</span>
+                  <span
+                    className={
+                      ex.hours === '' || !hourPattern.test(ex.hours)
+                        ? redClosedClasses
+                        : 'font-medium'
+                    }
+                  >
+                    {ex.hours === '' ? 'Zavřeno' : ex.hours}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

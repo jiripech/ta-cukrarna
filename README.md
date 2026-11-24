@@ -21,7 +21,9 @@ sends a PDF link via email with tri-lingual support.
 - **⏰ Opening Hours** - Admin-configurable weekly schedule with date exceptions
   (holidays, special days). Stored in `public/holiday.jsonc`, editable via admin
   form at `/admin/`. Supports summer/winter schedules and exact-date exceptions
-  that override the weekly schedule.
+  that override the weekly schedule. The homepage now displays a "Nadcházející
+  výjimky" (Upcoming exceptions) section for exceptions scheduled for tomorrow
+  or the day after tomorrow.
 
 ## 🛠️ Tech Stack
 
