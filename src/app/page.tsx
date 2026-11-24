@@ -137,7 +137,7 @@ export default function Home() {
               >
                 instagram
               </a>
-              .
+              {'!'}
             </p>
           </div>
         </div>
