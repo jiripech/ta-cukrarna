@@ -5,6 +5,11 @@ import PhotoSlideshow from '@/components/PhotoSlideshow';
 import OpeningHours from '@/components/OpeningHours';
 
 export default function Home() {
+  const now = new Date();
+  const currentYear = now.getFullYear();
+  const christmasDeadline = new Date(currentYear, 11, 20, 23, 59, 59); // Dec 20, 23:59:59
+  const showChristmasPromo = now <= christmasDeadline;
+
   return (
     <div className="flex flex-col min-h-screen bg-zinc-50 dark:bg-black">
       {/* Header Section with Background Image */}
@@ -63,6 +68,30 @@ export default function Home() {
         </div>
       </header>
 
+      {/* Christmas Promo Block (shown until Dec 20) - visible on all platforms */}
+      {showChristmasPromo && (
+        <section
+          className="bg-white dark:bg-zinc-900 py-8 border-t border-zinc-200 dark:border-zinc-800"
+          id="promo"
+        >
+          <div className="container mx-auto px-4 text-center">
+            <div className="max-w-2xl mx-auto">
+              <h2 className="text-2xl font-bold text-zinc-900 dark:text-zinc-100 mb-4">
+                Vánoce
+              </h2>
+              <a
+                className="inline-block bg-amber-600 hover:bg-amber-700 text-white px-6 py-3 rounded-lg font-medium transition-colors"
+                href="https://obchod.tacukrarna.cz/kategorie/vanoce"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                Objednat vánoční cukroví nebo vánočku
+              </a>
+            </div>
+          </div>
+        </section>
+      )}
+
       {/* Main Content (Hidden on mobile) */}
       <main
         id="main-content"
@@ -87,7 +116,10 @@ export default function Home() {
       </main>
 
       {/* Dynamic Content Sections (Hidden on mobile) */}
-      <section className="hidden md:block bg-white dark:bg-zinc-900 py-12 border-t border-zinc-200 dark:border-zinc-800">
+      <section
+        className="hidden md:block bg-white dark:bg-zinc-900 py-12 border-t border-zinc-200 dark:border-zinc-800"
+        id="more-content"
+      >
         <div className="container mx-auto px-4 text-center">
           <div className="max-w-2xl mx-auto">
             <h2 className="text-3xl font-bold text-zinc-900 dark:text-zinc-100 mb-4">

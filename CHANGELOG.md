@@ -1,6 +1,16 @@
 # Changelog
 
-## v1.3.17
+## v1.4.0
+
+### Added
+
+- **Christmas promo block on homepage** (`src/app/page.tsx`,
+  `e2e/promo-block.spec.ts`): new promotional section with id="promo" displayed
+  on all platforms (not hidden on mobile) until December 20. Contains an h2
+  "Vánoce" and a call-to-action link to the Christmas shop
+  (<https://obchod.tacukrarna.cz/kategorie/vanoce>) with text "Objednat vánoční
+  cukroví nebo vánočku". The block auto-hides after December 20 via client-side
+  date check. E2E test coverage added.
 
 ### Security
 
@@ -24,7 +34,7 @@
   - `postcss` 8.5.25 → 8.5.33 All existing security overrides (`katex`,
     `smol-toml`, `compression`, `fast-uri`, `markdownlint→re2js`,
     `typescript-estree→minimatch`) remain in place and continue to mitigate
-    their respective advisories. `npm run check-all` and full E2E suite (84
+    their respective advisories. `npm run check-all` and full E2E suite (87
     passed, 33 skipped) verify compatibility.
 
 ## v1.3.16

@@ -24,6 +24,10 @@ sends a PDF link via email with tri-lingual support.
   that override the weekly schedule. The homepage now displays a "Nadcházející
   výjimky" (Upcoming exceptions) section for exceptions scheduled for tomorrow
   or the day after tomorrow.
+- **🎄 Christmas Promo** - Seasonal promotional block (id="promo") displayed on
+  all devices until December 20, featuring a "Vánoce" heading and a
+  call-to-action button linking to the Christmas shop (vánoční cukroví a
+  vánočky).
 
 ## 🛠️ Tech Stack
 
