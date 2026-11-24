@@ -1,5 +1,32 @@
 # Changelog
 
+## v1.3.17
+
+### Security
+
+- **Dependency updates** (`package.json`, `package-lock.json`): updated all
+  dependencies to latest compatible versions, resolving all open Dependabot
+  security advisories. Key updates include:
+  - `@tailwindcss/postcss` 4.1.15 → 4.3.5
+  - `@types/node` 20.19.23 → 20.19.43
+  - `@types/react` 19.2.2 → 19.3.0
+  - `@types/react-dom` 19.2.2 → 19.3.0
+  - `@secretlint/secretlint-rule-preset-recommend` 13.0.7 → 13.1.0
+  - `eslint` 9.39.5 (pinned)
+  - `html-validate` 11.19.0 → 11.21.1
+  - `lint-staged` 16.4.0 (pinned)
+  - `markdownlint-cli2` 0.24.0 → 0.24.2
+  - `prettier` 3.6.2 → 3.10.1
+  - `secretlint` 13.0.7 → 13.1.0
+  - `serve` 14.2.6 → 14.2.8
+  - `tailwindcss` 4.1.15 → 4.3.5
+  - `typescript` 5.9.3 (pinned)
+  - `postcss` 8.5.25 → 8.5.33 All existing security overrides (`katex`,
+    `smol-toml`, `compression`, `fast-uri`, `markdownlint→re2js`,
+    `typescript-estree→minimatch`) remain in place and continue to mitigate
+    their respective advisories. `npm run check-all` and full E2E suite (84
+    passed, 33 skipped) verify compatibility.
+
 ## v1.3.16
 
 ### Added

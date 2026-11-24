@@ -4,12 +4,7 @@ import React, { useState, useEffect, useRef } from 'react';
 
 type Language = 'cs' | 'sk' | 'en';
 type ChatStep =
-  | 'GREETING'
-  | 'EMAIL_REQUEST'
-  | 'SENDING'
-  | 'COMPLETED'
-  | 'DECLINED'
-  | 'ERROR';
+  'GREETING' | 'EMAIL_REQUEST' | 'SENDING' | 'COMPLETED' | 'DECLINED' | 'ERROR';
 
 const translations = {
   cs: {

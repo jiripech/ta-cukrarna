@@ -183,8 +183,7 @@ export default function OpeningHours() {
             days: Record<string, string>;
           }[];
           const defaults = d?.defaults as
-            | Record<string, Record<string, string>>
-            | undefined;
+            Record<string, Record<string, string>> | undefined;
           return { exceptions: userExceptions, schedule, defaults };
         });
 
