@@ -1,5 +1,9 @@
 # Changelog
 
+## v1.4.4
+
+- **Updated** Playwright Chromium installation step to include dependencies
+
 ## v1.4.3
 
 ### Added
