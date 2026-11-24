@@ -73,8 +73,13 @@ jobs:
           NEXT_PUBLIC_USE_CHATBOT: ${{ vars.USE_CHATBOT }}
         run: npm run build
 
-      - name: Install Playwright browsers
-        run: npx playwright install --with-deps
+      - name: Install system dependencies for Playwright
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq libnss3 libatk1.0-0 libatk-bridge2.0-0 libcups2 libdrm2 libxkbcommon0 libxcomposite1 libxdamage1 libxfixes3 libxrandr2 libgbm1 libasound2 libxshmfence1 libx11-xcb1 libxcb-dri3-0 libxcb-randr0 libxcb-shm0 libxcb-xfixes0 libxcb-shape0 libxcb-xinerama0
+
+      - name: Install Playwright Chromium (without deps)
+        run: npx playwright install chromium --no-deps
 
       - name: Run PHP API security tests
         run: |
