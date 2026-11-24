@@ -1,5 +1,9 @@
 # Changelog
 
+## v1.4.1
+
+- **Fixed** CI workflow
+
 ## v1.4.0
 
 ### Added
@@ -34,6 +38,7 @@
   - `postcss` 8.5.25 → 8.5.33 All existing security overrides (`katex`,
     `smol-toml`, `compression`, `fast-uri`, `markdownlint→re2js`,
     `typescript-estree→minimatch`) remain in place and continue to mitigate
+    their respective advisories. `npm run check-all` and full E2E suite (87
     their respective advisories. `npm run check-all` and full E2E suite (87
     passed, 33 skipped) verify compatibility.
 
