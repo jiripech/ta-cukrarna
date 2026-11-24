@@ -63,16 +63,26 @@ export function todayLocalIso(date: Date = new Date()): string {
   return `${year}-${month}-${day}`;
 }
 
-type WeekdayKey = 'pondeli' | 'utery' | 'streda' | 'ctvrtek' | 'patek';
+/**
+ * Returns the local YYYY-MM-DD date for a given weekday (1=Mon ... 5=Fri)
+ * of the current week (week starts on Monday).
+ */
+export function getWeekdayDate(
+  weekday: 1 | 2 | 3 | 4 | 5,
+  baseDate: Date = new Date()
+): string {
+  const date = new Date(baseDate);
+  const currentDay = date.getDay(); // 0=Sun, 1=Mon, ... 6=Sat
+  let daysToAdd = weekday - currentDay;
+  if (daysToAdd < 0) daysToAdd += 7;
+  date.setDate(date.getDate() + daysToAdd);
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
 
-// Maps JS getDay() (0 = Sunday … 6 = Saturday) to the Mon–Fri row keys.
-const ROW_BY_JS_DAY: Record<number, WeekdayKey> = {
-  1: 'pondeli',
-  2: 'utery',
-  3: 'streda',
-  4: 'ctvrtek',
-  5: 'patek',
-};
+type WeekdayKey = 'pondeli' | 'utery' | 'streda' | 'ctvrtek' | 'patek';
 
 /**
  * Returns the JS day index (0 = Sunday … 6 = Saturday) for a local
@@ -242,25 +252,47 @@ export default function OpeningHours() {
   const today = todayLocalIso();
   const exception = exceptions.find(x => x.date === today);
   const exceptionDay = exception ? localJsDay(exception.date) : -1;
-  const weekdayExceptionKey = exception
-    ? (ROW_BY_JS_DAY[exceptionDay] ?? null)
-    : null;
   const weekendException =
     exception && (exceptionDay === 0 || exceptionDay === 6) ? exception : null;
 
   const hourPattern = /^[0-9]+:[0-9]+ - [0-9]+:[0-9]+$/;
 
-  const dayCell = (key: WeekdayKey): { text: string; closed: boolean } => {
-    if (exception && weekdayExceptionKey === key) {
+  // Get the date for each weekday of the current week
+  const weekdayDates: Record<WeekdayKey, string> = {
+    pondeli: getWeekdayDate(1),
+    utery: getWeekdayDate(2),
+    streda: getWeekdayDate(3),
+    ctvrtek: getWeekdayDate(4),
+    patek: getWeekdayDate(5),
+  };
+
+  // Check for exceptions for each weekday
+  const weekdayExceptions: Record<WeekdayKey, HoursException | null> = {
+    pondeli: exceptions.find(x => x.date === weekdayDates.pondeli) ?? null,
+    utery: exceptions.find(x => x.date === weekdayDates.utery) ?? null,
+    streda: exceptions.find(x => x.date === weekdayDates.streda) ?? null,
+    ctvrtek: exceptions.find(x => x.date === weekdayDates.ctvrtek) ?? null,
+    patek: exceptions.find(x => x.date === weekdayDates.patek) ?? null,
+  };
+
+  const dayCell = (
+    key: WeekdayKey
+  ): { text: string; closed: boolean; hasException: boolean } => {
+    const exception = weekdayExceptions[key];
+    if (exception) {
+      const isClosed =
+        exception.hours === '' || !hourPattern.test(exception.hours);
       return {
-        text: exception.hours,
-        closed: exception.hours === '' || !hourPattern.test(exception.hours),
+        text: isClosed ? 'Zavřeno' : exception.hours,
+        closed: isClosed,
+        hasException: true,
       };
     }
     const text = schedule[key];
     return {
       text,
       closed: (key === 'pondeli' || key === 'patek') && hasNotClosedText(text),
+      hasException: false,
     };
   };
 
@@ -282,30 +314,55 @@ export default function OpeningHours() {
             <span className={pondeli.closed ? redClosedClasses : 'font-medium'}>
               {pondeli.text}
             </span>
+            {pondeli.hasException && (
+              <span className="ml-2 text-xs text-amber-600 dark:text-amber-400">
+                (výjimka)
+              </span>
+            )}
           </div>
           <div className="flex justify-between">
             <span>Úterý</span>
             <span className={utery.closed ? redClosedClasses : 'font-medium'}>
               {utery.text}
             </span>
+            {utery.hasException && (
+              <span className="ml-2 text-xs text-amber-600 dark:text-amber-400">
+                (výjimka)
+              </span>
+            )}
           </div>
           <div className="flex justify-between">
             <span>Středa</span>
             <span className={streda.closed ? redClosedClasses : 'font-medium'}>
               {streda.text}
             </span>
+            {streda.hasException && (
+              <span className="ml-2 text-xs text-amber-600 dark:text-amber-400">
+                (výjimka)
+              </span>
+            )}
           </div>
           <div className="flex justify-between">
             <span>Čtvrtek</span>
             <span className={ctvrtek.closed ? redClosedClasses : 'font-medium'}>
               {ctvrtek.text}
             </span>
+            {ctvrtek.hasException && (
+              <span className="ml-2 text-xs text-amber-600 dark:text-amber-400">
+                (výjimka)
+              </span>
+            )}
           </div>
           <div className="flex justify-between">
             <span>Pátek</span>
             <span className={patek.closed ? redClosedClasses : 'font-medium'}>
               {patek.text}
             </span>
+            {patek.hasException && (
+              <span className="ml-2 text-xs text-amber-600 dark:text-amber-400">
+                (výjimka)
+              </span>
+            )}
           </div>
           <div className="flex justify-between">
             <span>Sobota - Neděle, svátky</span>

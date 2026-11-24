@@ -1,5 +1,17 @@
 # Changelog
 
+## v1.4.3
+
+### Added
+
+- **Upcoming weekday exceptions integrated into schedule display**
+  (`src/components/OpeningHours.tsx`, `e2e/opening-hours-exception.spec.ts`):
+  exceptions for upcoming weekdays (Mon–Fri) are now displayed directly in their
+  respective day rows instead of a separate "Upcoming exceptions" section. Each
+  affected day shows the exception hours (or "Zavřeno" for closed) with a
+  "(výjimka)" label. The `getWeekdayDate()` helper was added to compute the date
+  for each weekday of the current week. E2E test coverage added.
+
 ## v1.4.2
 
 ### Removed

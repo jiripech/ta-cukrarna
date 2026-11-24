@@ -21,7 +21,9 @@ sends a PDF link via email with tri-lingual support.
 - **⏰ Opening Hours** - Admin-configurable weekly schedule with date exceptions
   (holidays, special days). Stored in `public/holiday.jsonc`, editable via admin
   form at `/admin/`. Supports summer/winter schedules and exact-date exceptions
-  that override the weekly schedule for the current day.
+  that override the weekly schedule for the current day. Upcoming weekday
+  exceptions are displayed inline in their respective day rows with a
+  "(výjimka)" label.
 - **🎄 Christmas Promo** - Seasonal promotional block (id="promo") displayed on
   all devices until December 20, featuring a "Vánoce" heading and a
   call-to-action button linking to the Christmas shop (vánoční cukroví a
