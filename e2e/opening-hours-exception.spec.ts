@@ -9,19 +9,6 @@ import {
 } from './helpers/soft-webauthn';
 
 /**
- * Returns a local YYYY-MM-DD string for a given offset from today (in days).
- * Does not shift into UTC, matching todayLocalIso() in OpeningHours.tsx.
- */
-function localIsoOffset(daysOffset: number): string {
-  const date = new Date();
-  date.setDate(date.getDate() + daysOffset);
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, '0');
-  const day = String(date.getDate()).padStart(2, '0');
-  return `${year}-${month}-${day}`;
-}
-
-/**
  * Date-based opening-hours exceptions.
  *
  *  1. Public display: the weekday rows render from the real docroot
@@ -74,77 +61,6 @@ test.describe('public display', () => {
     const hoursCell = patekRow.locator('span').nth(1);
     await expect(hoursCell).toHaveClass(/font-medium/);
     await expect(hoursCell).not.toHaveClass(/text-red-600/);
-  });
-
-  test('displays exceptions for tomorrow and day after tomorrow', async ({
-    page,
-  }) => {
-    // Modify the docroot opening-hours.jsonc to add exceptions for tomorrow
-    // and day after tomorrow, then verify they appear on the homepage.
-    const docrootJsonc = resolve(__dirname, '..', 'out', 'opening-hours.jsonc');
-    const sourceJsonc = resolve(
-      __dirname,
-      '..',
-      'public',
-      'opening-hours.jsonc'
-    );
-    const originalContent = readFileSync(sourceJsonc, 'utf8');
-
-    const tomorrow = localIsoOffset(1);
-    const dayAfterTomorrow = localIsoOffset(2);
-
-    const modifiedContent = JSON.stringify({
-      schedule: [
-        {
-          startDate: '2026-01-01',
-          endDate: '2026-12-31',
-          days: {
-            mon: '9:00 - 17:00',
-            tue: '9:00 - 16:00',
-            wed: '9:00 - 16:00',
-            thu: '9:00 - 19:00',
-            fri: '9:00 - 17:00',
-            sat: '',
-            sun: '',
-          },
-        },
-      ],
-      exceptions: [
-        { date: tomorrow, hours: '9:00 - 12:00' },
-        { date: dayAfterTomorrow, hours: '' }, // closed
-      ],
-    });
-
-    writeFileSync(docrootJsonc, modifiedContent);
-
-    try {
-      await page.goto('/');
-      await page.waitForLoadState('networkidle');
-
-      // Wait for the OpeningHours component to load its data AND the upcoming
-      // exceptions section to appear (since we know there are exceptions for
-      // tomorrow and day after tomorrow in the modified JSONC).
-      await page.waitForFunction(
-        () => {
-          const openingHours = document.getElementById('opening-hours');
-          if (!openingHours) return false;
-          const text = openingHours.textContent || '';
-          return text.includes('Nadcházející výjimky');
-        },
-        { timeout: 30000 }
-      );
-
-      // Verify the upcoming exceptions section is displayed
-      // The section should show both tomorrow and day after tomorrow exceptions
-      await expect(page.getByText('Nadcházející výjimky')).toBeVisible();
-      await expect(page.getByText(tomorrow)).toBeVisible();
-      await expect(page.getByText('9:00 - 12:00')).toBeVisible();
-      await expect(page.getByText(dayAfterTomorrow)).toBeVisible();
-      await expect(page.getByText('Zavřeno')).toBeVisible();
-    } finally {
-      // Restore the original file
-      writeFileSync(docrootJsonc, originalContent);
-    }
   });
 });
 

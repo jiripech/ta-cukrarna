@@ -1,5 +1,26 @@
 # Changelog
 
+## v1.4.2
+
+### Removed
+
+- **"Nadcházející výjimky" section from OpeningHours component**
+  (`src/components/OpeningHours.tsx`, `e2e/opening-hours-exception.spec.ts`):
+  removed the "Upcoming exceptions" section that displayed exceptions for
+  tomorrow and the day after tomorrow. The dates were not localized and the
+  feature was not requested. Date exceptions are already automatically
+  calculated into the currently displayed opening hours for the current day
+  (overriding the weekly schedule when an exact-date exception exists). E2E test
+  updated to remove the test for the removed section. `npm run check-all` and
+  full E2E suite verify compatibility.
+
+### Fixed
+
+- **CI workflow** (`.github/workflows/deploy.yml`): fixed Playwright browser
+  installation on self-hosted runner by installing only required system
+  dependencies and then Playwright Chromium without deps, avoiding dpkg lock
+  issues with `dbus-system-bus-common`.
+
 ## v1.4.1
 
 - **Fixed** CI workflow
