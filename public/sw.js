@@ -1,4 +1,4 @@
-const CACHE_NAME = 'ta-cukrarna-v1.4.1';
+const CACHE_NAME = 'ta-cukrarna-v1.4.2';
 const urlsToCache = [
   '/',
   '/icon.ico',
